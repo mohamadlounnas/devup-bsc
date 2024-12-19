@@ -91,6 +91,14 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "3.0.1"
+  lib:
+    dependency: "direct main"
+    description:
+      name: lib
+      sha256: f179c3948ea1b48010a7154588a86df1c4970a895bb7f51c4e493a2e40bba509
+      url: "https://pub.dev"
+    source: hosted
+    version: "0.0.3"
   lints:
     dependency: transitive
     description:
@@ -123,6 +131,14 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "1.15.0"
+  motif:
+    dependency: "direct main"
+    description:
+      name: motif
+      sha256: "7747aa4050099ebce580352e0d6378452ba9d469f1f0c3219c325318fc38a07c"
+      url: "https://pub.dev"
+    source: hosted
+    version: "0.0.6"
   path:
     dependency: transitive
     description:
@@ -131,6 +147,14 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "1.9.0"
+  shaper:
+    dependency: transitive
+    description:
+      name: shaper
+      sha256: "005ddc391eb1f833d2e905154837a2729567d3f54476ceb52957646fe4223bd4"
+      url: "https://pub.dev"
+    source: hosted
+    version: "0.0.4"
   sky_engine:
     dependency: transitive
     description: flutter
