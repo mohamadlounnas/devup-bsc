@@ -9,8 +9,16 @@ environment:
 dependencies:
   flutter:
     sdk: flutter
+  intl: ^0.20.1
   lib: ^0.0.3
+
   motif: ^0.0.6
+  pocketbase: ^0.18.1
+  get_it: ^7.6.7
+  shared:
+    path: ../shared
+  provider: ^6.0.5
+  shared_preferences: ^2.2.0
 
 dev_dependencies:
   flutter_test:
