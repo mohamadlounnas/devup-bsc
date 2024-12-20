@@ -1,14 +1,12 @@
 import 'package:admin_app/presentation/dashboard/dashboard_screen.dart';
 import 'package:admin_app/presentation/login/login_screen.dart';
 import 'package:admin_app/services/auth_service.dart';
-import 'package:admin_app/services/facility_service.dart';
 import 'package:admin_app/services/reservation_service.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:pocketbase/pocketbase.dart';
 import 'package:provider/provider.dart';
-
-final pb = PocketBase('https://bsc-pocketbase.mtdjari.com');
+import 'package:shared/services/api_service.dart';
 
 void main() {
   // Initialize PocketBase with proper configuration
@@ -18,7 +16,9 @@ void main() {
       providers: [
         ChangeNotifierProvider(create: (_) => AuthService(pb)),
         ChangeNotifierProvider(create: (_) => ReservationService(pb)),
-        ChangeNotifierProvider.value(value: FacilityService.instance),
+        Provider<ApiService>(
+          create: (context) => ApiService(pb),
+        ),
       ],
       child: const MainApp(),
     ),

@@ -54,4 +54,18 @@ enum HostelStatus {
   /// Partially active hostel
   @JsonValue('partially')
   partially;
+}
+
+/// Enum representing reservation status
+@JsonEnum()
+enum ReservationStatus {
+  /// Pending reservation
+  @JsonValue('pending')
+  pending,
+  /// Confirmed reservation
+  @JsonValue('confirmed')
+  confirmed,
+  /// Completed reservation
+  @JsonValue('completed')
+  completed;
 } 

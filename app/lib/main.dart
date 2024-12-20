@@ -9,7 +9,6 @@ import 'services/pb_service.dart';
 final pb = PocketBase('https://bsc-pocketbase.mtdjari.com');
 
 void main() {
-
   runApp(App(pb: pb));
 }
 
