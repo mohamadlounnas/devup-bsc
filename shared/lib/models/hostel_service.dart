@@ -1,6 +1,7 @@
 // ignore_for_file: invalid_annotation_target
 
 import 'package:freezed_annotation/freezed_annotation.dart';
+import 'enums.dart';
 
 part 'hostel_service.freezed.dart';
 part 'hostel_service.g.dart';
@@ -10,9 +11,10 @@ part 'hostel_service.g.dart';
 class HostelService with _$HostelService {
   const factory HostelService({
     @JsonKey(name: 'id') required String id,
-    @JsonKey(name: 'icon') String? icon,
     @JsonKey(name: 'name') required String name,
+    @JsonKey(name: 'type') required ServiceType type,
     @JsonKey(name: 'description') String? description,
+    @JsonKey(name: 'icon') String? icon,
     @JsonKey(name: 'created') required DateTime created,
     @JsonKey(name: 'updated') required DateTime updated,
   }) = _HostelService;

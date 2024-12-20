@@ -68,4 +68,15 @@ enum ReservationStatus {
   /// Completed reservation
   @JsonValue('completed')
   completed;
+}
+
+/// Enum representing service types
+@JsonEnum()
+enum ServiceType {
+  @JsonValue('hospitality')
+  hospitality,
+  @JsonValue('restoration')
+  restoration,
+  @JsonValue('activity')
+  activity;
 } 
