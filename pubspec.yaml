@@ -1,0 +1,8 @@
+dependencies:
+  flutter:
+    sdk: flutter
+  google_fonts: ^6.1.0
+  intl: ^0.18.0
+  shared:
+    path: ../shared
+  pocketbase: ^0.18.1

@@ -16,7 +16,7 @@ dependencies:
   pocketbase: ^0.18.1
   get_it: ^7.6.7
   shared:
-    path: /Users/mac/comp/devup-bsc/shared
+    path: C:\Users\May-Tech\devup-bsc\shared
   provider: ^6.1.2
   shared_preferences: ^2.2.0
   date_format: ^2.0.9

@@ -1,208 +1,61 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:go_router/go_router.dart';
+import '../../widgets/background_gradient.dart';
+import '../../widgets/theme_toggle.dart';
 
-/// A shell widget that provides the common layout for all dashboard screens
-/// This includes the navigation rail/drawer and app bar
-class DashboardShell extends StatelessWidget {
-  /// The child widget to display in the content area
+/// A responsive shell that adapts its navigation based on screen size.
+/// Provides an accessible and professional navigation experience across different devices.
+class DashboardShell extends StatefulWidget {
   final Widget child;
 
-  /// Creates a new dashboard shell
   const DashboardShell({
-    required this.child,
     super.key,
+    required this.child,
   });
 
   @override
-  Widget build(BuildContext context) {
-    // Use LayoutBuilder to make the dashboard responsive
-    return LayoutBuilder(
-      builder: (context, constraints) {
-        // Check if we should use compact layout (like a drawer) or extended layout (like a rail)
-        final isCompact = constraints.maxWidth < 1200;
+  State<DashboardShell> createState() => _DashboardShellState();
+}
 
-        return Scaffold(
-          // Show drawer for compact layout
-          drawer: isCompact ? _buildDrawer(context) : null,
-          body: SafeArea(
-            child: Row(
-              children: [
-                // Show navigation rail for extended layout
-                if (!isCompact) _buildNavigationRail(context),
-                // Main content area
-                Expanded(
-                  child: Column(
-                    children: [
-                      // Custom app bar
-                      _buildAppBar(context, isCompact),
-                      // Content area
-                      Expanded(child: child),
-                    ],
-                  ),
-                ),
-              ],
-            ),
-          ),
-        );
-      },
+class _DashboardShellState extends State<DashboardShell> with SingleTickerProviderStateMixin {
+  bool _isRailHovered = false;
+  late final AnimationController _railController;
+  late final Animation<double> _railWidth;
+
+  @override
+  void initState() {
+    super.initState();
+    _railController = AnimationController(
+      duration: const Duration(milliseconds: 200),
+      vsync: this,
     );
+    _railWidth = Tween<double>(
+      begin: 240,
+      end: 280,
+    ).animate(CurvedAnimation(
+      parent: _railController,
+      curve: Curves.easeInOutCubic,
+    ));
   }
 
-  /// Builds the app bar with a consistent style
-  Widget _buildAppBar(BuildContext context, bool isCompact) {
-    return Container(
-      height: 64,
-      padding: const EdgeInsets.symmetric(horizontal: 16),
-      decoration: BoxDecoration(
-        color: Theme.of(context).colorScheme.surface,
-        border: Border(
-          bottom: BorderSide(
-            color: Theme.of(context).colorScheme.outlineVariant,
-          ),
-        ),
-      ),
-      child: Row(
-        children: [
-          if (isCompact)
-            IconButton(
-              icon: const Icon(Icons.menu),
-              onPressed: () {
-                Scaffold.of(context).openDrawer();
-              },
-            ),
-          Text(
-            'DevUp',
-            style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                  color: Theme.of(context).colorScheme.primary,
-                ),
-          ),
-          const Spacer(),
-          IconButton(
-            icon: const Icon(Icons.search),
-            onPressed: () {
-              // TODO: Implement search
-            },
-          ),
-          IconButton(
-            icon: const Icon(Icons.notifications_outlined),
-            onPressed: () {
-              // TODO: Implement notifications
-            },
-          ),
-        ],
-      ),
-    );
+  @override
+  void dispose() {
+    _railController.dispose();
+    super.dispose();
   }
 
-  /// Builds the navigation rail for extended layout
-  Widget _buildNavigationRail(BuildContext context) {
-    return NavigationRail(
-      extended: true,
-      backgroundColor: Theme.of(context).colorScheme.surface,
-      selectedIndex: _getSelectedIndex(context),
-      onDestinationSelected: (index) => _onDestinationSelected(context, index),
-      leading: const Padding(
-        padding: EdgeInsets.symmetric(vertical: 8),
-        child: Icon(
-          Icons.flutter_dash,
-          size: 32,
-        ),
-      ),
-      destinations: const [
-        NavigationRailDestination(
-          icon: Icon(Icons.event_outlined),
-          selectedIcon: Icon(Icons.event),
-          label: Text('Events'),
-        ),
-        NavigationRailDestination(
-          icon: Icon(Icons.map_outlined),
-          selectedIcon: Icon(Icons.map),
-          label: Text('Map'),
-        ),
-        NavigationRailDestination(
-          icon: Icon(Icons.hotel_outlined),
-          selectedIcon: Icon(Icons.hotel),
-          label: Text('Hostels'),
-        ),
-        NavigationRailDestination(
-          icon: Icon(Icons.sports_outlined),
-          selectedIcon: Icon(Icons.sports),
-          label: Text('Facilities'),
-        ),
-      ],
-    );
+  int _calculateSelectedIndex(BuildContext context) {
+    final String location = GoRouterState.of(context).uri.path;
+    if (location.startsWith('/events')) return 0;
+    if (location.startsWith('/map')) return 1;
+    if (location.startsWith('/hostels')) return 2;
+    if (location.startsWith('/facilities')) return 3;
+    return 0;
   }
 
-  /// Builds the navigation drawer for compact layout
-  Widget _buildDrawer(BuildContext context) {
-    return NavigationDrawer(
-      selectedIndex: _getSelectedIndex(context),
-      onDestinationSelected: (index) {
-        _onDestinationSelected(context, index);
-        Navigator.pop(context); // Close drawer after selection
-      },
-      children: [
-        Padding(
-          padding: const EdgeInsets.fromLTRB(16, 28, 16, 16),
-          child: Row(
-            children: [
-              const Icon(
-                Icons.flutter_dash,
-                size: 32,
-              ),
-              const SizedBox(width: 12),
-              Text(
-                'DevUp',
-                style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                      color: Theme.of(context).colorScheme.primary,
-                    ),
-              ),
-            ],
-          ),
-        ),
-        const NavigationDrawerDestination(
-          icon: Icon(Icons.event_outlined),
-          selectedIcon: Icon(Icons.event),
-          label: Text('Events'),
-        ),
-        const NavigationDrawerDestination(
-          icon: Icon(Icons.map_outlined),
-          selectedIcon: Icon(Icons.map),
-          label: Text('Map'),
-        ),
-        const NavigationDrawerDestination(
-          icon: Icon(Icons.hotel_outlined),
-          selectedIcon: Icon(Icons.hotel),
-          label: Text('Hostels'),
-        ),
-        const NavigationDrawerDestination(
-          icon: Icon(Icons.sports_outlined),
-          selectedIcon: Icon(Icons.sports),
-          label: Text('Facilities'),
-        ),
-      ],
-    );
-  }
-
-  /// Gets the selected index based on the current route
-  int _getSelectedIndex(BuildContext context) {
-    final location = GoRouterState.of(context).uri.path;
-    switch (location) {
-      case '/events':
-        return 0;
-      case '/map':
-        return 1;
-      case '/hostels':
-        return 2;
-      case '/facilities':
-        return 3;
-      default:
-        return 0;
-    }
-  }
-
-  /// Handles navigation when a destination is selected
   void _onDestinationSelected(BuildContext context, int index) {
+    HapticFeedback.selectionClick();
     switch (index) {
       case 0:
         context.go('/events');
@@ -216,6 +69,297 @@ class DashboardShell extends StatelessWidget {
       case 3:
         context.go('/facilities');
         break;
+    }
+  }
+
+  void _handleRailHover(bool isHovered) {
+    setState(() => _isRailHovered = isHovered);
+    if (isHovered) {
+      _railController.forward();
+    } else {
+      _railController.reverse();
+    }
+  }
+
+  /// Builds a consistent navigation destination with semantic labels
+  NavigationDestination _buildDestination({
+    required IconData icon,
+    required IconData selectedIcon,
+    required String label,
+    required ColorScheme colorScheme,
+  }) {
+    return NavigationDestination(
+      icon: Icon(
+        icon,
+        semanticLabel: '$label tab',
+      ),
+      selectedIcon: Icon(
+        selectedIcon,
+        color: colorScheme.primary,
+        semanticLabel: 'Selected $label tab',
+      ),
+      label: label,
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
+    final width = MediaQuery.of(context).size.width;
+    final selectedIndex = _calculateSelectedIndex(context);
+
+    // Navigation destinations with semantic labels
+    final destinations = [
+      _buildDestination(
+        icon: Icons.event_outlined,
+        selectedIcon: Icons.event,
+        label: 'Events',
+        colorScheme: colorScheme,
+      ),
+      _buildDestination(
+        icon: Icons.map_outlined,
+        selectedIcon: Icons.map,
+        label: 'Map',
+        colorScheme: colorScheme,
+      ),
+      _buildDestination(
+        icon: Icons.apartment_outlined,
+        selectedIcon: Icons.apartment,
+        label: 'Hostels',
+        colorScheme: colorScheme,
+      ),
+      _buildDestination(
+        icon: Icons.business_outlined,
+        selectedIcon: Icons.business,
+        label: 'Facilities',
+        colorScheme: colorScheme,
+      ),
+    ];
+
+    // Rail destinations with consistent styling
+    final railDestinations = destinations.map((destination) {
+      return NavigationRailDestination(
+        icon: destination.icon,
+        selectedIcon: destination.selectedIcon,
+        padding: const EdgeInsets.symmetric(vertical: 8),
+        label: Text(
+          destination.label,
+          style: theme.textTheme.labelLarge?.copyWith(
+            fontWeight: FontWeight.w500,
+            letterSpacing: 0.5,
+          ),
+        ),
+      );
+    }).toList();
+
+    // Common navigation rail properties
+    final railProperties = NavigationRailThemeData(
+      backgroundColor: colorScheme.surface.withOpacity(0.95),
+      selectedIconTheme: IconThemeData(
+        color: colorScheme.primary,
+        size: 28,
+        shadows: [
+          Shadow(
+            color: colorScheme.primary.withOpacity(0.2),
+            blurRadius: 8,
+          ),
+        ],
+      ),
+      unselectedIconTheme: IconThemeData(
+        color: colorScheme.onSurfaceVariant,
+        size: 24,
+      ),
+      selectedLabelTextStyle: theme.textTheme.labelLarge?.copyWith(
+        color: colorScheme.primary,
+        fontWeight: FontWeight.w600,
+        letterSpacing: 0.5,
+      ),
+      unselectedLabelTextStyle: theme.textTheme.labelLarge?.copyWith(
+        color: colorScheme.onSurfaceVariant,
+        letterSpacing: 0.5,
+      ),
+      useIndicator: true,
+      indicatorColor: colorScheme.primaryContainer,
+      elevation: 0,
+    );
+
+    // Common navigation bar properties
+    final navBarProperties = NavigationBarThemeData(
+      backgroundColor: colorScheme.surface.withOpacity(0.95),
+      height: 64,
+      elevation: 0,
+      indicatorColor: colorScheme.primaryContainer,
+      indicatorShape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(16),
+      ),
+      labelBehavior: NavigationDestinationLabelBehavior.alwaysShow,
+      labelTextStyle: MaterialStateProperty.resolveWith((states) {
+        final style = theme.textTheme.labelMedium?.copyWith(
+          letterSpacing: 0.5,
+        );
+        if (states.contains(MaterialState.selected)) {
+          return style?.copyWith(
+            color: colorScheme.primary,
+            fontWeight: FontWeight.w600,
+          );
+        }
+        return style?.copyWith(
+          color: colorScheme.onSurfaceVariant,
+        );
+      }),
+    );
+
+    // Determine layout based on screen width
+    if (width >= 1200) {
+      // Desktop layout with extended navigation rail
+      return BackgroundGradient(
+        child: Scaffold(
+          backgroundColor: Colors.transparent,
+          body: Row(
+            children: [
+              MouseRegion(
+                onEnter: (_) => _handleRailHover(true),
+                onExit: (_) => _handleRailHover(false),
+                child: AnimatedBuilder(
+                  animation: _railWidth,
+                  builder: (context, child) => SizedBox(
+                    width: _railWidth.value,
+                    child: child,
+                  ),
+                  child: Theme(
+                    data: Theme.of(context).copyWith(
+                      navigationRailTheme: railProperties,
+                    ),
+                    child: NavigationRail(
+                      extended: true,
+                      selectedIndex: selectedIndex,
+                      onDestinationSelected: (index) => _onDestinationSelected(context, index),
+                      leading: Padding(
+                        padding: const EdgeInsets.symmetric(vertical: 24),
+                        child: Column(
+                          children: [
+                            Hero(
+                              tag: 'app_logo',
+                              child: Image.asset(
+                                'assets/images/logo.png',
+                                height: 40,
+                                semanticLabel: 'App logo',
+                              ),
+                            ),
+                            const SizedBox(height: 24),
+                            const ThemeToggle(),
+                          ],
+                        ),
+                      ),
+                      destinations: railDestinations,
+                    ),
+                  ),
+                ),
+              ),
+              Container(
+                width: 1,
+                color: colorScheme.outlineVariant.withOpacity(0.2),
+              ),
+              Expanded(
+                child: ClipRRect(
+                  child: widget.child,
+                ),
+              ),
+            ],
+          ),
+        ),
+      );
+    } else if (width >= 600) {
+      // Tablet layout with compact navigation rail
+      return BackgroundGradient(
+        child: Scaffold(
+          backgroundColor: Colors.transparent,
+          body: Row(
+            children: [
+              Theme(
+                data: Theme.of(context).copyWith(
+                  navigationRailTheme: railProperties,
+                ),
+                child: NavigationRail(
+                  selectedIndex: selectedIndex,
+                  onDestinationSelected: (index) => _onDestinationSelected(context, index),
+                  leading: Padding(
+                    padding: const EdgeInsets.symmetric(vertical: 16),
+                    child: Column(
+                      children: [
+                        Hero(
+                          tag: 'app_logo',
+                          child: Image.asset(
+                            'assets/images/logo_icon.png',
+                            height: 32,
+                            semanticLabel: 'App logo',
+                          ),
+                        ),
+                        const SizedBox(height: 16),
+                        const ThemeToggle(),
+                      ],
+                    ),
+                  ),
+                  destinations: railDestinations,
+                ),
+              ),
+              Container(
+                width: 1,
+                color: colorScheme.outlineVariant.withOpacity(0.2),
+              ),
+              Expanded(
+                child: ClipRRect(
+                  child: widget.child,
+                ),
+              ),
+            ],
+          ),
+        ),
+      );
+    } else {
+      // Mobile layout with bottom navigation bar
+      return BackgroundGradient(
+        child: Theme(
+          data: Theme.of(context).copyWith(
+            navigationBarTheme: navBarProperties,
+          ),
+          child: Scaffold(
+            backgroundColor: Colors.transparent,
+            appBar: AppBar(
+              backgroundColor: colorScheme.surface.withOpacity(0.95),
+              elevation: 0,
+              scrolledUnderElevation: 2,
+              title: Hero(
+                tag: 'app_logo',
+                child: Image.asset(
+                  'assets/images/logo.png',
+                  height: 28,
+                  semanticLabel: 'App logo',
+                ),
+              ),
+              centerTitle: true,
+              actions: const [
+                Padding(
+                  padding: EdgeInsets.symmetric(horizontal: 8),
+                  child: ThemeToggle(),
+                ),
+              ],
+            ),
+            body: SafeArea(
+              bottom: false,
+              child: ClipRRect(
+                child: widget.child,
+              ),
+            ),
+            bottomNavigationBar: NavigationBar(
+              selectedIndex: selectedIndex,
+              onDestinationSelected: (index) => _onDestinationSelected(context, index),
+              destinations: destinations,
+            ),
+          ),
+        ),
+      );
     }
   }
 } 

@@ -9,9 +9,10 @@ part of 'hostel_service.dart';
 _$HostelServiceImpl _$$HostelServiceImplFromJson(Map<String, dynamic> json) =>
     _$HostelServiceImpl(
       id: json['id'] as String,
-      icon: json['icon'] as String?,
       name: json['name'] as String,
+      type: $enumDecode(_$ServiceTypeEnumMap, json['type']),
       description: json['description'] as String?,
+      icon: json['icon'] as String?,
       created: DateTime.parse(json['created'] as String),
       updated: DateTime.parse(json['updated'] as String),
     );
@@ -19,9 +20,16 @@ _$HostelServiceImpl _$$HostelServiceImplFromJson(Map<String, dynamic> json) =>
 Map<String, dynamic> _$$HostelServiceImplToJson(_$HostelServiceImpl instance) =>
     <String, dynamic>{
       'id': instance.id,
-      'icon': instance.icon,
       'name': instance.name,
+      'type': _$ServiceTypeEnumMap[instance.type]!,
       'description': instance.description,
+      'icon': instance.icon,
       'created': instance.created.toIso8601String(),
       'updated': instance.updated.toIso8601String(),
     };
+
+const _$ServiceTypeEnumMap = {
+  ServiceType.hospitality: 'hospitality',
+  ServiceType.restoration: 'restoration',
+  ServiceType.activity: 'activity',
+};

@@ -1,325 +1,397 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:shared/shared.dart';
 import '../../providers/events_provider.dart';
+import '../../widgets/theme_toggle.dart';
+import '../../widgets/background_gradient.dart';
+import 'widgets/event_card.dart';
+import 'widgets/event_details_panel.dart';
+import 'widgets/timeline_view.dart';
 
 /// Screen that displays a list of facility events with real-time updates
 class EventsScreen extends StatefulWidget {
-  /// Creates a new events screen
   const EventsScreen({super.key});
 
   @override
   State<EventsScreen> createState() => _EventsScreenState();
 }
 
-class _EventsScreenState extends State<EventsScreen> {
+class _EventsScreenState extends State<EventsScreen> with SingleTickerProviderStateMixin {
   late final EventsProvider _eventsProvider;
+  late final AnimationController _viewModeController;
+  late final Animation<double> _viewModeAnimation;
+  
   final _searchController = TextEditingController();
-  DateTime _selectedDay = DateTime.now();
+  final _scrollController = ScrollController();
+  final _debouncer = Debouncer(milliseconds: 300);
+  
   EventFilter _currentFilter = EventFilter.all;
-  bool _isListView = true;
+  ViewMode _viewMode = ViewMode.list;
+  DateTimeRange? _selectedDateRange;
+  bool _isSearchExpanded = false;
+  FacilityEvent? _selectedEvent;
 
   @override
   void initState() {
     super.initState();
     _eventsProvider = EventsProvider();
     _eventsProvider.subscribeToEvents();
+    _searchController.addListener(_handleSearch);
+
+    _viewModeController = AnimationController(
+      duration: const Duration(milliseconds: 300),
+      vsync: this,
+    );
+    _viewModeAnimation = CurvedAnimation(
+      parent: _viewModeController,
+      curve: Curves.easeInOutCubic,
+    );
   }
 
   @override
   void dispose() {
     _eventsProvider.dispose();
     _searchController.dispose();
+    _scrollController.dispose();
+    _viewModeController.dispose();
     super.dispose();
+  }
+
+  // Debounced search handler for better performance
+  void _handleSearch() {
+    _debouncer.run(() {
+      setState(() {}); // Rebuild when search text changes
+    });
+  }
+
+  void _toggleViewMode() {
+    setState(() {
+      switch (_viewMode) {
+        case ViewMode.list:
+          _viewMode = ViewMode.grid;
+          _viewModeController.forward();
+          break;
+        case ViewMode.grid:
+          _viewMode = ViewMode.timeline;
+          _viewModeController.forward();
+          break;
+        case ViewMode.timeline:
+          _viewMode = ViewMode.list;
+          _viewModeController.reverse();
+          break;
+      }
+    });
+  }
+
+  void _showEventDetails(FacilityEvent event) {
+    final isWideScreen = MediaQuery.of(context).size.width > 1200;
+    
+    if (isWideScreen) {
+      setState(() => _selectedEvent = event);
+    } else {
+      showModalBottomSheet(
+        context: context,
+        isScrollControlled: true,
+        backgroundColor: Colors.transparent,
+        builder: (context) => DraggableScrollableSheet(
+          initialChildSize: 0.9,
+          minChildSize: 0.5,
+          maxChildSize: 0.9,
+          builder: (_, controller) => EventDetailsPanel(
+            event: event,
+            isSideSheet: false,
+            onClose: () => Navigator.of(context).pop(),
+          ),
+        ),
+      );
+    }
+  }
+
+  void _hideEventDetails() {
+    setState(() => _selectedEvent = null);
+  }
+
+  Future<void> _showDateRangePicker() async {
+    final initialDateRange = _selectedDateRange ?? DateTimeRange(
+      start: DateTime.now(),
+      end: DateTime.now().add(const Duration(days: 7)),
+    );
+
+    final pickedRange = await showDateRangePicker(
+      context: context,
+      firstDate: DateTime.now().subtract(const Duration(days: 365)),
+      lastDate: DateTime.now().add(const Duration(days: 365)),
+      initialDateRange: initialDateRange,
+      builder: (context, child) {
+        return Theme(
+          data: Theme.of(context).copyWith(
+            dialogBackgroundColor: Theme.of(context).colorScheme.surface,
+            colorScheme: Theme.of(context).colorScheme,
+          ),
+          child: child!,
+        );
+      },
+    );
+
+    if (pickedRange != null) {
+      setState(() => _selectedDateRange = pickedRange);
+      _scrollToTop();
+    }
+  }
+
+  void _scrollToTop() {
+    _scrollController.animateTo(
+      0,
+      duration: const Duration(milliseconds: 300),
+      curve: Curves.easeOut,
+    );
   }
 
   @override
   Widget build(BuildContext context) {
-    final screenWidth = MediaQuery.of(context).size.width;
-    final isWideScreen = screenWidth > 1200;
-
-    return Row(
-      children: [
-        // Events List Section
-        Expanded(
-          flex: isWideScreen ? 2 : 3,
-          child: Column(
-            children: [
-              // Search and View Toggle
-              Padding(
-                padding: const EdgeInsets.all(16),
-                child: Row(
-                  children: [
-                    Expanded(
-                      child: SearchBar(
-                        controller: _searchController,
-                        hintText: 'Search events...',
-                        leading: const Icon(Icons.search),
-                        padding: const MaterialStatePropertyAll(
-                          EdgeInsets.symmetric(horizontal: 16),
-                        ),
-                      ),
-                    ),
-                    const SizedBox(width: 8),
-                    IconButton.filled(
-                      icon: Icon(_isListView ? Icons.grid_view : Icons.view_list),
-                      onPressed: () {
-                        setState(() {
-                          _isListView = !_isListView;
-                        });
-                      },
-                    ),
-                  ],
-                ),
-              ),
-              // Filter Chips
-              SingleChildScrollView(
-                scrollDirection: Axis.horizontal,
-                padding: const EdgeInsets.symmetric(horizontal: 16),
-                child: Row(
-                  children: [
-                    _FilterChip(
-                      label: 'All Events',
-                      icon: Icons.event,
-                      isSelected: _currentFilter == EventFilter.all,
-                      onSelected: (_) => setState(() => _currentFilter = EventFilter.all),
-                    ),
-                    const SizedBox(width: 8),
-                    _FilterChip(
-                      label: 'Upcoming',
-                      icon: Icons.upcoming,
-                      isSelected: _currentFilter == EventFilter.upcoming,
-                      onSelected: (_) => setState(() => _currentFilter = EventFilter.upcoming),
-                    ),
-                    const SizedBox(width: 8),
-                    _FilterChip(
-                      label: 'Ongoing',
-                      icon: Icons.play_circle_outline,
-                      isSelected: _currentFilter == EventFilter.ongoing,
-                      onSelected: (_) => setState(() => _currentFilter = EventFilter.ongoing),
-                    ),
-                    const SizedBox(width: 8),
-                    _FilterChip(
-                      label: 'Past',
-                      icon: Icons.history,
-                      isSelected: _currentFilter == EventFilter.past,
-                      onSelected: (_) => setState(() => _currentFilter = EventFilter.past),
-                    ),
-                  ],
-                ),
-              ),
-              const SizedBox(height: 8),
-              // Events List
-              Expanded(
-                child: _buildEventsList(),
-              ),
-            ],
-          ),
-        ),
-        // Calendar Section
-        if (isWideScreen || screenWidth > 800)
-          Expanded(
-            flex: 2,
-            child: Container(
-              decoration: BoxDecoration(
-                color: Theme.of(context).colorScheme.surface,
-                border: Border(
-                  left: BorderSide(
-                    color: Theme.of(context).colorScheme.outlineVariant,
-                  ),
-                ),
-              ),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Padding(
-                    padding: const EdgeInsets.all(24),
-                    child: Row(
-                      children: [
-                        Text(
-                          'Calendar View',
-                          style: Theme.of(context).textTheme.titleLarge,
-                        ),
-                        const Spacer(),
-                        IconButton.filled(
-                          icon: const Icon(Icons.chevron_left),
-                          onPressed: _previousMonth,
-                        ),
-                        const SizedBox(width: 8),
-                        Text(
-                          '${_getMonthName(_selectedDay.month)} ${_selectedDay.year}',
-                          style: Theme.of(context).textTheme.titleMedium,
-                        ),
-                        const SizedBox(width: 8),
-                        IconButton.filled(
-                          icon: const Icon(Icons.chevron_right),
-                          onPressed: _nextMonth,
-                        ),
-                      ],
-                    ),
-                  ),
-                  _buildCalendar(),
-                ],
-              ),
-            ),
-          ),
-      ],
-    );
-  }
-
-  void _previousMonth() {
-    setState(() {
-      _selectedDay = DateTime(
-        _selectedDay.year,
-        _selectedDay.month - 1,
-        _selectedDay.day,
-      );
-    });
-  }
-
-  void _nextMonth() {
-    setState(() {
-      _selectedDay = DateTime(
-        _selectedDay.year,
-        _selectedDay.month + 1,
-        _selectedDay.day,
-      );
-    });
-  }
-
-  Widget _buildCalendar() {
-    return Expanded(
-      child: Column(
+    final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
+    final isWideScreen = MediaQuery.of(context).size.width > 1200;
+    
+    return Scaffold(
+      backgroundColor: Colors.transparent,
+      body: Row(
         children: [
-          // Weekday headers
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 24),
-            child: Row(
+          Expanded(
+            child: Column(
               children: [
-                for (final day in ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'])
-                  Expanded(
-                    child: Center(
-                      child: Text(
-                        day,
-                        style: Theme.of(context).textTheme.labelMedium?.copyWith(
-                          color: Theme.of(context).colorScheme.primary,
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
-                    ),
-                  ),
+                // Modern header with search and filters
+                _buildHeader(colorScheme),
+                // Events List with optimized rendering
+                Expanded(
+                  child: _buildEventsList(),
+                ),
               ],
             ),
           ),
-          const SizedBox(height: 8),
-          // Calendar grid
-          Expanded(
-            child: GridView.builder(
-              padding: const EdgeInsets.symmetric(horizontal: 24),
-              gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                crossAxisCount: 7,
-                mainAxisSpacing: 8,
-                crossAxisSpacing: 8,
-              ),
-              itemCount: 42,
-              itemBuilder: _buildCalendarCell,
+          if (_selectedEvent != null && isWideScreen)
+            EventDetailsPanel(
+              event: _selectedEvent!,
+              isSideSheet: true,
+              onClose: _hideEventDetails,
             ),
-          ),
         ],
       ),
     );
   }
 
-  Widget _buildCalendarCell(BuildContext context, int index) {
-    final firstDay = DateTime(_selectedDay.year, _selectedDay.month, 1);
-    final firstWeekday = firstDay.weekday;
-    final daysInMonth = DateTime(_selectedDay.year, _selectedDay.month + 1, 0).day;
-    final prevMonthDays = DateTime(_selectedDay.year, _selectedDay.month, 0).day;
-
-    late final DateTime date;
-    bool isCurrentMonth = true;
-
-    if (index < firstWeekday - 1) {
-      // Previous month
-      date = DateTime(
-        _selectedDay.year,
-        _selectedDay.month - 1,
-        prevMonthDays - (firstWeekday - 2 - index),
-      );
-      isCurrentMonth = false;
-    } else if (index >= firstWeekday - 1 + daysInMonth) {
-      // Next month
-      date = DateTime(
-        _selectedDay.year,
-        _selectedDay.month + 1,
-        index - (firstWeekday - 1 + daysInMonth) + 1,
-      );
-      isCurrentMonth = false;
-    } else {
-      // Current month
-      date = DateTime(
-        _selectedDay.year,
-        _selectedDay.month,
-        index - (firstWeekday - 1) + 1,
-      );
-    }
-
-    final events = _getEventsForDay(date);
-    final isToday = _isToday(date);
-    final isSelected = _isSameDay(date, _selectedDay);
-    final theme = Theme.of(context);
-
-    return Material(
-      color: Colors.transparent,
-      child: InkWell(
-        onTap: () => setState(() => _selectedDay = date),
-        borderRadius: BorderRadius.circular(8),
-        child: Container(
-          decoration: BoxDecoration(
-            color: isSelected
-                ? theme.colorScheme.primary.withOpacity(0.1)
-                : null,
-            borderRadius: BorderRadius.circular(8),
-            border: isToday
-                ? Border.all(color: theme.colorScheme.primary)
-                : null,
-          ),
-          child: Stack(
-            children: [
-              Center(
-                child: Text(
-                  date.day.toString(),
-                  style: theme.textTheme.bodyLarge?.copyWith(
-                    color: !isCurrentMonth
-                        ? theme.colorScheme.outline
-                        : isSelected
-                            ? theme.colorScheme.primary
-                            : null,
-                    fontWeight: isToday || isSelected ? FontWeight.bold : null,
+  Widget _buildHeader(ColorScheme colorScheme) {
+    return Container(
+      child: SafeArea(
+        bottom: false,
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            Padding(
+              padding: const EdgeInsets.only(right: 16, top: 8),
+              child: Row(
+                children: [
+                  Expanded(
+                    child: _buildSearchAndFilters(colorScheme),
                   ),
-                ),
+                  IconButton(
+                    onPressed: _toggleViewMode,
+                    icon: AnimatedIcon(
+                      icon: AnimatedIcons.list_view,
+                      progress: _viewModeAnimation,
+                      semanticLabel: 'Toggle view mode',
+                    ),
+                    tooltip: 'Change view mode',
+                  ),
+                ],
               ),
-              if (events.isNotEmpty)
-                Positioned(
-                  bottom: 4,
-                  left: 0,
-                  right: 0,
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      Container(
-                        width: 6,
-                        height: 6,
-                        decoration: BoxDecoration(
-                          color: theme.colorScheme.primary,
-                          shape: BoxShape.circle,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-            ],
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildSearchAndFilters(ColorScheme colorScheme) {
+    return SingleChildScrollView(
+      scrollDirection: Axis.horizontal,
+      padding: const EdgeInsets.only(left: 20),
+      child: Row(
+        children: [
+          // Optimized search bar with animation
+          AnimatedContainer(
+            duration: const Duration(milliseconds: 200),
+            width: _isSearchExpanded ? 300 : 200,
+            child: _buildSearchBar(colorScheme),
+          ),
+          _buildFilterChip(
+            label: 'All',
+            icon: Icons.event_rounded,
+            isSelected: _currentFilter == EventFilter.all,
+            onSelected: (_) => setState(() => _currentFilter = EventFilter.all),
+          ),
+          const SizedBox(width: 12),
+          _buildFilterChip(
+            label: 'Upcoming',
+            icon: Icons.upcoming_rounded,
+            isSelected: _currentFilter == EventFilter.upcoming,
+            onSelected: (_) => setState(() => _currentFilter = EventFilter.upcoming),
+          ),
+          const SizedBox(width: 12),
+          _buildFilterChip(
+            label: 'Ongoing',
+            icon: Icons.play_circle_outline_rounded,
+            isSelected: _currentFilter == EventFilter.ongoing,
+            onSelected: (_) => setState(() => _currentFilter = EventFilter.ongoing),
+          ),
+          const SizedBox(width: 12),
+          _buildFilterChip(
+            label: 'Past',
+            icon: Icons.history_rounded,
+            isSelected: _currentFilter == EventFilter.past,
+            onSelected: (_) => setState(() => _currentFilter = EventFilter.past),
+          ),
+          const SizedBox(width: 12),
+          Container(
+            height: 32,
+            width: 1,
+            color: colorScheme.outlineVariant.withOpacity(0.2),
+          ),
+          const SizedBox(width: 12),
+          _buildDateRangeChip(),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildSearchBar(ColorScheme colorScheme) {
+    return MouseRegion(
+      onEnter: (_) => setState(() => _isSearchExpanded = true),
+      onExit: (_) => setState(() => _isSearchExpanded = false),
+      child: Container(
+        height: 32,
+        margin: const EdgeInsets.only(right: 12),
+        child: TextField(
+          controller: _searchController,
+          decoration: InputDecoration(
+            isDense: true,
+            contentPadding: const EdgeInsets.symmetric(
+              horizontal: 12,
+              vertical: 6,
+            ),
+            hintText: 'Search events...',
+            prefixIcon: Icon(
+              Icons.search_rounded,
+              size: 20,
+              color: colorScheme.onSurfaceVariant,
+            ),
+            border: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(16),
+              borderSide: BorderSide(
+                color: colorScheme.outline.withOpacity(0.2),
+              ),
+            ),
+            enabledBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(16),
+              borderSide: BorderSide(
+                color: colorScheme.outline.withOpacity(0.2),
+              ),
+            ),
+            focusedBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(16),
+              borderSide: BorderSide(
+                color: colorScheme.primary,
+                width: 2,
+              ),
+            ),
+            filled: true,
+            fillColor: colorScheme.surface,
           ),
         ),
+      ),
+    );
+  }
+
+  Widget _buildFilterChip({
+    required String label,
+    required IconData icon,
+    required bool isSelected,
+    required ValueChanged<bool>? onSelected,
+  }) {
+    final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
+
+    return FilterChip(
+      selected: isSelected,
+      showCheckmark: false,
+      avatar: Icon(
+        icon,
+        size: 18,
+        color: isSelected
+            ? colorScheme.onSecondaryContainer
+            : colorScheme.onSurfaceVariant,
+      ),
+      label: Text(label),
+      labelStyle: theme.textTheme.labelLarge?.copyWith(
+        color: isSelected
+            ? colorScheme.onSecondaryContainer
+            : colorScheme.onSurfaceVariant,
+        letterSpacing: 0.5,
+      ),
+      onSelected: onSelected,
+      backgroundColor: Colors.transparent,
+      selectedColor: colorScheme.secondaryContainer.withOpacity(0.3),
+      side: BorderSide(
+        color: isSelected
+            ? Colors.transparent
+            : colorScheme.outline.withOpacity(0.2),
+        width: 1,
+      ),
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(12),
+      ),
+    );
+  }
+
+  Widget _buildDateRangeChip() {
+    final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
+
+    return FilterChip(
+      selected: _selectedDateRange != null,
+      showCheckmark: false,
+      avatar: Icon(
+        Icons.calendar_month_rounded,
+        size: 18,
+        color: _selectedDateRange != null
+            ? colorScheme.primary
+            : colorScheme.onSurfaceVariant,
+      ),
+      label: Text(
+        _selectedDateRange != null
+            ? '${_formatDate(_selectedDateRange!.start)} - ${_formatDate(_selectedDateRange!.end)}'
+            : 'Date Range',
+      ),
+      labelStyle: theme.textTheme.labelLarge?.copyWith(
+        color: _selectedDateRange != null
+            ? colorScheme.primary
+            : colorScheme.onSurfaceVariant,
+        letterSpacing: 0.5,
+      ),
+      onSelected: (_) => _showDateRangePicker(),
+      backgroundColor: Colors.transparent,
+      selectedColor: colorScheme.primary.withOpacity(0.1),
+      side: BorderSide(
+        color: _selectedDateRange != null
+            ? Colors.transparent
+            : colorScheme.outline.withOpacity(0.2),
+        width: 1,
+      ),
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(12),
       ),
     );
   }
@@ -329,7 +401,9 @@ class _EventsScreenState extends State<EventsScreen> {
       listenable: _eventsProvider,
       builder: (context, _) {
         if (_eventsProvider.isLoading) {
-          return const Center(child: CircularProgressIndicator());
+          return const Center(
+            child: CircularProgressIndicator.adaptive(),
+          );
         }
 
         final events = _getFilteredEvents();
@@ -337,9 +411,23 @@ class _EventsScreenState extends State<EventsScreen> {
           return _buildEmptyState();
         }
 
-        return _isListView
-            ? _buildListView(events)
-            : _buildGridView(events);
+        switch (_viewMode) {
+          case ViewMode.list:
+            return _buildListView(events);
+          case ViewMode.grid:
+            return _buildGridView(events);
+          case ViewMode.timeline:
+            return TimelineView(
+              events: events,
+              onEventTap: _showEventDetails,
+              onEventShare: () {
+                // TODO: Implement share
+              },
+              onEventAddToCalendar: () {
+                // TODO: Implement add to calendar
+              },
+            );
+        }
       },
     );
   }
@@ -349,16 +437,33 @@ class _EventsScreenState extends State<EventsScreen> {
     final now = DateTime.now();
 
     return _eventsProvider.events.where((event) {
+      // Search filter
       if (searchQuery.isNotEmpty) {
         final matchesSearch = event.name.toLowerCase().contains(searchQuery) ||
             (event.description?.toLowerCase().contains(searchQuery) ?? false);
         if (!matchesSearch) return false;
       }
 
-      if (_isSameDay(_selectedDay, event.started)) {
-        return true;
+      // Date range filter
+      if (_selectedDateRange != null && event.started != null) {
+        final start = DateTime(
+          _selectedDateRange!.start.year,
+          _selectedDateRange!.start.month,
+          _selectedDateRange!.start.day,
+        );
+        final end = DateTime(
+          _selectedDateRange!.end.year,
+          _selectedDateRange!.end.month,
+          _selectedDateRange!.end.day,
+          23, 59, 59,
+        );
+        
+        if (event.started!.isBefore(start) || event.started!.isAfter(end)) {
+          return false;
+        }
       }
 
+      // Status filter
       switch (_currentFilter) {
         case EventFilter.upcoming:
           return event.started != null && event.started!.isAfter(now);
@@ -374,40 +479,64 @@ class _EventsScreenState extends State<EventsScreen> {
     }).toList();
   }
 
-  List<FacilityEvent> _getEventsForDay(DateTime day) {
-    return _eventsProvider.events.where((event) {
-      return event.started != null && _isSameDay(day, event.started!);
-    }).toList();
+  String _formatDate(DateTime date) {
+    const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 
+                   'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+    return '${date.day} ${months[date.month - 1]} ${date.year}';
   }
 
   Widget _buildEmptyState() {
+    final theme = Theme.of(context);
+    final hasFilters = _searchController.text.isNotEmpty || 
+                      _selectedDateRange != null || 
+                      _currentFilter != EventFilter.all;
+    
     return Center(
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          Icon(
-            _getEmptyStateIcon(),
-            size: 64,
-            color: Theme.of(context).colorScheme.secondary,
-          ),
-          const SizedBox(height: 16),
-          Text(
-            _getEmptyStateMessage(),
-            style: Theme.of(context).textTheme.titleLarge,
-          ),
-          const SizedBox(height: 8),
-          Text(
-            _getEmptyStateSubmessage(),
-            style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-              color: Theme.of(context).colorScheme.onSurfaceVariant,
+      child: Padding(
+        padding: const EdgeInsets.all(32),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(
+              _getEmptyStateIcon(),
+              size: 64,
+              color: theme.colorScheme.secondary,
             ),
-          ),
-        ],
+            const SizedBox(height: 16),
+            Text(
+              _getEmptyStateMessage(),
+              style: theme.textTheme.titleLarge,
+              textAlign: TextAlign.center,
+            ),
+            const SizedBox(height: 8),
+            Text(
+              _getEmptyStateSubmessage(),
+              style: theme.textTheme.bodyMedium?.copyWith(
+                color: theme.colorScheme.onSurfaceVariant,
+              ),
+              textAlign: TextAlign.center,
+            ),
+            if (hasFilters) ...[
+              const SizedBox(height: 24),
+              FilledButton.tonal(
+                onPressed: () {
+                  setState(() {
+                    _searchController.clear();
+                    _selectedDateRange = null;
+                    _currentFilter = EventFilter.all;
+                  });
+                },
+                child: const Text('Clear All Filters'),
+              ),
+            ],
+          ],
+        ),
       ),
     );
   }
 
   IconData _getEmptyStateIcon() {
+    if (_selectedDateRange != null) return Icons.date_range;
     switch (_currentFilter) {
       case EventFilter.upcoming:
         return Icons.upcoming;
@@ -423,6 +552,7 @@ class _EventsScreenState extends State<EventsScreen> {
   }
 
   String _getEmptyStateMessage() {
+    if (_selectedDateRange != null) return 'No events in selected date range';
     switch (_currentFilter) {
       case EventFilter.upcoming:
         return 'No upcoming events';
@@ -438,6 +568,7 @@ class _EventsScreenState extends State<EventsScreen> {
   }
 
   String _getEmptyStateSubmessage() {
+    if (_selectedDateRange != null) return 'Try selecting a different date range';
     switch (_currentFilter) {
       case EventFilter.upcoming:
         return 'Stay tuned for new events';
@@ -453,246 +584,120 @@ class _EventsScreenState extends State<EventsScreen> {
   }
 
   Widget _buildListView(List<FacilityEvent> events) {
-    return ListView.builder(
-      padding: const EdgeInsets.symmetric(horizontal: 16),
-      itemCount: events.length,
-      itemBuilder: (context, index) {
-        return _EventCard(event: events[index]);
-      },
+    final width = MediaQuery.of(context).size.width;
+    final isCompact = width < 600;
+    
+    return AnimatedSwitcher(
+      duration: const Duration(milliseconds: 300),
+      child: ListView.builder(
+        key: ValueKey(_viewMode),
+        controller: _scrollController,
+        padding: EdgeInsets.symmetric(
+          horizontal: isCompact ? 12 : 16,
+          vertical: isCompact ? 12 : 16,
+        ),
+        itemCount: events.length,
+        itemBuilder: (context, index) {
+          return Padding(
+            padding: EdgeInsets.only(
+              bottom: isCompact ? 12 : 16,
+              left: isCompact ? 4 : 0,
+              right: isCompact ? 4 : 0,
+            ),
+            child: AnimatedOpacity(
+              opacity: 1.0,
+              duration: Duration(milliseconds: 200 + (index * 50)),
+              child: Container(
+                decoration: BoxDecoration(
+                  borderRadius: BorderRadius.circular(isCompact ? 12 : 16),
+                  boxShadow: [
+                    BoxShadow(
+                      color: Theme.of(context).colorScheme.shadow.withOpacity(0.08),
+                      blurRadius: 8,
+                      offset: const Offset(0, 2),
+                    ),
+                  ],
+                ),
+                child: ClipRRect(
+                  borderRadius: BorderRadius.circular(isCompact ? 12 : 16),
+                  child: EventCard(
+                    event: events[index],
+                    isCompact: isCompact,
+                    onTap: () => _showEventDetails(events[index]),
+                    onShare: () {
+                      // TODO: Implement share
+                    },
+                    onAddToCalendar: () {
+                      // TODO: Implement add to calendar
+                    },
+                  ),
+                ),
+              ),
+            ),
+          );
+        },
+      ),
     );
   }
 
   Widget _buildGridView(List<FacilityEvent> events) {
-    final crossAxisCount = MediaQuery.of(context).size.width ~/ 300;
+    final width = MediaQuery.of(context).size.width;
+    final isCompact = width < 600;
+    final crossAxisCount = (width / (isCompact ? 280 : 320)).floor().clamp(1, 4);
     
-    return GridView.builder(
-      padding: const EdgeInsets.symmetric(horizontal: 16),
-      gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-        crossAxisCount: crossAxisCount.clamp(1, 3),
-        childAspectRatio: 1.5,
-        mainAxisSpacing: 16,
-        crossAxisSpacing: 16,
-      ),
-      itemCount: events.length,
-      itemBuilder: (context, index) {
-        return _EventCard(
-          event: events[index],
-          isGridView: true,
-        );
-      },
-    );
-  }
-
-  String _getMonthName(int month) {
-    const months = [
-      'January', 'February', 'March', 'April', 'May', 'June',
-      'July', 'August', 'September', 'October', 'November', 'December'
-    ];
-    return months[month - 1];
-  }
-
-  bool _isToday(DateTime date) {
-    final now = DateTime.now();
-    return date.year == now.year &&
-        date.month == now.month &&
-        date.day == now.day;
-  }
-
-  bool _isSameDay(DateTime? a, DateTime? b) {
-    if (a == null || b == null) return false;
-    return a.year == b.year && a.month == b.month && a.day == b.day;
-  }
-}
-
-class _FilterChip extends StatelessWidget {
-  final String label;
-  final IconData icon;
-  final bool isSelected;
-  final ValueChanged<bool>? onSelected;
-
-  const _FilterChip({
-    required this.label,
-    required this.icon,
-    required this.isSelected,
-    this.onSelected,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    
-    return FilterChip(
-      selected: isSelected,
-      label: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Icon(
-            icon,
-            size: 18,
-            color: isSelected
-                ? theme.colorScheme.onSecondaryContainer
-                : theme.colorScheme.onSurfaceVariant,
-          ),
-          const SizedBox(width: 8),
-          Text(label),
-        ],
-      ),
-      showCheckmark: false,
-      onSelected: onSelected,
-    );
-  }
-}
-
-class _EventCard extends StatelessWidget {
-  final FacilityEvent event;
-  final bool isGridView;
-
-  const _EventCard({
-    required this.event,
-    this.isGridView = false,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    final colorScheme = theme.colorScheme;
-
-    return Card(
-      margin: EdgeInsets.only(bottom: isGridView ? 0 : 16),
-      clipBehavior: Clip.antiAlias,
-      child: InkWell(
-        onTap: () {
-          // TODO: Navigate to event details
-        },
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            _buildEventHeader(context),
-            Padding(
-              padding: const EdgeInsets.all(16),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    event.name,
-                    style: theme.textTheme.titleMedium,
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                  ),
-                  if (event.description != null) ...[
-                    const SizedBox(height: 4),
-                    Text(
-                      event.description!,
-                      style: theme.textTheme.bodySmall?.copyWith(
-                        color: colorScheme.onSurfaceVariant,
-                      ),
-                      maxLines: 2,
-                      overflow: TextOverflow.ellipsis,
+    return AnimatedSwitcher(
+      duration: const Duration(milliseconds: 300),
+      child: GridView.builder(
+        key: ValueKey(_viewMode),
+        controller: _scrollController,
+        padding: EdgeInsets.all(isCompact ? 12 : 16),
+        gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+          crossAxisCount: crossAxisCount,
+          childAspectRatio: isCompact ? 1.2 : 1.5,
+          mainAxisSpacing: isCompact ? 12 : 16,
+          crossAxisSpacing: isCompact ? 12 : 16,
+        ),
+        itemCount: events.length,
+        itemBuilder: (context, index) {
+          return AnimatedScale(
+            scale: 1.0,
+            duration: Duration(milliseconds: 200 + (index * 50)),
+            child: AnimatedOpacity(
+              opacity: 1.0,
+              duration: Duration(milliseconds: 200 + (index * 50)),
+              child: Container(
+                decoration: BoxDecoration(
+                  borderRadius: BorderRadius.circular(isCompact ? 12 : 16),
+                  boxShadow: [
+                    BoxShadow(
+                      color: Theme.of(context).colorScheme.shadow.withOpacity(0.08),
+                      blurRadius: 8,
+                      offset: const Offset(0, 2),
                     ),
                   ],
-                  const SizedBox(height: 16),
-                  _buildEventFooter(context),
-                ],
+                ),
+                child: ClipRRect(
+                  borderRadius: BorderRadius.circular(isCompact ? 12 : 16),
+                  child: EventCard(
+                    event: events[index],
+                    isGridView: true,
+                    isCompact: isCompact,
+                    onTap: () => _showEventDetails(events[index]),
+                    onShare: () {
+                      // TODO: Implement share
+                    },
+                    onAddToCalendar: () {
+                      // TODO: Implement add to calendar
+                    },
+                  ),
+                ),
               ),
             ),
-          ],
-        ),
+          );
+        },
       ),
     );
   }
-
-  Widget _buildEventHeader(BuildContext context) {
-    final theme = Theme.of(context);
-    final now = DateTime.now();
-    
-    Color backgroundColor;
-    String status;
-    IconData icon;
-    
-    if (event.ended != null && event.ended!.isBefore(now)) {
-      backgroundColor = theme.colorScheme.surfaceVariant;
-      status = 'Past';
-      icon = Icons.history;
-    } else if (event.started != null && event.started!.isAfter(now)) {
-      backgroundColor = theme.colorScheme.primaryContainer;
-      status = 'Upcoming';
-      icon = Icons.upcoming;
-    } else {
-      backgroundColor = theme.colorScheme.tertiaryContainer;
-      status = 'Ongoing';
-      icon = Icons.play_circle_outline;
-    }
-
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-      color: backgroundColor,
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Icon(icon, size: 16),
-          const SizedBox(width: 8),
-          Text(
-            status,
-            style: theme.textTheme.labelMedium?.copyWith(
-              fontWeight: FontWeight.bold,
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildEventFooter(BuildContext context) {
-    final theme = Theme.of(context);
-    
-    return Row(
-      children: [
-        if (event.started != null) ...[
-          Icon(
-            Icons.calendar_today,
-            size: 16,
-            color: theme.colorScheme.primary,
-          ),
-          const SizedBox(width: 8),
-          Expanded(
-            child: Text(
-              _formatDateRange(event.started!, event.ended),
-              style: theme.textTheme.bodySmall?.copyWith(
-                color: theme.colorScheme.onSurfaceVariant,
-              ),
-            ),
-          ),
-        ],
-        IconButton(
-          icon: const Icon(Icons.share_outlined),
-          onPressed: () {
-            // TODO: Implement share
-          },
-          tooltip: 'Share Event',
-          visualDensity: VisualDensity.compact,
-        ),
-        IconButton(
-          icon: const Icon(Icons.calendar_month_outlined),
-          onPressed: () {
-            // TODO: Implement add to calendar
-          },
-          tooltip: 'Add to Calendar',
-          visualDensity: VisualDensity.compact,
-        ),
-      ],
-    );
-  }
-}
-
-String _formatDateRange(DateTime start, DateTime? end) {
-  final startStr = '${start.day}/${start.month}/${start.year}';
-  if (end == null) return startStr;
-  
-  if (start.year == end.year && start.month == end.month && start.day == end.day) {
-    return startStr;
-  }
-  
-  return '$startStr - ${end.day}/${end.month}/${end.year}';
 }
 
 enum EventFilter {
@@ -700,4 +705,23 @@ enum EventFilter {
   upcoming,
   ongoing,
   past,
+}
+
+enum ViewMode {
+  list,
+  grid,
+  timeline,
+}
+
+/// A utility class for debouncing operations
+class Debouncer {
+  final int milliseconds;
+  Timer? _timer;
+
+  Debouncer({required this.milliseconds});
+
+  void run(VoidCallback action) {
+    _timer?.cancel();
+    _timer = Timer(Duration(milliseconds: milliseconds), action);
+  }
 } 

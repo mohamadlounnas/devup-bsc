@@ -22,12 +22,14 @@ HostelService _$HostelServiceFromJson(Map<String, dynamic> json) {
 mixin _$HostelService {
   @JsonKey(name: 'id')
   String get id => throw _privateConstructorUsedError;
-  @JsonKey(name: 'icon')
-  String? get icon => throw _privateConstructorUsedError;
   @JsonKey(name: 'name')
   String get name => throw _privateConstructorUsedError;
+  @JsonKey(name: 'type')
+  ServiceType get type => throw _privateConstructorUsedError;
   @JsonKey(name: 'description')
   String? get description => throw _privateConstructorUsedError;
+  @JsonKey(name: 'icon')
+  String? get icon => throw _privateConstructorUsedError;
   @JsonKey(name: 'created')
   DateTime get created => throw _privateConstructorUsedError;
   @JsonKey(name: 'updated')
@@ -51,9 +53,10 @@ abstract class $HostelServiceCopyWith<$Res> {
   @useResult
   $Res call(
       {@JsonKey(name: 'id') String id,
-      @JsonKey(name: 'icon') String? icon,
       @JsonKey(name: 'name') String name,
+      @JsonKey(name: 'type') ServiceType type,
       @JsonKey(name: 'description') String? description,
+      @JsonKey(name: 'icon') String? icon,
       @JsonKey(name: 'created') DateTime created,
       @JsonKey(name: 'updated') DateTime updated});
 }
@@ -74,9 +77,10 @@ class _$HostelServiceCopyWithImpl<$Res, $Val extends HostelService>
   @override
   $Res call({
     Object? id = null,
-    Object? icon = freezed,
     Object? name = null,
+    Object? type = null,
     Object? description = freezed,
+    Object? icon = freezed,
     Object? created = null,
     Object? updated = null,
   }) {
@@ -85,17 +89,21 @@ class _$HostelServiceCopyWithImpl<$Res, $Val extends HostelService>
           ? _value.id
           : id // ignore: cast_nullable_to_non_nullable
               as String,
-      icon: freezed == icon
-          ? _value.icon
-          : icon // ignore: cast_nullable_to_non_nullable
-              as String?,
       name: null == name
           ? _value.name
           : name // ignore: cast_nullable_to_non_nullable
               as String,
+      type: null == type
+          ? _value.type
+          : type // ignore: cast_nullable_to_non_nullable
+              as ServiceType,
       description: freezed == description
           ? _value.description
           : description // ignore: cast_nullable_to_non_nullable
+              as String?,
+      icon: freezed == icon
+          ? _value.icon
+          : icon // ignore: cast_nullable_to_non_nullable
               as String?,
       created: null == created
           ? _value.created
@@ -119,9 +127,10 @@ abstract class _$$HostelServiceImplCopyWith<$Res>
   @useResult
   $Res call(
       {@JsonKey(name: 'id') String id,
-      @JsonKey(name: 'icon') String? icon,
       @JsonKey(name: 'name') String name,
+      @JsonKey(name: 'type') ServiceType type,
       @JsonKey(name: 'description') String? description,
+      @JsonKey(name: 'icon') String? icon,
       @JsonKey(name: 'created') DateTime created,
       @JsonKey(name: 'updated') DateTime updated});
 }
@@ -140,9 +149,10 @@ class __$$HostelServiceImplCopyWithImpl<$Res>
   @override
   $Res call({
     Object? id = null,
-    Object? icon = freezed,
     Object? name = null,
+    Object? type = null,
     Object? description = freezed,
+    Object? icon = freezed,
     Object? created = null,
     Object? updated = null,
   }) {
@@ -151,17 +161,21 @@ class __$$HostelServiceImplCopyWithImpl<$Res>
           ? _value.id
           : id // ignore: cast_nullable_to_non_nullable
               as String,
-      icon: freezed == icon
-          ? _value.icon
-          : icon // ignore: cast_nullable_to_non_nullable
-              as String?,
       name: null == name
           ? _value.name
           : name // ignore: cast_nullable_to_non_nullable
               as String,
+      type: null == type
+          ? _value.type
+          : type // ignore: cast_nullable_to_non_nullable
+              as ServiceType,
       description: freezed == description
           ? _value.description
           : description // ignore: cast_nullable_to_non_nullable
+              as String?,
+      icon: freezed == icon
+          ? _value.icon
+          : icon // ignore: cast_nullable_to_non_nullable
               as String?,
       created: null == created
           ? _value.created
@@ -180,9 +194,10 @@ class __$$HostelServiceImplCopyWithImpl<$Res>
 class _$HostelServiceImpl implements _HostelService {
   const _$HostelServiceImpl(
       {@JsonKey(name: 'id') required this.id,
-      @JsonKey(name: 'icon') this.icon,
       @JsonKey(name: 'name') required this.name,
+      @JsonKey(name: 'type') required this.type,
       @JsonKey(name: 'description') this.description,
+      @JsonKey(name: 'icon') this.icon,
       @JsonKey(name: 'created') required this.created,
       @JsonKey(name: 'updated') required this.updated});
 
@@ -193,14 +208,17 @@ class _$HostelServiceImpl implements _HostelService {
   @JsonKey(name: 'id')
   final String id;
   @override
-  @JsonKey(name: 'icon')
-  final String? icon;
-  @override
   @JsonKey(name: 'name')
   final String name;
   @override
+  @JsonKey(name: 'type')
+  final ServiceType type;
+  @override
   @JsonKey(name: 'description')
   final String? description;
+  @override
+  @JsonKey(name: 'icon')
+  final String? icon;
   @override
   @JsonKey(name: 'created')
   final DateTime created;
@@ -210,7 +228,7 @@ class _$HostelServiceImpl implements _HostelService {
 
   @override
   String toString() {
-    return 'HostelService(id: $id, icon: $icon, name: $name, description: $description, created: $created, updated: $updated)';
+    return 'HostelService(id: $id, name: $name, type: $type, description: $description, icon: $icon, created: $created, updated: $updated)';
   }
 
   @override
@@ -219,18 +237,19 @@ class _$HostelServiceImpl implements _HostelService {
         (other.runtimeType == runtimeType &&
             other is _$HostelServiceImpl &&
             (identical(other.id, id) || other.id == id) &&
-            (identical(other.icon, icon) || other.icon == icon) &&
             (identical(other.name, name) || other.name == name) &&
+            (identical(other.type, type) || other.type == type) &&
             (identical(other.description, description) ||
                 other.description == description) &&
+            (identical(other.icon, icon) || other.icon == icon) &&
             (identical(other.created, created) || other.created == created) &&
             (identical(other.updated, updated) || other.updated == updated));
   }
 
   @JsonKey(includeFromJson: false, includeToJson: false)
   @override
-  int get hashCode =>
-      Object.hash(runtimeType, id, icon, name, description, created, updated);
+  int get hashCode => Object.hash(
+      runtimeType, id, name, type, description, icon, created, updated);
 
   /// Create a copy of HostelService
   /// with the given fields replaced by the non-null parameter values.
@@ -251,9 +270,10 @@ class _$HostelServiceImpl implements _HostelService {
 abstract class _HostelService implements HostelService {
   const factory _HostelService(
           {@JsonKey(name: 'id') required final String id,
-          @JsonKey(name: 'icon') final String? icon,
           @JsonKey(name: 'name') required final String name,
+          @JsonKey(name: 'type') required final ServiceType type,
           @JsonKey(name: 'description') final String? description,
+          @JsonKey(name: 'icon') final String? icon,
           @JsonKey(name: 'created') required final DateTime created,
           @JsonKey(name: 'updated') required final DateTime updated}) =
       _$HostelServiceImpl;
@@ -265,14 +285,17 @@ abstract class _HostelService implements HostelService {
   @JsonKey(name: 'id')
   String get id;
   @override
-  @JsonKey(name: 'icon')
-  String? get icon;
-  @override
   @JsonKey(name: 'name')
   String get name;
   @override
+  @JsonKey(name: 'type')
+  ServiceType get type;
+  @override
   @JsonKey(name: 'description')
   String? get description;
+  @override
+  @JsonKey(name: 'icon')
+  String? get icon;
   @override
   @JsonKey(name: 'created')
   DateTime get created;
