@@ -324,26 +324,6 @@ class _DashboardShellState extends State<DashboardShell> with SingleTickerProvid
           ),
           child: Scaffold(
             backgroundColor: Colors.transparent,
-            appBar: AppBar(
-              backgroundColor: colorScheme.surface.withOpacity(0.95),
-              elevation: 0,
-              scrolledUnderElevation: 2,
-              title: Hero(
-                tag: 'app_logo',
-                child: Image.asset(
-                  'assets/images/logo.png',
-                  height: 28,
-                  semanticLabel: 'App logo',
-                ),
-              ),
-              centerTitle: true,
-              actions: const [
-                Padding(
-                  padding: EdgeInsets.symmetric(horizontal: 8),
-                  child: ThemeToggle(),
-                ),
-              ],
-            ),
             body: SafeArea(
               bottom: false,
               child: ClipRRect(

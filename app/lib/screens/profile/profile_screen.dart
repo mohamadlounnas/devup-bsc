@@ -3,15 +3,27 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../services/auth_service.dart';
 import '../../services/theme_service.dart';
+import '../../utils/responsive.dart';
 
 /// Screen that displays user profile information and settings
 class ProfileScreen extends StatelessWidget {
   const ProfileScreen({super.key});
 
+  String _getUserTypeLabel(String type) {
+    switch (type) {
+      case 'employee':
+        return 'Service Provider';
+      case 'client':
+        return 'Customer';
+      default:
+        return type.toUpperCase();
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
     final user = context.watch<AuthService>().currentUser;
+    final isDesktop = Responsive.isDesktop(context);
 
     if (user == null) {
       return const Center(child: CupertinoActivityIndicator());
@@ -51,8 +63,13 @@ class ProfileScreen extends StatelessWidget {
         ),
       ),
       child: CustomScrollView(
-        physics: const BouncingScrollPhysics(),
+        physics: const BouncingScrollPhysics(parent: AlwaysScrollableScrollPhysics()),
         slivers: [
+          CupertinoSliverRefreshControl(
+            onRefresh: () async {
+              await context.read<AuthService>().checkAuthState();
+            },
+          ),
           // Add padding at the top to account for navigation bar
           const SliverToBoxAdapter(
             child: SizedBox(height: 16),
@@ -61,11 +78,11 @@ class ProfileScreen extends StatelessWidget {
           // Profile Header
           SliverToBoxAdapter(
             child: Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 16),
+              padding: EdgeInsets.symmetric(horizontal: isDesktop ? 32 : 16),
               child: Container(
                 decoration: BoxDecoration(
                   color: CupertinoColors.systemBackground.resolveFrom(context),
-                  borderRadius: BorderRadius.circular(12),
+                  borderRadius: BorderRadius.circular(16),
                   boxShadow: [
                     BoxShadow(
                       color: CupertinoColors.systemGrey.withOpacity(0.1),
@@ -74,40 +91,58 @@ class ProfileScreen extends StatelessWidget {
                     ),
                   ],
                 ),
-                padding: const EdgeInsets.all(16),
+                padding: const EdgeInsets.all(24),
                 child: Column(
                   children: [
-                    Container(
-                      width: 100,
-                      height: 100,
-                      decoration: BoxDecoration(
-                        shape: BoxShape.circle,
-                        color: CupertinoColors.systemGrey5.resolveFrom(context),
+                    Hero(
+                      tag: 'profile_avatar',
+                      child: Container(
+                        width: 120,
+                        height: 120,
+                        decoration: BoxDecoration(
+                          shape: BoxShape.circle,
+                          gradient: LinearGradient(
+                            colors: [
+                              CupertinoColors.systemBlue.resolveFrom(context),
+                              CupertinoColors.activeBlue.resolveFrom(context),
+                            ],
+                            begin: Alignment.topLeft,
+                            end: Alignment.bottomRight,
+                          ),
+                        ),
+                        child: const Icon(
+                          CupertinoIcons.person_fill,
+                          size: 60,
+                          color: CupertinoColors.white,
+                        ),
                       ),
-                      child: Icon(
-                        CupertinoIcons.person_fill,
-                        size: 50,
+                    ),
+                    const SizedBox(height: 20),
+                    Text(
+                      '${user.firstname} ${user.lastname}',
+                      style: const TextStyle(
+                        fontSize: 24,
+                        fontWeight: FontWeight.w600,
+                      ),
+                      textAlign: TextAlign.center,
+                    ),
+                    const SizedBox(height: 4),
+                    Text(
+                      user.email,
+                      style: TextStyle(
+                        fontSize: 16,
                         color: CupertinoColors.systemGrey.resolveFrom(context),
                       ),
                     ),
-                    const SizedBox(height: 16),
-                    Text(
-                      '${user.firstname} ${user.lastname}',
-                      style: theme.textTheme.headlineSmall,
-                    ),
-                    Text(
-                      user.email,
-                      style: theme.textTheme.bodyLarge,
-                    ),
-                    const SizedBox(height: 8),
+                    const SizedBox(height: 12),
                     Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
                       decoration: BoxDecoration(
                         color: CupertinoColors.systemBlue.withOpacity(0.1),
                         borderRadius: BorderRadius.circular(20),
                       ),
                       child: Text(
-                        user.type.name.toUpperCase(),
+                        _getUserTypeLabel(user.type.name),
                         style: TextStyle(
                           color: CupertinoColors.systemBlue.resolveFrom(context),
                           fontWeight: FontWeight.w600,
@@ -120,27 +155,30 @@ class ProfileScreen extends StatelessWidget {
             ),
           ),
 
-          const SliverToBoxAdapter(child: SizedBox(height: 16)),
+          const SliverToBoxAdapter(child: SizedBox(height: 24)),
 
           // Personal Information Section
           SliverToBoxAdapter(
             child: Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 16),
-              child: Text(
+              padding: EdgeInsets.symmetric(horizontal: isDesktop ? 32 : 16),
+              child: const Text(
                 'Personal Information',
-                style: theme.textTheme.titleLarge,
+                style: TextStyle(
+                  fontSize: 20,
+                  fontWeight: FontWeight.w600,
+                ),
               ),
             ),
           ),
 
-          const SliverToBoxAdapter(child: SizedBox(height: 8)),
+          const SliverToBoxAdapter(child: SizedBox(height: 12)),
 
           SliverToBoxAdapter(
             child: Container(
-              margin: const EdgeInsets.symmetric(horizontal: 16),
+              margin: EdgeInsets.symmetric(horizontal: isDesktop ? 32 : 16),
               decoration: BoxDecoration(
                 color: CupertinoColors.systemBackground.resolveFrom(context),
-                borderRadius: BorderRadius.circular(12),
+                borderRadius: BorderRadius.circular(16),
                 boxShadow: [
                   BoxShadow(
                     color: CupertinoColors.systemGrey.withOpacity(0.1),
@@ -184,27 +222,30 @@ class ProfileScreen extends StatelessWidget {
             ),
           ),
 
-          const SliverToBoxAdapter(child: SizedBox(height: 16)),
+          const SliverToBoxAdapter(child: SizedBox(height: 24)),
 
           // Settings Section
           SliverToBoxAdapter(
             child: Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 16),
-              child: Text(
+              padding: EdgeInsets.symmetric(horizontal: isDesktop ? 32 : 16),
+              child: const Text(
                 'Settings',
-                style: theme.textTheme.titleLarge,
+                style: TextStyle(
+                  fontSize: 20,
+                  fontWeight: FontWeight.w600,
+                ),
               ),
             ),
           ),
 
-          const SliverToBoxAdapter(child: SizedBox(height: 8)),
+          const SliverToBoxAdapter(child: SizedBox(height: 12)),
 
           SliverToBoxAdapter(
             child: Container(
-              margin: const EdgeInsets.symmetric(horizontal: 16),
+              margin: EdgeInsets.symmetric(horizontal: isDesktop ? 32 : 16),
               decoration: BoxDecoration(
                 color: CupertinoColors.systemBackground.resolveFrom(context),
-                borderRadius: BorderRadius.circular(12),
+                borderRadius: BorderRadius.circular(16),
                 boxShadow: [
                   BoxShadow(
                     color: CupertinoColors.systemGrey.withOpacity(0.1),
@@ -213,27 +254,37 @@ class ProfileScreen extends StatelessWidget {
                   ),
                 ],
               ),
-              child: Consumer<ThemeService>(
-                builder: (context, themeService, _) {
-                  return CupertinoFormRow(
-                    prefix: Icon(
-                      themeService.isDarkMode
-                          ? CupertinoIcons.moon_fill
-                          : CupertinoIcons.sun_max_fill,
-                      color: CupertinoColors.systemGrey,
-                    ),
-                    child: Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        const Text('Dark Mode'),
-                        CupertinoSwitch(
+              child: Column(
+                children: [
+                  Consumer<ThemeService>(
+                    builder: (context, themeService, _) {
+                      return CupertinoFormRow(
+                        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                        prefix: Row(
+                          children: [
+                            Icon(
+                              themeService.isDarkMode
+                                  ? CupertinoIcons.moon_fill
+                                  : CupertinoIcons.sun_max_fill,
+                              color: CupertinoColors.systemGrey,
+                            ),
+                            const SizedBox(width: 12),
+                            const Text('Dark Mode'),
+                          ],
+                        ),
+                        child: CupertinoSwitch(
                           value: themeService.isDarkMode,
                           onChanged: (_) => themeService.toggleTheme(),
                         ),
-                      ],
-                    ),
-                  );
-                },
+                      );
+                    },
+                  ),
+                  _buildInfoTile(
+                    icon: CupertinoIcons.info,
+                    title: 'App Version',
+                    value: '1.0.0',
+                  ),
+                ],
               ),
             ),
           ),
