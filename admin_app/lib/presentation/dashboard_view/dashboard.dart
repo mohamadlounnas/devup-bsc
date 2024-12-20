@@ -156,6 +156,16 @@ class _DashboardShellState extends State<DashboardShell> {
           selectedIcon: Icon(Icons.sports),
           label: Text('Facilities'),
         ),
+        NavigationRailDestination(
+          icon: Icon(Icons.sports_outlined),
+          selectedIcon: Icon(Icons.sports),
+          label: Text('Hostel_Settings'),
+        ),
+        NavigationRailDestination(
+          icon: Icon(Icons.sports_outlined),
+          selectedIcon: Icon(Icons.sports),
+          label: Text('Events'),
+        ),
       ],
     );
   }
@@ -242,6 +252,11 @@ class _DashboardShellState extends State<DashboardShell> {
         break;
       case 3:
         context.go('/facilities');
+        break;
+      case 4:
+        context.go('/hostelsettings');
+      case 5:
+        context.go('/events');
         break;
     }
   }

@@ -16,7 +16,7 @@ dependencies:
   pocketbase: ^0.18.1
   get_it: ^7.6.7
   shared:
-    path: C:\Users\May-Tech\devup-bsc\shared
+    path: /Users/mac/comp/devup-bsc/shared
   provider: ^6.1.2
   shared_preferences: ^2.2.0
   date_format: ^2.0.9
@@ -26,6 +26,7 @@ dependencies:
   flutter_map: ^7.0.2
   feather_icons: ^1.2.0
   iconsax: ^0.0.8
+  file_picker: ^8.1.6
 
 dev_dependencies:
   flutter_test:
