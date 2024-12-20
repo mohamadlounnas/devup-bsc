@@ -2,6 +2,7 @@
 
 import 'package:freezed_annotation/freezed_annotation.dart';
 import 'user.dart';
+import 'enums.dart';
 
 part 'hostel_reservation.freezed.dart';
 part 'hostel_reservation.g.dart';
@@ -25,5 +26,6 @@ class HostelReservation with _$HostelReservation {
   }) = _HostelReservation;
 
   /// Creates a HostelReservation instance from JSON data
-  factory HostelReservation.fromJson(Map<String, dynamic> json) => _$HostelReservationFromJson(json);
-} 
+  factory HostelReservation.fromJson(Map<String, dynamic> json) =>
+      _$HostelReservationFromJson(json);
+}

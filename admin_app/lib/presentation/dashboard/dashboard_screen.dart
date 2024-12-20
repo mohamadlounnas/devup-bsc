@@ -1,9 +1,13 @@
+import 'package:admin_app/features/settings/facility_settings.dart';
 import 'package:admin_app/main.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
+import 'package:shared/services/api_service.dart';
+import 'package:shared/models/models.dart';
+import 'package:provider/provider.dart';
 
 class DashboardScreen extends StatefulWidget {
-  const DashboardScreen({Key? key}) : super(key: key);
+  const DashboardScreen({super.key});
 
   @override
   State<DashboardScreen> createState() => _DashboardScreenState();
@@ -24,6 +28,9 @@ class _DashboardScreenState extends State<DashboardScreen> {
   double? minAmount;
   double? maxAmount;
 
+  // Add a list to store reservations
+  List<Map<String, dynamic>> reservations = [];
+
   final List<MenuItem> menuItems = [
     MenuItem(icon: Icons.dashboard_outlined, label: 'Dashboard'),
     MenuItem(icon: Icons.people_outline, label: 'Users'),
@@ -31,29 +38,63 @@ class _DashboardScreenState extends State<DashboardScreen> {
     MenuItem(icon: Icons.settings_outlined, label: 'Settings'),
   ];
 
-  final List<Map<String, dynamic>> reservations = [
-    {
-      'id': '001',
-      'customerName': 'John Doe',
-      'date': '2024-02-15',
-      'status': 'Confirmed',
-      'amount': 150.00,
-    },
-    {
-      'id': '002',
-      'customerName': 'Jane Smith',
-      'date': '2024-02-16',
-      'status': 'Pending',
-      'amount': 200.00,
-    },
-    {
-      'id': '003',
-      'customerName': 'Mike Johnson',
-      'date': '2024-02-14',
-      'status': 'Completed',
-      'amount': 175.00,
-    },
-  ];
+  // Add initState to fetch reservations when the screen loads
+  @override
+  void initState() {
+    super.initState();
+    _loadReservations();
+  }
+
+  // Add method to load reservations
+  Future<void> _loadReservations() async {
+    try {
+      final apiService = Provider.of<ApiService>(context, listen: false);
+      final List<HostelReservation> hostelReservations =
+          await apiService.getHostelReservations();
+
+      // Create a map to store user details
+      final Map<String, User> users = {};
+
+      // Fetch user details for each unique userId
+      for (final reservation in hostelReservations) {
+        if (!users.containsKey(reservation.userId)) {
+          try {
+            users[reservation.userId] =
+                await apiService.getUser(reservation.userId);
+          } catch (e) {
+            print('Error fetching user ${reservation.userId}: $e');
+          }
+        }
+      }
+
+      setState(() {
+        reservations = hostelReservations
+            .map((reservation) => reservation.toJson())
+            .toList();
+      });
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Error loading reservations: ${e.toString()}'),
+            backgroundColor: Theme.of(context).colorScheme.error,
+          ),
+        );
+      }
+    }
+  }
+
+  // Add this helper method to convert status to display string
+  String _getStatusString(ReservationStatus status) {
+    switch (status) {
+      case ReservationStatus.pending:
+        return 'Pending';
+      case ReservationStatus.confirmed:
+        return 'Confirmed';
+      case ReservationStatus.completed:
+        return 'Completed';
+    }
+  }
 
   List<Map<String, dynamic>> get filteredReservations {
     return reservations.where((reservation) {
@@ -273,7 +314,9 @@ class _DashboardScreenState extends State<DashboardScreen> {
 
   void _showAddReservationDialog() {
     final newReservation = {
-      'id': (int.parse(reservations.last['id']) + 1).toString().padLeft(3, '0'),
+      'id': DateTime.now()
+          .millisecondsSinceEpoch
+          .toString(), // Temporary ID generation
       'customerName': '',
       'date': DateTime.now().toString().split(' ')[0],
       'status': 'Pending',
@@ -472,27 +515,51 @@ class _DashboardScreenState extends State<DashboardScreen> {
                     ),
                     _DetailItem(
                       title: 'Login Date',
-                      value:
-                          editedReservation['loginAt']?.toString() ?? 'Not set',
+                      value: editedReservation['loginAt'] != null
+                          ? DateFormat('yyyy-MM-dd HH:mm').format(
+                              DateTime.parse(editedReservation['loginAt']))
+                          : 'Not set',
                       customWidget: isEditing
                           ? TextButton.icon(
                               icon: const Icon(Icons.calendar_today),
-                              label: Text(editedReservation['loginAt']
-                                      ?.toString()
-                                      .split(' ')[0] ??
-                                  'Select Date'),
+                              label: Text(editedReservation['loginAt'] != null
+                                  ? DateFormat('yyyy-MM-dd').format(
+                                      DateTime.parse(
+                                          editedReservation['loginAt']))
+                                  : 'Select Date'),
                               onPressed: () async {
-                                final date = await showDatePicker(
+                                final DateTime? date = await showDatePicker(
                                   context: context,
-                                  initialDate: DateTime.now(),
+                                  initialDate:
+                                      editedReservation['loginAt'] != null
+                                          ? DateTime.parse(
+                                              editedReservation['loginAt'])
+                                          : DateTime.now(),
                                   firstDate: DateTime(2020),
                                   lastDate: DateTime(2025),
                                 );
                                 if (date != null) {
-                                  setState(() {
-                                    editedReservation['loginAt'] =
-                                        date.toIso8601String();
-                                  });
+                                  final TimeOfDay? time = await showTimePicker(
+                                    context: context,
+                                    initialTime: editedReservation['loginAt'] !=
+                                            null
+                                        ? TimeOfDay.fromDateTime(DateTime.parse(
+                                            editedReservation['loginAt']))
+                                        : TimeOfDay.now(),
+                                  );
+                                  if (time != null) {
+                                    setState(() {
+                                      final DateTime dateTime = DateTime(
+                                        date.year,
+                                        date.month,
+                                        date.day,
+                                        time.hour,
+                                        time.minute,
+                                      );
+                                      editedReservation['loginAt'] =
+                                          dateTime.toIso8601String();
+                                    });
+                                  }
                                 }
                               },
                             )
@@ -500,27 +567,52 @@ class _DashboardScreenState extends State<DashboardScreen> {
                     ),
                     _DetailItem(
                       title: 'Logout Date',
-                      value: editedReservation['logoutAt']?.toString() ??
-                          'Not set',
+                      value: editedReservation['logoutAt'] != null
+                          ? DateFormat('yyyy-MM-dd HH:mm').format(
+                              DateTime.parse(editedReservation['logoutAt']))
+                          : 'Not set',
                       customWidget: isEditing
                           ? TextButton.icon(
                               icon: const Icon(Icons.calendar_today),
-                              label: Text(editedReservation['logoutAt']
-                                      ?.toString()
-                                      .split(' ')[0] ??
-                                  'Select Date'),
+                              label: Text(editedReservation['logoutAt'] != null
+                                  ? DateFormat('yyyy-MM-dd').format(
+                                      DateTime.parse(
+                                          editedReservation['logoutAt']))
+                                  : 'Select Date'),
                               onPressed: () async {
-                                final date = await showDatePicker(
+                                final DateTime? date = await showDatePicker(
                                   context: context,
-                                  initialDate: DateTime.now(),
+                                  initialDate:
+                                      editedReservation['logoutAt'] != null
+                                          ? DateTime.parse(
+                                              editedReservation['logoutAt'])
+                                          : DateTime.now(),
                                   firstDate: DateTime(2020),
                                   lastDate: DateTime(2025),
                                 );
                                 if (date != null) {
-                                  setState(() {
-                                    editedReservation['logoutAt'] =
-                                        date.toIso8601String();
-                                  });
+                                  final TimeOfDay? time = await showTimePicker(
+                                    context: context,
+                                    initialTime: editedReservation[
+                                                'logoutAt'] !=
+                                            null
+                                        ? TimeOfDay.fromDateTime(DateTime.parse(
+                                            editedReservation['logoutAt']))
+                                        : TimeOfDay.now(),
+                                  );
+                                  if (time != null) {
+                                    setState(() {
+                                      final DateTime dateTime = DateTime(
+                                        date.year,
+                                        date.month,
+                                        date.day,
+                                        time.hour,
+                                        time.minute,
+                                      );
+                                      editedReservation['logoutAt'] =
+                                          dateTime.toIso8601String();
+                                    });
+                                  }
                                 }
                               },
                             )
@@ -668,473 +760,8 @@ class _DashboardScreenState extends State<DashboardScreen> {
                 ),
               ],
             ),
-            child: Row(
-              children: [
-                IconButton(
-                  icon: Icon(
-                    isExpanded ? Icons.menu_open : Icons.menu,
-                  ),
-                  onPressed: () {
-                    setState(() {
-                      isExpanded = !isExpanded;
-                    });
-                  },
-                ),
-                const SizedBox(width: 16),
-                Text(
-                  menuItems[selectedIndex].label,
-                  style: Theme.of(context).textTheme.titleLarge,
-                ),
-                const Spacer(),
-                // Theme Toggle
-                IconButton(
-                  icon: Icon(
-                    Theme.of(context).brightness == Brightness.light
-                        ? Icons.dark_mode_outlined
-                        : Icons.light_mode_outlined,
-                  ),
-                  onPressed: () {
-                    final platform = Theme.of(context).platform;
-                    if (platform == TargetPlatform.iOS ||
-                        platform == TargetPlatform.android) {
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(
-                          content: Text('Please use system settings'),
-                          duration: Duration(seconds: 2),
-                        ),
-                      );
-                      return;
-                    }
-                    setState(() {
-                      final brightness = Theme.of(context).brightness;
-                      final themeMode = brightness == Brightness.light
-                          ? ThemeMode.dark
-                          : ThemeMode.light;
-                      MainApp.of(context)?.updateThemeMode(themeMode);
-                    });
-                  },
-                ),
-                const SizedBox(width: 8),
-                // User Avatar with Popup Menu
-                PopupMenuButton<String>(
-                  offset: const Offset(0, 40),
-                  child: const CircleAvatar(
-                    radius: 16,
-                    child: Icon(Icons.person_outline, size: 20),
-                  ),
-                  itemBuilder: (BuildContext context) => [
-                    const PopupMenuItem<String>(
-                      value: 'profile',
-                      child: Row(
-                        children: [
-                          Icon(Icons.person_outline),
-                          SizedBox(width: 8),
-                          Text('Profile'),
-                        ],
-                      ),
-                    ),
-                    const PopupMenuItem<String>(
-                      value: 'logout',
-                      child: Row(
-                        children: [
-                          Icon(Icons.logout),
-                          SizedBox(width: 8),
-                          Text('Logout'),
-                        ],
-                      ),
-                    ),
-                  ],
-                  onSelected: (String value) {
-                    if (value == 'logout') {
-                      Navigator.of(context).pushReplacementNamed('/');
-                    }
-                  },
-                ),
-                const SizedBox(width: 8),
-              ],
-            ),
           ),
           // Main Content
-          Expanded(
-            child: Row(
-              children: [
-                // Side Menu
-                AnimatedContainer(
-                  duration: const Duration(milliseconds: 200),
-                  width: isExpanded ? 250 : 70,
-                  child: Card(
-                    margin: const EdgeInsets.all(8),
-                    elevation: 2,
-                    child: ListView.builder(
-                      itemCount: menuItems.length,
-                      itemBuilder: (context, index) {
-                        return AnimatedContainer(
-                          duration: const Duration(milliseconds: 200),
-                          decoration: BoxDecoration(
-                            borderRadius: BorderRadius.circular(8),
-                            color: selectedIndex == index
-                                ? Theme.of(context).colorScheme.primaryContainer
-                                : Colors.transparent,
-                          ),
-                          margin: const EdgeInsets.symmetric(
-                              horizontal: 8, vertical: 2),
-                          child: ListTile(
-                            leading: Icon(
-                              menuItems[index].icon,
-                              color: selectedIndex == index
-                                  ? Theme.of(context).colorScheme.primary
-                                  : null,
-                            ),
-                            title: isExpanded
-                                ? Text(menuItems[index].label)
-                                : null,
-                            selected: selectedIndex == index,
-                            onTap: () {
-                              setState(() {
-                                selectedIndex = index;
-                              });
-                            },
-                          ),
-                        );
-                      },
-                    ),
-                  ),
-                ),
-                const VerticalDivider(width: 1),
-                // Content Area
-                Expanded(
-                  child: Container(
-                    color: Theme.of(context).colorScheme.surface,
-                    padding: const EdgeInsets.all(16),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        // Search and Filter Bar
-                        Row(
-                          children: [
-                            Expanded(
-                              child: TextField(
-                                decoration: InputDecoration(
-                                  hintText: 'Search reservations...',
-                                  prefixIcon: const Icon(Icons.search),
-                                  border: OutlineInputBorder(
-                                    borderRadius: BorderRadius.circular(8),
-                                  ),
-                                ),
-                                onChanged: (value) {
-                                  setState(() {
-                                    searchQuery = value;
-                                  });
-                                },
-                              ),
-                            ),
-                            const SizedBox(width: 16),
-                            Wrap(
-                              spacing: 8,
-                              children: [
-                                ChoiceChip(
-                                  label: const Text('All'),
-                                  selected: selectedFilter == 'All',
-                                  onSelected: (selected) {
-                                    if (selected) {
-                                      setState(() {
-                                        selectedFilter = 'All';
-                                      });
-                                    }
-                                  },
-                                ),
-                                ChoiceChip(
-                                  label: const Text('Confirmed'),
-                                  selected: selectedFilter == 'Confirmed',
-                                  selectedColor: Colors.green.withOpacity(0.2),
-                                  onSelected: (selected) {
-                                    if (selected) {
-                                      setState(() {
-                                        selectedFilter = 'Confirmed';
-                                      });
-                                    }
-                                  },
-                                ),
-                                ChoiceChip(
-                                  label: const Text('Pending'),
-                                  selected: selectedFilter == 'Pending',
-                                  selectedColor: Colors.orange.withOpacity(0.2),
-                                  onSelected: (selected) {
-                                    if (selected) {
-                                      setState(() {
-                                        selectedFilter = 'Pending';
-                                      });
-                                    }
-                                  },
-                                ),
-                                ChoiceChip(
-                                  label: const Text('Completed'),
-                                  selected: selectedFilter == 'Completed',
-                                  selectedColor: Colors.blue.withOpacity(0.2),
-                                  onSelected: (selected) {
-                                    if (selected) {
-                                      setState(() {
-                                        selectedFilter = 'Completed';
-                                      });
-                                    }
-                                  },
-                                ),
-                              ],
-                            ),
-                            const SizedBox(width: 16),
-                            IconButton(
-                              icon: Icon(isAscending
-                                  ? Icons.arrow_upward
-                                  : Icons.arrow_downward),
-                              onPressed: () {
-                                setState(() {
-                                  isAscending = !isAscending;
-                                });
-                              },
-                              tooltip: 'Sort by date',
-                            ),
-                            const SizedBox(width: 8),
-                            IconButton(
-                              icon: const Icon(Icons.filter_list),
-                              onPressed: _showFilterDialog,
-                              tooltip: 'Advanced filters',
-                              style: IconButton.styleFrom(
-                                backgroundColor: (startDate != null ||
-                                        endDate != null ||
-                                        idFilter != null ||
-                                        minAmount != null ||
-                                        maxAmount != null)
-                                    ? Theme.of(context)
-                                        .colorScheme
-                                        .primaryContainer
-                                    : null,
-                              ),
-                            ),
-                            const SizedBox(width: 16),
-                            FilledButton.icon(
-                              icon: const Icon(Icons.add),
-                              label: const Text('New Reservation'),
-                              onPressed: _showAddReservationDialog,
-                            ),
-                          ],
-                        ),
-                        const SizedBox(height: 16),
-                        // Reservations List
-                        Expanded(
-                          child: Card(
-                            margin: EdgeInsets.zero,
-                            child: Column(
-                              children: [
-                                Expanded(
-                                  child: SingleChildScrollView(
-                                    scrollDirection: Axis.vertical,
-                                    child: SingleChildScrollView(
-                                      scrollDirection: Axis.horizontal,
-                                      child: ConstrainedBox(
-                                        constraints: BoxConstraints(
-                                          minWidth: MediaQuery.of(context)
-                                                  .size
-                                                  .width -
-                                              (isExpanded ? 250 : 70) -
-                                              33,
-                                        ),
-                                        child: DataTable(
-                                          columnSpacing: 24,
-                                          horizontalMargin: 24,
-                                          headingRowHeight: 48,
-                                          dataRowHeight: 52,
-                                          columns: [
-                                            DataColumn(
-                                              label: Row(
-                                                children: [
-                                                  const Text('ID'),
-                                                  const SizedBox(width: 4),
-                                                  if (sortColumn == 'id')
-                                                    Icon(
-                                                      isAscending
-                                                          ? Icons.arrow_upward
-                                                          : Icons
-                                                              .arrow_downward,
-                                                      size: 16,
-                                                    ),
-                                                ],
-                                              ),
-                                              onSort: (_, __) => onSort('id'),
-                                            ),
-                                            DataColumn(
-                                              label: Row(
-                                                children: [
-                                                  const Text('Customer Name'),
-                                                  const SizedBox(width: 4),
-                                                  if (sortColumn ==
-                                                      'customerName')
-                                                    Icon(
-                                                      isAscending
-                                                          ? Icons.arrow_upward
-                                                          : Icons
-                                                              .arrow_downward,
-                                                      size: 16,
-                                                    ),
-                                                ],
-                                              ),
-                                              onSort: (_, __) =>
-                                                  onSort('customerName'),
-                                            ),
-                                            DataColumn(
-                                              label: Row(
-                                                children: [
-                                                  const Text('Date'),
-                                                  const SizedBox(width: 4),
-                                                  if (sortColumn == 'date')
-                                                    Icon(
-                                                      isAscending
-                                                          ? Icons.arrow_upward
-                                                          : Icons
-                                                              .arrow_downward,
-                                                      size: 16,
-                                                    ),
-                                                ],
-                                              ),
-                                              onSort: (_, __) => onSort('date'),
-                                            ),
-                                            DataColumn(
-                                              label: Row(
-                                                children: [
-                                                  const Text('Status'),
-                                                  const SizedBox(width: 4),
-                                                  if (sortColumn == 'status')
-                                                    Icon(
-                                                      isAscending
-                                                          ? Icons.arrow_upward
-                                                          : Icons
-                                                              .arrow_downward,
-                                                      size: 16,
-                                                    ),
-                                                ],
-                                              ),
-                                              onSort: (_, __) =>
-                                                  onSort('status'),
-                                            ),
-                                            DataColumn(
-                                              label: Row(
-                                                children: [
-                                                  const Text('Amount'),
-                                                  const SizedBox(width: 4),
-                                                  if (sortColumn == 'amount')
-                                                    Icon(
-                                                      isAscending
-                                                          ? Icons.arrow_upward
-                                                          : Icons
-                                                              .arrow_downward,
-                                                      size: 16,
-                                                    ),
-                                                ],
-                                              ),
-                                              numeric: true,
-                                              onSort: (_, __) =>
-                                                  onSort('amount'),
-                                            ),
-                                          ],
-                                          rows: filteredReservations
-                                              .map((reservation) {
-                                            return DataRow(
-                                              onSelectChanged: (_) =>
-                                                  _showReservationDetails(
-                                                      reservation),
-                                              cells: [
-                                                DataCell(
-                                                    Text(reservation['id'])),
-                                                DataCell(
-                                                  Row(
-                                                    mainAxisSize:
-                                                        MainAxisSize.min,
-                                                    children: [
-                                                      CircleAvatar(
-                                                        radius: 14,
-                                                        backgroundColor:
-                                                            _getStatusColor(
-                                                                reservation[
-                                                                    'status']),
-                                                        child: Text(
-                                                          reservation[
-                                                              'customerName'][0],
-                                                          style:
-                                                              const TextStyle(
-                                                                  color: Colors
-                                                                      .white,
-                                                                  fontSize: 12),
-                                                        ),
-                                                      ),
-                                                      const SizedBox(width: 8),
-                                                      Text(reservation[
-                                                          'customerName']),
-                                                    ],
-                                                  ),
-                                                ),
-                                                DataCell(
-                                                    Text(reservation['date'])),
-                                                DataCell(
-                                                  Container(
-                                                    padding: const EdgeInsets
-                                                        .symmetric(
-                                                        horizontal: 8,
-                                                        vertical: 4),
-                                                    decoration: BoxDecoration(
-                                                      color: _getStatusColor(
-                                                              reservation[
-                                                                  'status'])
-                                                          .withOpacity(0.1),
-                                                      borderRadius:
-                                                          BorderRadius.circular(
-                                                              12),
-                                                      border: Border.all(
-                                                        color: _getStatusColor(
-                                                            reservation[
-                                                                'status']),
-                                                        width: 1,
-                                                      ),
-                                                    ),
-                                                    child: Text(
-                                                      reservation['status'],
-                                                      style: TextStyle(
-                                                        color: _getStatusColor(
-                                                            reservation[
-                                                                'status']),
-                                                        fontSize: 12,
-                                                        fontWeight:
-                                                            FontWeight.w500,
-                                                      ),
-                                                    ),
-                                                  ),
-                                                ),
-                                                DataCell(
-                                                  Text(
-                                                    '\$${reservation['amount'].toStringAsFixed(2)}',
-                                                    style: const TextStyle(
-                                                      fontWeight:
-                                                          FontWeight.w500,
-                                                    ),
-                                                  ),
-                                                ),
-                                              ],
-                                            );
-                                          }).toList(),
-                                        ),
-                                      ),
-                                    ),
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                ),
-              ],
-            ),
-          ),
         ],
       ),
     );

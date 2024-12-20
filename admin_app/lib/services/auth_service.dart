@@ -48,13 +48,15 @@ class AuthService extends ChangeNotifier {
 
     if (error is ClientException) {
       if (error.statusCode == 0) {
-        if (kIsWeb) {
-          return 'Connection failed. This might be due to CORS policy. Please ensure the server allows cross-origin requests.';
-        }
         if (error.originalError is SocketException) {
+          // Check specific socket error types
+          final socketError = error.originalError as SocketException;
+          if (socketError.osError?.errorCode == 1) {
+            return 'Network access denied. Please check your internet permissions and connection.';
+          }
           return 'Connection failed. Please check your internet connection and try again.';
         }
-        return 'Unable to connect to server. Please try again later.';
+        return 'Unable to connect to server. Please check if the server is accessible.';
       }
       if (error.response != null && error.response is Map) {
         if (error.response['message'] != null) {
@@ -78,7 +80,7 @@ class AuthService extends ChangeNotifier {
   /// Login with email and password
   Future<User> loginWithCredentials(String email, String password) async {
     int retryCount = 0;
-    const maxRetries = kIsWeb ? 1 : 3; // Only retry on native platforms
+    const maxRetries = 3;
 
     while (retryCount < maxRetries) {
       try {
@@ -98,10 +100,7 @@ class AuthService extends ChangeNotifier {
 
         if (authData.record != null) {
           _currentUser = User.fromJson(authData.record!.toJson());
-          if (!kIsWeb) {
-            // Only save credentials on native platforms
-            await saveCredentials(email, password);
-          }
+          await saveCredentials(email, password);
 
           _loading = false;
           notifyListeners();
@@ -117,10 +116,8 @@ class AuthService extends ChangeNotifier {
           notifyListeners();
           throw _error!;
         }
-        if (!kIsWeb) {
-          // Only delay retries on native platforms
-          await Future.delayed(Duration(seconds: retryCount));
-        }
+        // Wait before retrying
+        await Future.delayed(Duration(seconds: retryCount));
       }
     }
     throw 'Maximum retry attempts reached';

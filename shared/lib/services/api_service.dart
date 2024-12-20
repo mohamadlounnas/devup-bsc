@@ -80,4 +80,9 @@ class ApiService {
     final records = await pb.collection('facilities_events').getFullList();
     return records.map((r) => FacilityEvent.fromJson(r.toJson())).toList();
   }
+
+  Future<HostelReservation> createHostelReservation(HostelReservation reservation) async {
+    final record = await pb.collection('hostels_reservations').create(body: reservation.toJson());
+    return HostelReservation.fromJson(record.toJson());
+  }
 } 

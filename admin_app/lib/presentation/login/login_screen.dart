@@ -1,7 +1,9 @@
 import 'package:admin_app/app_container.dart';
+import 'package:admin_app/presentation/dashboard/dashboard_screen.dart';
 import 'package:admin_app/services/auth_service.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:go_router/go_router.dart';
 
 class Login extends StatefulWidget {
   const Login({Key? key}) : super(key: key);
@@ -54,7 +56,7 @@ class LoginState extends State<Login> {
       }
 
       if (mounted) {
-        Navigator.of(context).pushReplacementNamed('/dashboard');
+        context.go('/dashboard');
       }
     } catch (error) {
       if (mounted) {
