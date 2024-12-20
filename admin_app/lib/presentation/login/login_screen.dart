@@ -6,7 +6,7 @@ import 'package:provider/provider.dart';
 import 'package:go_router/go_router.dart';
 
 class Login extends StatefulWidget {
-  const Login({Key? key}) : super(key: key);
+  const Login({super.key});
 
   @override
   State<Login> createState() => LoginState();
