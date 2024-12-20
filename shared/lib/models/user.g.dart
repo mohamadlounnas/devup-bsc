@@ -24,6 +24,7 @@ _$UserImpl _$$UserImplFromJson(Map<String, dynamic> json) => _$UserImpl(
       post: json['post'] as String?,
       type: $enumDecode(_$UserTypeEnumMap, json['type']),
       gender: $enumDecode(_$GenderEnumMap, json['gander']),
+      phone: json['phone'] as String?,
       created: DateTime.parse(json['created'] as String),
       updated: DateTime.parse(json['updated'] as String),
     );
@@ -45,6 +46,7 @@ Map<String, dynamic> _$$UserImplToJson(_$UserImpl instance) =>
       'post': instance.post,
       'type': _$UserTypeEnumMap[instance.type]!,
       'gander': _$GenderEnumMap[instance.gender]!,
+      'phone': instance.phone,
       'created': instance.created.toIso8601String(),
       'updated': instance.updated.toIso8601String(),
     };

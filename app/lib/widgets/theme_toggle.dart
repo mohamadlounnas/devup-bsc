@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import '../main.dart';
+import '../services/theme_service.dart';
 
 /// A beautiful animated theme toggle button
 class ThemeToggle extends StatelessWidget {

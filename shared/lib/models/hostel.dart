@@ -1,6 +1,7 @@
 // ignore_for_file: invalid_annotation_target
 
 import 'package:freezed_annotation/freezed_annotation.dart';
+import 'package:latlong2/latlong.dart';
 import 'enums.dart';
 import 'hostel_service.dart';
 import 'user.dart';
@@ -53,3 +54,18 @@ class Hostel with _$Hostel {
   /// It's automatically generated using the freezed package.
   factory Hostel.fromJson(Map<String, dynamic> json) => _$HostelFromJson(json);
 } 
+
+
+
+// latlong extension
+extension HostelLatLong on Hostel {
+  LatLng? get latLong {
+    try {
+    if (location == null) return null;
+    final latLong = location!.split(',');
+    return LatLng(double.parse(latLong[0]), double.parse(latLong[1]));
+    } catch (e) {
+      return null;
+    }
+  }
+}

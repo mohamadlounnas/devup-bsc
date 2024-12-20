@@ -27,3 +27,9 @@ Map<String, dynamic> _$$HostelServiceImplToJson(_$HostelServiceImpl instance) =>
       'created': instance.created.toIso8601String(),
       'updated': instance.updated.toIso8601String(),
     };
+
+const _$ServiceTypeEnumMap = {
+  ServiceType.hospitality: 'hospitality',
+  ServiceType.activity: 'activity',
+  ServiceType.restoration: 'restoration',
+};

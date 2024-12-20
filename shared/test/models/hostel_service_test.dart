@@ -8,6 +8,7 @@ void main() {
         'id': '123',
         'icon': 'service.jpg',
         'name': 'Test Service',
+        'type': 'hospitality',
         'description': 'A test service',
         'created': '2023-01-01T00:00:00.000Z',
         'updated': '2023-01-01T00:00:00.000Z',
@@ -18,6 +19,7 @@ void main() {
       expect(service.id, '123');
       expect(service.icon, 'service.jpg');
       expect(service.name, 'Test Service');
+      expect(service.type, ServiceType.hospitality);
       expect(service.description, 'A test service');
       expect(service.created, DateTime.parse('2023-01-01T00:00:00.000Z'));
       expect(service.updated, DateTime.parse('2023-01-01T00:00:00.000Z'));
@@ -27,6 +29,7 @@ void main() {
       final json = {
         'id': '123',
         'name': 'Test Service',
+        'type': 'activity',
         'created': '2023-01-01T00:00:00.000Z',
         'updated': '2023-01-01T00:00:00.000Z',
       };
@@ -41,6 +44,7 @@ void main() {
       final service = HostelService(
         id: '123',
         name: 'Test Service',
+        type: ServiceType.restoration,
         created: DateTime.parse('2023-01-01T00:00:00.000Z'),
         updated: DateTime.parse('2023-01-01T00:00:00.000Z'),
       );
@@ -49,6 +53,7 @@ void main() {
 
       expect(json['id'], '123');
       expect(json['name'], 'Test Service');
+      expect(json['type'], 'restoration');
       expect(json['created'], '2023-01-01T00:00:00.000Z');
       expect(json['updated'], '2023-01-01T00:00:00.000Z');
     });

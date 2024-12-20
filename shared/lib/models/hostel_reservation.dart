@@ -14,6 +14,8 @@ class HostelReservation with _$HostelReservation {
     @JsonKey(name: 'id') required String id,
     @JsonKey(name: 'user') required String userId,
     @JsonKey(name: 'user_expand') User? user,
+    /// The status of the reservation (pending, approved, cancelled)
+    @JsonKey(name: 'status') required ReservationStatus status,
     @JsonKey(name: 'parental_license') String? parentalLicense,
     @JsonKey(name: 'login_at') DateTime? loginAt,
     @JsonKey(name: 'logout_at') DateTime? logoutAt,

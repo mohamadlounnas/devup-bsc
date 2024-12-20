@@ -7,6 +7,7 @@ void main() {
       final json = {
         'id': '123',
         'user': 'user123',
+        'status': 'pending',
         'user_expand': {
           'id': 'user123',
           'email': 'user@example.com',
@@ -32,6 +33,7 @@ void main() {
 
       expect(reservation.id, '123');
       expect(reservation.userId, 'user123');
+      expect(reservation.status, ReservationStatus.pending);
       expect(reservation.user?.id, 'user123');
       expect(reservation.user?.email, 'user@example.com');
       expect(reservation.parentalLicense, 'license.pdf');
@@ -49,12 +51,14 @@ void main() {
       final json = {
         'id': '123',
         'user': 'user123',
+        'status': 'approved',
         'created': '2023-01-01T00:00:00.000Z',
         'updated': '2023-01-01T00:00:00.000Z',
       };
 
       final reservation = HostelReservation.fromJson(json);
 
+      expect(reservation.status, ReservationStatus.approved);
       expect(reservation.user, null);
       expect(reservation.parentalLicense, null);
       expect(reservation.loginAt, null);
@@ -69,6 +73,7 @@ void main() {
       final reservation = HostelReservation(
         id: '123',
         userId: 'user123',
+        status: ReservationStatus.pending,
         created: DateTime.parse('2023-01-01T00:00:00.000Z'),
         updated: DateTime.parse('2023-01-01T00:00:00.000Z'),
       );
@@ -77,6 +82,7 @@ void main() {
 
       expect(json['id'], '123');
       expect(json['user'], 'user123');
+      expect(json['status'], 'pending');
       expect(json['created'], '2023-01-01T00:00:00.000Z');
       expect(json['updated'], '2023-01-01T00:00:00.000Z');
     });
