@@ -34,6 +34,9 @@ dependencies:
   intl: ^0.20.1
   pocketbase: ^0.18.1
   provider: ^6.1.1
+  flutter_map: ^6.1.0
+  latlong2: ^0.9.0
+  http: ^1.1.0
   shared:
     path: ../shared
 
