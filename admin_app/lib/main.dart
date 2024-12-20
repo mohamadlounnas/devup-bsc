@@ -17,7 +17,6 @@ void main() {
     MultiProvider(
       providers: [
         ChangeNotifierProvider(create: (_) => AuthService(pb)),
-        ChangeNotifierProvider(create: (_) => ReservationService(pb)),
         Provider<ApiService>(
           create: (context) => ApiService(pb),
         ),

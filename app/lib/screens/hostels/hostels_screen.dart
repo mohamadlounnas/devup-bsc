@@ -298,9 +298,41 @@ class _HostelsScreenState extends State<HostelsScreen> {
         }
 
         return _isGridView
-            ? _buildGridView(hostels)
+            ? _buildWrappedView(hostels)
             : _buildListView(hostels);
       },
+    );
+  }
+
+  Widget _buildWrappedView(List<Hostel> hostels) {
+    final width = MediaQuery.of(context).size.width;
+    final isCompact = width < 600;
+    final cardWidth = isCompact ? 280.0 : 320.0;
+    
+    return SingleChildScrollView(
+      controller: _scrollController,
+      padding: EdgeInsets.all(isCompact ? 12 : 16),
+      child: Wrap(
+        spacing: isCompact ? 12 : 16,
+        runSpacing: isCompact ? 12 : 16,
+        children: hostels.map((hostel) {
+          return SizedBox(
+            width: cardWidth,
+            child: HostelCard(
+              hostel: hostel,
+              isGridView: true,
+              isCompact: isCompact,
+              onTap: () => _showHostelDetails(hostel),
+              onShare: () {
+                // TODO: Implement share
+              },
+              onGetDirections: () {
+                // TODO: Implement directions
+              },
+            ),
+          );
+        }).toList(),
+      ),
     );
   }
 
@@ -403,38 +435,6 @@ class _HostelsScreenState extends State<HostelsScreen> {
               // TODO: Implement directions
             },
           ),
-        );
-      },
-    );
-  }
-
-  Widget _buildGridView(List<Hostel> hostels) {
-    final width = MediaQuery.of(context).size.width;
-    final isCompact = width < 600;
-    final crossAxisCount = (width / (isCompact ? 280 : 320)).floor().clamp(1, 4);
-    
-    return GridView.builder(
-      controller: _scrollController,
-      padding: EdgeInsets.all(isCompact ? 12 : 16),
-      gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-        crossAxisCount: crossAxisCount,
-        childAspectRatio: isCompact ? 1.2 : 1.5,
-        mainAxisSpacing: isCompact ? 12 : 16,
-        crossAxisSpacing: isCompact ? 12 : 16,
-      ),
-      itemCount: hostels.length,
-      itemBuilder: (context, index) {
-        return HostelCard(
-          hostel: hostels[index],
-          isGridView: true,
-          isCompact: isCompact,
-          onTap: () => _showHostelDetails(hostels[index]),
-          onShare: () {
-            // TODO: Implement share
-          },
-          onGetDirections: () {
-            // TODO: Implement directions
-          },
         );
       },
     );

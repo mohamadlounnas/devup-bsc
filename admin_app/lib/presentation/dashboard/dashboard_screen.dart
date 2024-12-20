@@ -1,5 +1,6 @@
 import 'package:admin_app/features/settings/facility_settings.dart';
 import 'package:admin_app/main.dart';
+import 'package:admin_app/services/reservation_service.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:shared/services/api_service.dart';
@@ -42,6 +43,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
   @override
   void initState() {
     super.initState();
+    ReservationService.instance.getReservations();
     _loadReservations();
   }
 

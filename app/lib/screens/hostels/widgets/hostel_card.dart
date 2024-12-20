@@ -113,17 +113,39 @@ class HostelCard extends StatelessWidget {
   }
 
   Widget _buildGridCard(ThemeData theme) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        // Hostel image or placeholder
-        Expanded(
-          flex: 3,
-          child: Stack(
-            fit: StackFit.expand,
+    return Container(
+      decoration: BoxDecoration(
+        color: theme.colorScheme.surface,
+        borderRadius: BorderRadius.circular(isCompact ? 12 : 16),
+        border: Border.all(
+          color: theme.colorScheme.outlineVariant.withOpacity(0.2),
+        ),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          // Hostel image or placeholder
+          Stack(
             children: [
-              _buildImagePlaceholder(theme),
-              if (hostel.status == HostelStatus.active)
+              AspectRatio(
+                aspectRatio: 16 / 9,
+                child: Container(
+                  decoration: BoxDecoration(
+                    color: theme.colorScheme.surfaceVariant.withOpacity(0.5),
+                    borderRadius: BorderRadius.vertical(
+                      top: Radius.circular(isCompact ? 12 : 16),
+                    ),
+                  ),
+                  child: Center(
+                    child: Icon(
+                      Icons.apartment_outlined,
+                      size: 48,
+                      color: theme.colorScheme.onSurfaceVariant.withOpacity(0.8),
+                    ),
+                  ),
+                ),
+              ),
+              if (hostel.status != HostelStatus.active)
                 Positioned(
                   top: 8,
                   right: 8,
@@ -131,46 +153,55 @@ class HostelCard extends StatelessWidget {
                 ),
             ],
           ),
-        ),
-        // Hostel details
-        Expanded(
-          flex: 2,
-          child: Padding(
+          // Hostel details
+          Padding(
             padding: EdgeInsets.all(isCompact ? 12 : 16),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(
-                  hostel.name,
-                  style: theme.textTheme.titleMedium?.copyWith(
-                    fontWeight: FontWeight.w600,
-                    fontSize: isCompact ? 15 : 16,
-                    height: 1.2,
-                  ),
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                ),
-                const SizedBox(height: 4),
-                if (hostel.address != null)
-                  Expanded(
-                    child: Text(
-                      hostel.address!,
-                      style: theme.textTheme.bodyMedium?.copyWith(
-                        color: theme.colorScheme.onSurfaceVariant,
-                        fontSize: isCompact ? 12 : 13,
-                        height: 1.4,
+                Row(
+                  children: [
+                    Expanded(
+                      child: Text(
+                        hostel.name,
+                        style: theme.textTheme.titleMedium?.copyWith(
+                          fontWeight: FontWeight.w600,
+                          fontSize: isCompact ? 15 : 16,
+                          height: 1.2,
+                        ),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
                       ),
-                      maxLines: 2,
-                      overflow: TextOverflow.ellipsis,
                     ),
+                    if (hostel.status == HostelStatus.active)
+                      Padding(
+                        padding: const EdgeInsets.only(left: 8),
+                        child: _buildStatusBadge(theme),
+                      ),
+                  ],
+                ),
+                if (hostel.address != null) ...[
+                  const SizedBox(height: 8),
+                  Text(
+                    hostel.address!,
+                    style: theme.textTheme.bodyMedium?.copyWith(
+                      color: theme.colorScheme.onSurfaceVariant,
+                      fontSize: isCompact ? 12 : 13,
+                      height: 1.4,
+                    ),
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
                   ),
-                const Spacer(),
+                ],
+                const SizedBox(height: 12),
                 _buildHostelInfo(theme),
+                const SizedBox(height: 12),
+                _buildActionButtons(theme),
               ],
             ),
           ),
-        ),
-      ],
+        ],
+      ),
     );
   }
 

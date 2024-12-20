@@ -1,6 +1,8 @@
 import 'package:admin_app/app_container.dart';
 import 'package:admin_app/services/facility_service.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_map/flutter_map.dart';
+import 'package:latlong2/latlong.dart';
 import 'package:shared/models/models.dart';
 
 class FacilitySettingsScreen extends StatefulWidget {
@@ -261,27 +263,58 @@ class _FacilitySettingsScreenState extends State<FacilitySettingsScreen> {
                           // Location Information
                           Card(
                             child: Padding(
-                              padding: const EdgeInsets.all(16),
+                              padding: const EdgeInsets.all(10),
                               child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
                                 children: [
-                                  const Text(
-                                    'Location',
-                                    style:
-                                        TextStyle(fontWeight: FontWeight.bold),
+                                  ListTile(
+                                    title: Text('Location'),
+                                    leading: const Icon(
+                                      Icons.location_on,
+                                      color: Colors.red,
+                                    ),
+                                    subtitle: Text(_facility!.location ?? ''),
                                   ),
-                                  const SizedBox(height: 16),
-                                  TextFormField(
-                                    controller: _locationController,
-                                    decoration: const InputDecoration(
-                                      labelText: 'Location (lat,lng)',
-                                      border: OutlineInputBorder(),
-                                      helperText:
-                                          'Enter coordinates in format: latitude,longitude',
+                                  Container(
+                                    height: 300,
+                                    width: double.infinity,
+                                    child: FlutterMap(
+                                      options: MapOptions(
+                                        initialCenter: LatLng(
+                                          _facility!.locationLatLng!.latitude,
+                                          _facility!.locationLatLng!.longitude,
+                                        ),
+                                        initialZoom: 13,
+                                      ),
+                                      children: [
+                                        TileLayer(
+                                          urlTemplate:
+                                              'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
+                                        ),
+                                      ],
                                     ),
                                   ),
                                 ],
                               ),
+                              // child: Column(
+                              //   crossAxisAlignment: CrossAxisAlignment.start,
+                              //   children: [
+                              //     // const Text(
+                              //     //   'Location',
+                              //     //   style:
+                              //     //       TextStyle(fontWeight: FontWeight.bold),
+                              //     // ),
+                              //     // const SizedBox(height: 16),
+                              //     // TextFormField(
+                              //     //   controller: _locationController,
+                              //     //   decoration: const InputDecoration(
+                              //     //     labelText: 'Location (lat,lng)',
+                              //     //     border: OutlineInputBorder(),
+                              //     //     helperText:
+                              //     //         'Enter coordinates in format: latitude,longitude',
+                              //     //   ),
+                              //     // ),
+                              //   ],
+                              // ),
                             ),
                           ),
                           const SizedBox(height: 24),

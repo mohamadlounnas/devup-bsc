@@ -219,7 +219,7 @@ class _DashboardShellState extends State<DashboardShell> {
         return 0;
       case '/map':
         return 1;
-      case '/hostels':
+      case '/reservations':
         return 2;
       case '/facilities':
         return 3;
@@ -238,7 +238,7 @@ class _DashboardShellState extends State<DashboardShell> {
         context.go('/map');
         break;
       case 2:
-        context.go('/hostels');
+        context.go('/reservations');
         break;
       case 3:
         context.go('/facilities');
