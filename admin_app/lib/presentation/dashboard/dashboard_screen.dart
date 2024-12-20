@@ -259,14 +259,143 @@ class _DashboardScreenState extends State<DashboardScreen> {
     );
   }
 
+  void _showAddReservationDialog() {
+    final newReservation = {
+      'id': (int.parse(reservations.last['id']) + 1).toString().padLeft(3, '0'),
+      'customerName': '',
+      'date': DateTime.now().toString().split(' ')[0],
+      'status': 'Pending',
+      'amount': 0.00,
+      'created': DateTime.now().toIso8601String(),
+      'updated': DateTime.now().toIso8601String(),
+    };
+
+    final nameController = TextEditingController();
+    final amountController = TextEditingController(text: '0.00');
+
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return StatefulBuilder(
+          builder: (context, setState) {
+            return AlertDialog(
+              title: const Text('New Reservation'),
+              content: SingleChildScrollView(
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    TextField(
+                      controller: nameController,
+                      decoration: const InputDecoration(
+                        labelText: 'Customer Name',
+                        hintText: 'Enter customer name',
+                        isDense: true,
+                      ),
+                      onChanged: (value) {
+                        newReservation['customerName'] = value;
+                      },
+                    ),
+                    const SizedBox(height: 16),
+                    Row(
+                      children: [
+                        Expanded(
+                          child: TextButton.icon(
+                            icon: const Icon(Icons.calendar_today),
+                            label: Text(newReservation['date'].toString()),
+                            onPressed: () async {
+                              final date = await showDatePicker(
+                                context: context,
+                                initialDate: DateTime.now(),
+                                firstDate: DateTime(2020),
+                                lastDate: DateTime(2025),
+                              );
+                              if (date != null) {
+                                setState(() {
+                                  newReservation['date'] = date.toString().split(' ')[0];
+                                });
+                              }
+                            },
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 16),
+                    DropdownButtonFormField<String>(
+                      value: newReservation['status'] as String,
+                      decoration: const InputDecoration(
+                        labelText: 'Status',
+                        isDense: true,
+                      ),
+                      items: ['Pending', 'Confirmed', 'Completed']
+                          .map((status) => DropdownMenuItem(
+                                value: status,
+                                child: Text(status),
+                              ))
+                          .toList(),
+                      onChanged: (value) {
+                        if (value != null) {
+                          setState(() {
+                            newReservation['status'] = value;
+                          });
+                        }
+                      },
+                    ),
+                    const SizedBox(height: 16),
+                    TextField(
+                      controller: amountController,
+                      decoration: const InputDecoration(
+                        labelText: 'Amount',
+                        prefixText: '\$',
+                        isDense: true,
+                      ),
+                      keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                      onChanged: (value) {
+                        newReservation['amount'] = double.tryParse(value) ?? 0.0;
+                      },
+                    ),
+                  ],
+                ),
+              ),
+              actions: [
+                TextButton(
+                  onPressed: () => Navigator.of(context).pop(),
+                  child: const Text('Cancel'),
+                ),
+                FilledButton(
+                  onPressed: () {
+                    if (nameController.text.isEmpty) {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(
+                          content: Text('Please enter a customer name'),
+                        ),
+                      );
+                      return;
+                    }
+                    setState(() {
+                      reservations.add(newReservation);
+                    });
+                    Navigator.of(context).pop();
+                    // Refresh the main screen
+                    this.setState(() {});
+                  },
+                  child: const Text('Add'),
+                ),
+              ],
+            );
+          },
+        );
+      },
+    );
+  }
+
   void _showReservationDetails(Map<String, dynamic> reservation) {
     bool isEditing = false;
     final editedReservation = Map<String, dynamic>.from(reservation);
     final TextEditingController paymentAmountController = TextEditingController(
-      text: editedReservation['paymentAmount']?.toString() ?? '0.00'
+      text: (editedReservation['paymentAmount'] ?? 0.00).toString(),
     );
     final TextEditingController foodAmountController = TextEditingController(
-      text: editedReservation['foodAmount']?.toString() ?? '0.00'
+      text: (editedReservation['foodAmount'] ?? 0.00).toString(),
     );
 
     showDialog(
@@ -279,9 +408,9 @@ class _DashboardScreenState extends State<DashboardScreen> {
                 children: [
                   CircleAvatar(
                     radius: 16,
-                    backgroundColor: _getStatusColor(editedReservation['status']),
+                    backgroundColor: _getStatusColor(editedReservation['status'] as String),
                     child: Text(
-                      editedReservation['customerName'][0],
+                      (editedReservation['customerName'] as String)[0],
                       style: const TextStyle(color: Colors.white),
                     ),
                   ),
@@ -296,18 +425,18 @@ class _DashboardScreenState extends State<DashboardScreen> {
                   children: [
                     _DetailItem(
                       title: 'ID',
-                      value: editedReservation['id'],
+                      value: editedReservation['id'] as String,
                     ),
                     _DetailItem(
                       title: 'Customer',
-                      value: editedReservation['customerName'],
+                      value: editedReservation['customerName'] as String,
                     ),
                     _DetailItem(
                       title: 'Status',
-                      value: editedReservation['status'],
+                      value: editedReservation['status'] as String,
                       customWidget: isEditing
                           ? DropdownButton<String>(
-                              value: editedReservation['status'],
+                              value: editedReservation['status'] as String,
                               items: ['Confirmed', 'Pending', 'Completed']
                                   .map((String value) {
                                 return DropdownMenuItem<String>(
@@ -323,32 +452,11 @@ class _DashboardScreenState extends State<DashboardScreen> {
                                 }
                               },
                             )
-                          : Container(
-                              padding: const EdgeInsets.symmetric(
-                                  horizontal: 8, vertical: 4),
-                              decoration: BoxDecoration(
-                                color: _getStatusColor(editedReservation['status'])
-                                    .withOpacity(0.1),
-                                borderRadius: BorderRadius.circular(12),
-                                border: Border.all(
-                                  color:
-                                      _getStatusColor(editedReservation['status']),
-                                  width: 1,
-                                ),
-                              ),
-                              child: Text(
-                                editedReservation['status'],
-                                style: TextStyle(
-                                  color:
-                                      _getStatusColor(editedReservation['status']),
-                                  fontWeight: FontWeight.w500,
-                                ),
-                              ),
-                            ),
+                          : null,
                     ),
                     _DetailItem(
                       title: 'Login Date',
-                      value: editedReservation['loginAt'] ?? 'Not set',
+                      value: editedReservation['loginAt']?.toString() ?? 'Not set',
                       customWidget: isEditing
                           ? TextButton.icon(
                               icon: const Icon(Icons.calendar_today),
@@ -371,7 +479,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                     ),
                     _DetailItem(
                       title: 'Logout Date',
-                      value: editedReservation['logoutAt'] ?? 'Not set',
+                      value: editedReservation['logoutAt']?.toString() ?? 'Not set',
                       customWidget: isEditing
                           ? TextButton.icon(
                               icon: const Icon(Icons.calendar_today),
@@ -765,6 +873,12 @@ class _DashboardScreenState extends State<DashboardScreen> {
                                     ? Theme.of(context).colorScheme.primaryContainer
                                     : null,
                               ),
+                            ),
+                            const SizedBox(width: 16),
+                            FilledButton.icon(
+                              icon: const Icon(Icons.add),
+                              label: const Text('New Reservation'),
+                              onPressed: _showAddReservationDialog,
                             ),
                           ],
                         ),
