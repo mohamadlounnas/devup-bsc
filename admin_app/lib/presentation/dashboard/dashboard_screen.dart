@@ -1,6 +1,9 @@
 import 'package:admin_app/main.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
+import 'package:shared/services/api_service.dart';
+import 'package:shared/models/models.dart';
+import 'package:provider/provider.dart';
 
 class DashboardScreen extends StatefulWidget {
   const DashboardScreen({Key? key}) : super(key: key);
@@ -24,6 +27,9 @@ class _DashboardScreenState extends State<DashboardScreen> {
   double? minAmount;
   double? maxAmount;
 
+  // Add a list to store reservations
+  List<Map<String, dynamic>> reservations = [];
+
   final List<MenuItem> menuItems = [
     MenuItem(icon: Icons.dashboard_outlined, label: 'Dashboard'),
     MenuItem(icon: Icons.people_outline, label: 'Users'),
@@ -31,29 +37,63 @@ class _DashboardScreenState extends State<DashboardScreen> {
     MenuItem(icon: Icons.settings_outlined, label: 'Settings'),
   ];
 
-  final List<Map<String, dynamic>> reservations = [
-    {
-      'id': '001',
-      'customerName': 'John Doe',
-      'date': '2024-02-15',
-      'status': 'Confirmed',
-      'amount': 150.00,
-    },
-    {
-      'id': '002',
-      'customerName': 'Jane Smith',
-      'date': '2024-02-16',
-      'status': 'Pending',
-      'amount': 200.00,
-    },
-    {
-      'id': '003',
-      'customerName': 'Mike Johnson',
-      'date': '2024-02-14',
-      'status': 'Completed',
-      'amount': 175.00,
-    },
-  ];
+  // Add initState to fetch reservations when the screen loads
+  @override
+  void initState() {
+    super.initState();
+    _loadReservations();
+  }
+
+  // Add method to load reservations
+  Future<void> _loadReservations() async {
+    try {
+      final apiService = Provider.of<ApiService>(context, listen: false);
+      final List<HostelReservation> hostelReservations =
+          await apiService.getHostelReservations();
+
+      // Create a map to store user details
+      final Map<String, User> users = {};
+
+      // Fetch user details for each unique userId
+      for (final reservation in hostelReservations) {
+        if (!users.containsKey(reservation.userId)) {
+          try {
+            users[reservation.userId] =
+                await apiService.getUser(reservation.userId);
+          } catch (e) {
+            print('Error fetching user ${reservation.userId}: $e');
+          }
+        }
+      }
+
+      setState(() {
+        reservations = hostelReservations
+            .map((reservation) => reservation.toJson())
+            .toList();
+      });
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Error loading reservations: ${e.toString()}'),
+            backgroundColor: Theme.of(context).colorScheme.error,
+          ),
+        );
+      }
+    }
+  }
+
+  // Add this helper method to convert status to display string
+  String _getStatusString(ReservationStatus status) {
+    switch (status) {
+      case ReservationStatus.pending:
+        return 'Pending';
+      case ReservationStatus.confirmed:
+        return 'Confirmed';
+      case ReservationStatus.completed:
+        return 'Completed';
+    }
+  }
 
   List<Map<String, dynamic>> get filteredReservations {
     return reservations.where((reservation) {
@@ -273,7 +313,9 @@ class _DashboardScreenState extends State<DashboardScreen> {
 
   void _showAddReservationDialog() {
     final newReservation = {
-      'id': (int.parse(reservations.last['id']) + 1).toString().padLeft(3, '0'),
+      'id': DateTime.now()
+          .millisecondsSinceEpoch
+          .toString(), // Temporary ID generation
       'customerName': '',
       'date': DateTime.now().toString().split(' ')[0],
       'status': 'Pending',
@@ -472,27 +514,51 @@ class _DashboardScreenState extends State<DashboardScreen> {
                     ),
                     _DetailItem(
                       title: 'Login Date',
-                      value:
-                          editedReservation['loginAt']?.toString() ?? 'Not set',
+                      value: editedReservation['loginAt'] != null
+                          ? DateFormat('yyyy-MM-dd HH:mm').format(
+                              DateTime.parse(editedReservation['loginAt']))
+                          : 'Not set',
                       customWidget: isEditing
                           ? TextButton.icon(
                               icon: const Icon(Icons.calendar_today),
-                              label: Text(editedReservation['loginAt']
-                                      ?.toString()
-                                      .split(' ')[0] ??
-                                  'Select Date'),
+                              label: Text(editedReservation['loginAt'] != null
+                                  ? DateFormat('yyyy-MM-dd').format(
+                                      DateTime.parse(
+                                          editedReservation['loginAt']))
+                                  : 'Select Date'),
                               onPressed: () async {
-                                final date = await showDatePicker(
+                                final DateTime? date = await showDatePicker(
                                   context: context,
-                                  initialDate: DateTime.now(),
+                                  initialDate:
+                                      editedReservation['loginAt'] != null
+                                          ? DateTime.parse(
+                                              editedReservation['loginAt'])
+                                          : DateTime.now(),
                                   firstDate: DateTime(2020),
                                   lastDate: DateTime(2025),
                                 );
                                 if (date != null) {
-                                  setState(() {
-                                    editedReservation['loginAt'] =
-                                        date.toIso8601String();
-                                  });
+                                  final TimeOfDay? time = await showTimePicker(
+                                    context: context,
+                                    initialTime: editedReservation['loginAt'] !=
+                                            null
+                                        ? TimeOfDay.fromDateTime(DateTime.parse(
+                                            editedReservation['loginAt']))
+                                        : TimeOfDay.now(),
+                                  );
+                                  if (time != null) {
+                                    setState(() {
+                                      final DateTime dateTime = DateTime(
+                                        date.year,
+                                        date.month,
+                                        date.day,
+                                        time.hour,
+                                        time.minute,
+                                      );
+                                      editedReservation['loginAt'] =
+                                          dateTime.toIso8601String();
+                                    });
+                                  }
                                 }
                               },
                             )
@@ -500,27 +566,52 @@ class _DashboardScreenState extends State<DashboardScreen> {
                     ),
                     _DetailItem(
                       title: 'Logout Date',
-                      value: editedReservation['logoutAt']?.toString() ??
-                          'Not set',
+                      value: editedReservation['logoutAt'] != null
+                          ? DateFormat('yyyy-MM-dd HH:mm').format(
+                              DateTime.parse(editedReservation['logoutAt']))
+                          : 'Not set',
                       customWidget: isEditing
                           ? TextButton.icon(
                               icon: const Icon(Icons.calendar_today),
-                              label: Text(editedReservation['logoutAt']
-                                      ?.toString()
-                                      .split(' ')[0] ??
-                                  'Select Date'),
+                              label: Text(editedReservation['logoutAt'] != null
+                                  ? DateFormat('yyyy-MM-dd').format(
+                                      DateTime.parse(
+                                          editedReservation['logoutAt']))
+                                  : 'Select Date'),
                               onPressed: () async {
-                                final date = await showDatePicker(
+                                final DateTime? date = await showDatePicker(
                                   context: context,
-                                  initialDate: DateTime.now(),
+                                  initialDate:
+                                      editedReservation['logoutAt'] != null
+                                          ? DateTime.parse(
+                                              editedReservation['logoutAt'])
+                                          : DateTime.now(),
                                   firstDate: DateTime(2020),
                                   lastDate: DateTime(2025),
                                 );
                                 if (date != null) {
-                                  setState(() {
-                                    editedReservation['logoutAt'] =
-                                        date.toIso8601String();
-                                  });
+                                  final TimeOfDay? time = await showTimePicker(
+                                    context: context,
+                                    initialTime: editedReservation[
+                                                'logoutAt'] !=
+                                            null
+                                        ? TimeOfDay.fromDateTime(DateTime.parse(
+                                            editedReservation['logoutAt']))
+                                        : TimeOfDay.now(),
+                                  );
+                                  if (time != null) {
+                                    setState(() {
+                                      final DateTime dateTime = DateTime(
+                                        date.year,
+                                        date.month,
+                                        date.day,
+                                        time.hour,
+                                        time.minute,
+                                      );
+                                      editedReservation['logoutAt'] =
+                                          dateTime.toIso8601String();
+                                    });
+                                  }
                                 }
                               },
                             )
