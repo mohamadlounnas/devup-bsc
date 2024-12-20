@@ -19,15 +19,27 @@ class Station {
   });
 }
 
+class Bus {
+  final String id;
+  final int delayMinutes; // Delay from first bus start time
+
+  Bus({
+    required this.id,
+    required this.delayMinutes,
+  });
+}
+
 class BusLine {
   final String name;
   final Color color;
   final List<Station> stations;
+  final List<Bus> buses; // Add buses to BusLine
 
   BusLine({
     required this.name,
     required this.color,
     required this.stations,
+    required this.buses,
   });
 
   List<LatLng> get stationPoints =>
@@ -65,6 +77,11 @@ class _MapPageState extends State<MapPage> with TickerProviderStateMixin {
     BusLine(
       name: 'Bus Line 1',
       color: Colors.blue,
+      buses: [
+        Bus(id: 'Bus 1A', delayMinutes: 0),
+        Bus(id: 'Bus 1B', delayMinutes: 15),
+        Bus(id: 'Bus 1C', delayMinutes: 30),
+      ],
       stations: [
         Station(
           name: '350 logment',
@@ -113,6 +130,10 @@ class _MapPageState extends State<MapPage> with TickerProviderStateMixin {
     BusLine(
       name: 'Bus Line 2',
       color: Colors.red,
+      buses: [
+        Bus(id: 'Bus 2A', delayMinutes: 0),
+        Bus(id: 'Bus 2B', delayMinutes: 20),
+      ],
       stations: [
         Station(
           name: 'UMBB',
@@ -159,40 +180,49 @@ class _MapPageState extends State<MapPage> with TickerProviderStateMixin {
   void _setupAnimations() {
     for (var busLine in busLines) {
       if (busRoutes.containsKey(busLine.name)) {
-        // Total duration in seconds (1 minute = 1 second in animation)
         final totalDuration = busLine.totalDuration;
 
-        _animationControllers[busLine.name] = AnimationController(
-          vsync: this,
-          duration: Duration(seconds: totalDuration),
-        )..repeat(reverse: true);
+        // Create animation controller and animation for each bus
+        for (var bus in busLine.buses) {
+          final controllerId = '${busLine.name}_${bus.id}';
 
-        // Create a sequence of animations for each segment with proportional durations
-        final List<TweenSequenceItem<double>> sequences = [];
-        double totalProgress = 0.0;
-
-        for (int i = 0; i < busLine.stations.length - 1; i++) {
-          // Calculate segment weight based on time to next station
-          final segmentWeight =
-              (busLine.stations[i].minutesToNextStation / totalDuration) * 100;
-
-          sequences.add(
-            TweenSequenceItem(
-              tween: Tween(
-                begin: totalProgress,
-                end: totalProgress +
-                    (busLine.stations[i].minutesToNextStation / totalDuration),
-              ).chain(CurveTween(curve: Curves.linear)),
-              weight: segmentWeight,
-            ),
+          _animationControllers[controllerId] = AnimationController(
+            vsync: this,
+            duration: Duration(seconds: totalDuration),
           );
 
-          totalProgress +=
-              busLine.stations[i].minutesToNextStation / totalDuration;
-        }
+          final List<TweenSequenceItem<double>> sequences = [];
+          double totalProgress = 0.0;
 
-        _animations[busLine.name] = TweenSequence(sequences)
-            .animate(_animationControllers[busLine.name]!);
+          for (int i = 0; i < busLine.stations.length - 1; i++) {
+            final segmentWeight =
+                (busLine.stations[i].minutesToNextStation / totalDuration) *
+                    100;
+
+            sequences.add(
+              TweenSequenceItem(
+                tween: Tween(
+                  begin: totalProgress,
+                  end: totalProgress +
+                      (busLine.stations[i].minutesToNextStation /
+                          totalDuration),
+                ).chain(CurveTween(curve: Curves.linear)),
+                weight: segmentWeight,
+              ),
+            );
+
+            totalProgress +=
+                busLine.stations[i].minutesToNextStation / totalDuration;
+          }
+
+          _animations[controllerId] = TweenSequence(sequences)
+              .animate(_animationControllers[controllerId]!);
+
+          // Start animation with delay
+          Future.delayed(Duration(seconds: bus.delayMinutes), () {
+            _animationControllers[controllerId]!.repeat(reverse: true);
+          });
+        }
       }
     }
   }
@@ -299,11 +329,332 @@ class _MapPageState extends State<MapPage> with TickerProviderStateMixin {
     }
   }
 
+  String _getNextBusTime(BusLine busLine, Station station,
+      {bool isForward = true}) {
+    // For first and last stations, we'll calculate both directions and use the maximum
+    bool isFirstStation = station.order == 1;
+    bool isLastStation = station.order == busLine.stations.length;
+
+    if (isFirstStation || isLastStation) {
+      int forwardTime = _calculateTimeForDirection(busLine, station, true);
+      int reverseTime = _calculateTimeForDirection(busLine, station, false);
+
+      // For first and last stations, use the maximum time
+      int maxTime = max(forwardTime, reverseTime);
+      return maxTime == 999999 ? '' : '$maxTime min';
+    }
+
+    // For other stations, calculate time based on direction
+    return '${_calculateTimeForDirection(busLine, station, isForward)} min';
+  }
+
+  int _calculateTimeForDirection(
+      BusLine busLine, Station station, bool isForward) {
+    int shortestTime = 999999;
+
+    // Check each bus in the line
+    for (var bus in busLine.buses) {
+      final controllerId = '${busLine.name}_${bus.id}';
+      final controller = _animationControllers[controllerId];
+      final animation = _animations[controllerId];
+
+      if (controller == null || animation == null) continue;
+
+      final totalDuration = busLine.totalDuration;
+      double timeToStation = 0;
+      int stationIndex = busLine.stations.indexOf(station);
+
+      if (isForward) {
+        // Calculate time to reach this station from start
+        for (int i = 0; i < stationIndex; i++) {
+          timeToStation += busLine.stations[i].minutesToNextStation;
+        }
+
+        // If we've passed this station, add full route time
+        if (animation.value * totalDuration > timeToStation) {
+          timeToStation += totalDuration;
+        }
+      } else {
+        // Calculate time from end to this station
+        for (int i = busLine.stations.length - 2; i >= stationIndex; i--) {
+          timeToStation += busLine.stations[i].minutesToNextStation;
+        }
+
+        // If we've passed this station in reverse, add full route time
+        if ((1 - animation.value) * totalDuration > timeToStation) {
+          timeToStation += totalDuration;
+        }
+      }
+
+      final minutes = (timeToStation -
+              (isForward ? animation.value : (1 - animation.value)) *
+                  totalDuration)
+          .round();
+      if (minutes < shortestTime) {
+        shortestTime = minutes;
+      }
+    }
+
+    return shortestTime;
+  }
+
+  Widget _buildTimingRow(BusLine busLine, Station station) {
+    // Check if any animations are ready
+    bool hasReadyAnimations = false;
+    for (var bus in busLine.buses) {
+      final controllerId = '${busLine.name}_${bus.id}';
+      if (_animationControllers[controllerId] != null &&
+          _animations[controllerId] != null) {
+        hasReadyAnimations = true;
+        break;
+      }
+    }
+
+    if (!hasReadyAnimations) {
+      return const SizedBox.shrink();
+    }
+
+    bool isFirstStation = station.order == 1;
+    bool isLastStation = station.order == busLine.stations.length;
+
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+      children: [
+        // Forward direction
+        Expanded(
+          child: Row(
+            children: [
+              Icon(Icons.arrow_forward, size: 14, color: busLine.color),
+              const SizedBox(width: 4),
+              AnimatedBuilder(
+                animation: Listenable.merge(
+                  busLine.buses
+                      .map((bus) =>
+                          _animationControllers['${busLine.name}_${bus.id}'])
+                      .whereType<AnimationController>()
+                      .toList(),
+                ),
+                builder: (context, _) {
+                  String time =
+                      _getNextBusTime(busLine, station, isForward: true);
+                  // For first or last station, show the same time in both directions
+                  if (isFirstStation || isLastStation) {
+                    time = _getNextBusTime(busLine, station,
+                        isForward:
+                            true); // The isForward parameter doesn't matter here as we take max
+                  }
+                  return Text(
+                    time,
+                    style: TextStyle(
+                      color: busLine.color,
+                      fontWeight: FontWeight.w500,
+                    ),
+                  );
+                },
+              ),
+            ],
+          ),
+        ),
+        // Reverse direction
+        Expanded(
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.end,
+            children: [
+              AnimatedBuilder(
+                animation: Listenable.merge(
+                  busLine.buses
+                      .map((bus) =>
+                          _animationControllers['${busLine.name}_${bus.id}'])
+                      .whereType<AnimationController>()
+                      .toList(),
+                ),
+                builder: (context, _) {
+                  String time =
+                      _getNextBusTime(busLine, station, isForward: false);
+                  // For first or last station, show the same time in both directions
+                  if (isFirstStation || isLastStation) {
+                    time = _getNextBusTime(busLine, station,
+                        isForward:
+                            true); // The isForward parameter doesn't matter here as we take max
+                  }
+                  return Text(
+                    time,
+                    style: TextStyle(
+                      color: busLine.color,
+                      fontWeight: FontWeight.w500,
+                    ),
+                  );
+                },
+              ),
+              const SizedBox(width: 4),
+              Icon(Icons.arrow_back, size: 14, color: busLine.color),
+            ],
+          ),
+        ),
+      ],
+    );
+  }
+
+  // Update the table in the drawer
+  Widget _buildStationTable(BusLine busLine) {
+    return Table(
+      border: TableBorder.all(
+        color: Colors.grey.shade300,
+        width: 1,
+      ),
+      columnWidths: const {
+        0: FlexColumnWidth(3), // More space for station names
+        1: FlexColumnWidth(4), // More space for timing info
+      },
+      children: [
+        TableRow(
+          decoration: BoxDecoration(
+            color: busLine.color.withOpacity(0.1),
+          ),
+          children: [
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+              child: Text(
+                'Station',
+                style: TextStyle(
+                  fontWeight: FontWeight.bold,
+                  fontSize: 16,
+                  color: busLine.color,
+                ),
+              ),
+            ),
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceAround,
+                children: [
+                  Row(
+                    children: [
+                      Icon(Icons.arrow_forward, size: 18, color: busLine.color),
+                      const SizedBox(width: 8),
+                      Text(
+                        'Going',
+                        style: TextStyle(
+                          fontWeight: FontWeight.bold,
+                          fontSize: 16,
+                          color: busLine.color,
+                        ),
+                      ),
+                    ],
+                  ),
+                  Row(
+                    children: [
+                      Text(
+                        'Return',
+                        style: TextStyle(
+                          fontWeight: FontWeight.bold,
+                          fontSize: 16,
+                          color: busLine.color,
+                        ),
+                      ),
+                      const SizedBox(width: 8),
+                      Icon(Icons.arrow_back, size: 18, color: busLine.color),
+                    ],
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
+        for (var station in busLine.stations)
+          TableRow(
+            decoration: BoxDecoration(
+              color: Colors.white,
+            ),
+            children: [
+              Padding(
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                child: Text(
+                  station.name,
+                  style: const TextStyle(
+                    fontSize: 14,
+                  ),
+                ),
+              ),
+              Padding(
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                child: _buildTimingRow(busLine, station),
+              ),
+            ],
+          ),
+      ],
+    );
+  }
+
+  // Update the drawer content
+  Widget _buildDrawerContent() {
+    return Column(
+      children: [
+        Container(
+          padding: const EdgeInsets.all(16),
+          color: Colors.grey.shade100,
+          child: const Row(
+            children: [
+              Icon(Icons.schedule),
+              SizedBox(width: 16),
+              Text(
+                'Bus Schedule',
+                style: TextStyle(
+                  fontSize: 20,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+            ],
+          ),
+        ),
+        Expanded(
+          child: SingleChildScrollView(
+            padding: const EdgeInsets.all(16),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                for (var busLine in busLines) ...[
+                  Container(
+                    padding: const EdgeInsets.symmetric(vertical: 8),
+                    child: Row(
+                      children: [
+                        Icon(Icons.directions_bus, color: busLine.color),
+                        const SizedBox(width: 8),
+                        Text(
+                          busLine.name,
+                          style: TextStyle(
+                            fontWeight: FontWeight.bold,
+                            color: busLine.color,
+                            fontSize: 16,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  _buildStationTable(busLine),
+                  const SizedBox(height: 24),
+                ],
+              ],
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
         title: const Text('Boumerdes Transport Lines'),
+      ),
+      endDrawer: Drawer(
+        width: MediaQuery.of(context).size.width * 0.85, // 85% of screen width
+        child: SafeArea(
+          child: _buildDrawerContent(),
+        ),
       ),
       body: Stack(
         children: [
@@ -321,34 +672,60 @@ class _MapPageState extends State<MapPage> with TickerProviderStateMixin {
                     ..._staticMarkers,
                     // Only animate bus markers
                     for (var busLine in busLines)
-                      if (busRoutes.containsKey(busLine.name) &&
-                          _animations.containsKey(busLine.name))
-                        Marker(
-                          point: _calculatePosition(
-                            busRoutes[busLine.name]!,
-                            _animations[busLine.name]!.value,
-                            busLine.name,
-                          ),
-                          width: 30,
-                          height: 30,
-                          child: RepaintBoundary(
-                            child: Container(
-                              decoration: BoxDecoration(
-                                color: busLine.color,
-                                shape: BoxShape.circle,
-                                border: Border.all(
-                                  color: Colors.white,
-                                  width: 2,
+                      if (busRoutes.containsKey(busLine.name))
+                        for (var bus in busLine.buses)
+                          if (_animations
+                              .containsKey('${busLine.name}_${bus.id}'))
+                            Marker(
+                              point: _calculatePosition(
+                                busRoutes[busLine.name]!,
+                                _animations['${busLine.name}_${bus.id}']!.value,
+                                busLine.name,
+                              ),
+                              width: 30,
+                              height: 30,
+                              child: RepaintBoundary(
+                                child: Stack(
+                                  children: [
+                                    Container(
+                                      decoration: BoxDecoration(
+                                        color: busLine.color,
+                                        shape: BoxShape.circle,
+                                        border: Border.all(
+                                          color: Colors.white,
+                                          width: 2,
+                                        ),
+                                      ),
+                                      child: const Icon(
+                                        Icons.directions_bus,
+                                        color: Colors.white,
+                                        size: 20,
+                                      ),
+                                    ),
+                                    Positioned(
+                                      right: 0,
+                                      bottom: 0,
+                                      child: Container(
+                                        padding: const EdgeInsets.all(2),
+                                        decoration: const BoxDecoration(
+                                          color: Colors.white,
+                                          shape: BoxShape.circle,
+                                        ),
+                                        child: Text(
+                                          bus.id.split(' ')[
+                                              1], // Show bus number (1A, 1B, etc.)
+                                          style: TextStyle(
+                                            fontSize: 8,
+                                            fontWeight: FontWeight.bold,
+                                            color: busLine.color,
+                                          ),
+                                        ),
+                                      ),
+                                    ),
+                                  ],
                                 ),
                               ),
-                              child: const Icon(
-                                Icons.directions_bus,
-                                color: Colors.white,
-                                size: 20,
-                              ),
                             ),
-                          ),
-                        ),
                   ];
 
                   return FlutterMap(
@@ -435,6 +812,20 @@ class _MapPageState extends State<MapPage> with TickerProviderStateMixin {
   }
 
   Marker _buildMarker(LatLng point, String label, Color color) {
+    // Find which bus line and station this marker belongs to
+    BusLine? busLine;
+    Station? station;
+    for (var line in busLines) {
+      for (var s in line.stations) {
+        if (s.location == point) {
+          busLine = line;
+          station = s;
+          break;
+        }
+      }
+      if (station != null) break;
+    }
+
     return Marker(
       point: point,
       width: 100,
@@ -454,16 +845,32 @@ class _MapPageState extends State<MapPage> with TickerProviderStateMixin {
                 borderRadius: BorderRadius.circular(4),
                 border: Border.all(color: color, width: 1),
               ),
-              child: Text(
-                label,
-                style: TextStyle(
-                  fontWeight: FontWeight.bold,
-                  fontSize: 12,
-                  color: color,
-                ),
-                textAlign: TextAlign.center,
-                overflow: TextOverflow.ellipsis,
-                maxLines: 2,
+              child: Column(
+                children: [
+                  Text(
+                    label,
+                    style: TextStyle(
+                      fontWeight: FontWeight.bold,
+                      fontSize: 12,
+                      color: color,
+                    ),
+                    textAlign: TextAlign.center,
+                    overflow: TextOverflow.ellipsis,
+                    maxLines: 2,
+                  ),
+                  if (busLine != null &&
+                      station != null &&
+                      _animationControllers[busLine.name] != null &&
+                      _animations[busLine.name] != null)
+                    Text(
+                      _getNextBusTime(busLine, station),
+                      style: TextStyle(
+                        fontSize: 10,
+                        color: color,
+                        fontWeight: FontWeight.w500,
+                      ),
+                    ),
+                ],
               ),
             ),
             const SizedBox(height: 2),
