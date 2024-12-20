@@ -91,10 +91,10 @@ class _DashboardScreenState extends State<DashboardScreen> {
     switch (status) {
       case ReservationStatus.pending:
         return 'Pending';
-      case ReservationStatus.confirmed:
-        return 'Confirmed';
-      case ReservationStatus.completed:
-        return 'Completed';
+      case ReservationStatus.approved:
+        return 'Approved';
+      case ReservationStatus.cancelled:
+        return 'Canecelled';
     }
   }
 

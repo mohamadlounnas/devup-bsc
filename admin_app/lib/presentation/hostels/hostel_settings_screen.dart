@@ -123,6 +123,17 @@ class _HostelSettingsScreenState extends State<HostelSettingsScreen> {
 
               // Basic Information Card
               Card(
+                margin: const EdgeInsets.all(24),
+                color: Theme.of(context).colorScheme.surface.withOpacity(0.5),
+                elevation: 0,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(24),
+                  side: BorderSide(
+                    color: Colors.grey.withOpacity(0.5),
+                    width: 1,
+                  ),
+                ),
+                clipBehavior: Clip.antiAlias,
                 child: Padding(
                   padding: const EdgeInsets.all(24),
                   child: Column(
@@ -176,6 +187,17 @@ class _HostelSettingsScreenState extends State<HostelSettingsScreen> {
 
               // Capacity and Status Card
               Card(
+                margin: const EdgeInsets.all(24),
+                color: Theme.of(context).colorScheme.surface.withOpacity(0.5),
+                elevation: 0,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(24),
+                  side: BorderSide(
+                    color: Colors.grey.withOpacity(0.5),
+                    width: 1,
+                  ),
+                ),
+                clipBehavior: Clip.antiAlias,
                 child: Padding(
                   padding: const EdgeInsets.all(24),
                   child: Column(
@@ -229,6 +251,17 @@ class _HostelSettingsScreenState extends State<HostelSettingsScreen> {
 
               // Location Card
               Card(
+                margin: const EdgeInsets.all(24),
+                color: Theme.of(context).colorScheme.surface.withOpacity(0.5),
+                elevation: 0,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(24),
+                  side: BorderSide(
+                    color: Colors.grey.withOpacity(0.5),
+                    width: 1,
+                  ),
+                ),
+                clipBehavior: Clip.antiAlias,
                 child: Padding(
                   padding: const EdgeInsets.all(24),
                   child: Column(

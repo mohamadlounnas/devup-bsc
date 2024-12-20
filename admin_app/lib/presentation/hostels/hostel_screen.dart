@@ -6,6 +6,7 @@ import 'package:flutter/material.dart';
 import 'package:iconsax/iconsax.dart';
 import 'package:intl/intl.dart';
 import 'package:lib/widgets/flex_table.dart';
+import 'package:pocketbase/pocketbase.dart';
 import 'package:shared/models/models.dart';
 import 'package:admin_app/main.dart';
 
@@ -17,331 +18,282 @@ class ReservationScreen extends StatefulWidget {
 }
 
 class _ReservationScreenState extends State<ReservationScreen> {
-  List<User> _users = [];
-  bool _loadingUsers = false;
+  final _searchController = TextEditingController();
+  String _searchQuery = '';
 
   @override
-  void initState() {
-    super.initState();
-    _loadUsers();
-  }
-
-  Future<void> _loadUsers() async {
-    try {
-      setState(() => _loadingUsers = true);
-
-      final records = await pb.collection('users').getFullList(
-            filter: 'type = "client"',
-            sort: '-created',
-          );
-      records.forEach((e) {
-        return e.data.addAll(
-          {
-            'created': e.created,
-            'updated': e.updated,
-            'id': e.id,
-          },
-        );
-      });
-
-      setState(() {
-        _users = records.map((record) => User.fromJson(record.data)).toList();
-      });
-    } catch (e) {
-      print('Error loading users: $e');
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text('Error loading users: $e'),
-          backgroundColor: Theme.of(context).colorScheme.error,
-        ),
-      );
-    } finally {
-      setState(() => _loadingUsers = false);
-    }
+  void dispose() {
+    _searchController.dispose();
+    super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
-    return Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-      Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-        children: [
-          Text(
-            "Reservations",
-            style: Theme.of(context).textTheme.titleLarge!,
-          ),
-          FilledButton.icon(
-            icon: const Icon(FeatherIcons.shoppingBag),
-            onPressed: _loadingUsers
-                ? null // Disable button while loading
-                : () async {
-                    showDialog(
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Padding(
+          padding: const EdgeInsets.all(8.0),
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Text(
+                "All Reservations",
+                style: Theme.of(context).textTheme.titleLarge,
+              ),
+              FilledButton.icon(
+                icon: const Icon(Icons.add),
+                onPressed: () {
+                  showDialog(
                       context: context,
                       builder: (context) {
-                        return ReservationDialog(
-                          reservation: null,
-                          users: _users,
+                        return Dialog(
+                          child: CreateReservationDialog(),
                         );
+                      });
+                },
+                label: const Text('Add Reservation'),
+              ),
+            ],
+          ),
+        ),
+        const SizedBox(height: 16),
+        // Search Bar
+        SizedBox(
+          height: 35,
+          width: 400,
+          child: TextField(
+            controller: _searchController,
+            onChanged: (value) => setState(() => _searchQuery = value),
+            decoration: InputDecoration(
+              label: const Text("Search"),
+              prefixIcon: const Icon(Iconsax.search_favorite_1),
+              border: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(20),
+              ),
+              suffixIcon: _searchQuery.isNotEmpty
+                  ? IconButton(
+                      icon: const Icon(Icons.clear),
+                      onPressed: () {
+                        _searchController.clear();
+                        setState(() => _searchQuery = '');
                       },
-                    );
-                  },
-            label: _loadingUsers
-                ? const SizedBox(
-                    width: 16,
-                    height: 16,
-                    child: CircularProgressIndicator(strokeWidth: 2),
-                  )
-                : const Text('Add Reservation'),
-          )
-        ],
-      ),
-      SizedBox(
-        height: 3,
-      ),
-      SizedBox(
-        height: 35,
-        width: 400,
-        child: TextField(
-          onSubmitted: (value) {
-            // showDialog(
-            //     context: context,
-            //     builder: (context) {
-            //       return Dialog(
-            //         child: CreateReservationDialog(),
-            //       );
-            //     });
-          },
-          controller: TextEditingController(),
-          decoration: InputDecoration(
-            filled: true,
-            label: Text("Search"),
-            prefixIcon: Icon(Iconsax.search_favorite_1),
-            border: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(20),
+                    )
+                  : null,
             ),
           ),
         ),
-      ),
-      FlexTable(
-        selectable: false,
-        scrollable: true,
-        configs: const [
-          FlexTableItemConfig.square(48),
-          FlexTableItemConfig.flex(1),
-          FlexTableItemConfig.flex(1),
-          FlexTableItemConfig.flex(1),
-          FlexTableItemConfig.flex(1),
-          FlexTableItemConfig.square(40),
-        ],
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            FlexTableItem(children: [
-              SizedBox(),
-              Text(
-                'reservation id',
-              ),
-              Text(
-                'price',
-              ),
-              Text("Supplier"),
-              Text(
-                'Updated At',
-              ),
-              Icon(Iconsax.arrow_bottom),
-            ]),
-            FutureBuilder(
-                future: ReservationService.instance.getReservations(),
-                builder: (context, snapshot) {
-                  if (snapshot.connectionState == ConnectionState.waiting) {
-                    return CircularProgressIndicator();
-                  }
+        const SizedBox(height: 16),
+        // Reservations Table
+        Expanded(
+          child: FutureBuilder<RecordModel>(
+            future: pb.collection('hostels').getFirstListItem(
+                'admin = "${pb.authStore.model!.id}"',
+                expand: 'reservations,reservations.user'),
+            builder: (context, snapshot) {
+              if (snapshot.connectionState == ConnectionState.waiting) {
+                return const LinearProgressIndicator();
+              }
 
-                  if (snapshot.hasError) {
-                    return Center(
-                      child: Text('Something accured'),
-                    );
-                  }
+              if (snapshot.hasError) {
+                return Center(
+                  child: Text('Error: ${snapshot.error}'),
+                );
+              }
 
-                  List<HostelReservation> reservations = snapshot.data!;
-                  return Column(
+              final reservationsList =
+                  snapshot.data?.expand['reservations'] as List?;
+              final reservations =
+                  reservationsList?.map((item) => item as RecordModel).toList();
+
+              if (reservations == null || reservations.isEmpty) {
+                return Center(
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
                     children: [
-                      for (int i = 0; i < reservations.length; i++)
-                        InkWell(
-                          splashColor: Theme.of(context)
-                              .colorScheme
-                              .primary
-                              .withOpacity(0.3),
-                          highlightColor: Theme.of(context)
-                              .colorScheme
-                              .primary
-                              .withOpacity(0.1),
-                          focusColor: Theme.of(context)
-                              .colorScheme
-                              .primary
-                              .withOpacity(0.1),
-                          hoverColor: Theme.of(context)
-                              .colorScheme
-                              .primary
-                              .withOpacity(0.1),
-                          borderRadius: BorderRadius.circular(8),
-                          onTap: () {
-                            showDialog(
-                              context: context,
-                              builder: (context) => ReservationDetailsDialog(
-                                reservation: reservations[i],
-                              ),
-                            );
-                          },
-                          child: SizedBox(
-                            child: Padding(
-                              padding: const EdgeInsets.all(7.0),
-                              child: FlexTableItem(children: [
-                                Container(
-                                  // when desibled show red circle
-                                  width: 45,
-                                  height: 45,
-                                  decoration: BoxDecoration(
-                                    shape: BoxShape.circle,
-                                    border: Border.all(
-                                        color: Theme.of(context)
-                                            .colorScheme
-                                            .primary,
-                                        width: 0.5),
-                                  ),
-                                  child: Padding(
-                                    padding: const EdgeInsets.all(2),
-                                    child: CircleAvatar(
-                                      backgroundColor: Colors.green,
-                                      radius: 50,
-                                    ),
-                                  ),
-                                ),
-                                Text(
-                                  reservations[i].id.toString(),
-                                  maxLines: 1,
-                                  overflow: TextOverflow.ellipsis,
-                                ),
-                                Text(
-                                  reservations[i].foodReceipt.toString(),
-                                  style: Theme.of(context)
-                                      .textTheme
-                                      .bodyMedium!
-                                      .copyWith(),
-                                  maxLines: 1,
-                                  overflow: TextOverflow.ellipsis,
-                                ),
-                                Row(
-                                  children: [
-                                    Container(
-                                      // when desibled show red circle
-                                      width: 40,
-                                      height: 40,
-                                      decoration: BoxDecoration(
-                                        shape: BoxShape.circle,
-                                        border: Border.all(
-                                            color: Theme.of(context)
-                                                .colorScheme
-                                                .primary,
-                                            width: 1),
-                                      ),
-                                      child: Padding(
-                                        padding: const EdgeInsets.all(1),
-                                        child: CircleAvatar(
-                                          child: Text(
-                                            'instagram',
-                                            style: TextStyle(
-                                              fontSize: 15,
-                                              fontWeight: FontWeight.bold,
-                                              color: Theme.of(context)
-                                                  .colorScheme
-                                                  .onSurface
-                                                  .withOpacity(0.5),
-                                            ),
-                                          ),
-                                          // child: profile?.photoUrl.nullIfEmpty == null ? null : Text((profile!.displayName.nullIfEmpty ?? "?")[0].toUpperCase()),
-                                        ),
-                                      ),
-                                    ),
-                                    const SizedBox(
-                                      width: 4,
-                                    ),
-                                    Column(
-                                      crossAxisAlignment:
-                                          CrossAxisAlignment.start,
-                                      mainAxisAlignment:
-                                          MainAxisAlignment.spaceBetween,
-                                      children: [
-                                        Text(
-                                          'safe',
-                                          maxLines: 1,
-                                          overflow: TextOverflow.ellipsis,
-                                          style: Theme.of(context)
-                                              .textTheme
-                                              .bodySmall!
-                                              .copyWith(),
-                                        ),
-                                        const SizedBox(
-                                          height: 3,
-                                        ),
-                                        Text(
-                                          'beef',
-                                          style: Theme.of(context) //
-                                              .textTheme
-                                              .bodySmall!
-                                              .copyWith(color: Colors.grey),
-                                          maxLines: 1,
-                                          overflow: TextOverflow.ellipsis,
-                                        ),
-                                      ],
-                                    ),
-                                  ],
-                                ),
-                                Text(
-                                  'tt',
-                                  maxLines: 1,
-                                  style: Theme.of(context)
-                                      .textTheme
-                                      .bodyMedium!
-                                      .copyWith(),
-                                  overflow: TextOverflow.ellipsis,
-                                ),
-                                PopupMenuButton(
-                                  itemBuilder: (context) => [
-                                    PopupMenuItem(
-                                      onTap: () async {},
-                                      child: ListTile(
-                                        title: Text("Edit"),
-                                        leading: Icon(
-                                          Iconsax.edit,
-                                          color: Theme.of(context)
-                                              .colorScheme
-                                              .surfaceContainerHigh,
-                                        ),
-                                      ),
-                                    ),
-                                    // PopupMenuItem(
-                                    //   child: ListTile(
-                                    //     title:
-                                    //         Text("Delete".tr()),
-                                    //     leading:
-                                    //         Icon(Iconsax.trash),
-                                    //   ),
-                                    // )
-                                  ],
-                                )
-                              ]),
+                      Icon(
+                        Icons.hotel_outlined,
+                        size: 64,
+                        color: Theme.of(context).colorScheme.secondary,
+                      ),
+                      const SizedBox(height: 16),
+                      Text(
+                        'No reservations found',
+                        style: Theme.of(context).textTheme.titleLarge,
+                      ),
+                    ],
+                  ),
+                );
+              }
+
+              return FlexTable(
+                selectable: false,
+                scrollable: true,
+                configs: const [
+                  FlexTableItemConfig.square(48),
+                  FlexTableItemConfig.flex(2), // User
+                  FlexTableItemConfig.flex(1), // Status
+                  FlexTableItemConfig.flex(1), // Check-in
+                  FlexTableItemConfig.flex(1), // Check-out
+                  FlexTableItemConfig.flex(1), // Payment
+                  FlexTableItemConfig.square(40),
+                ],
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    // Header
+                    FlexTableItem(
+                      children: [
+                        const SizedBox(),
+                        Text(
+                          'User',
+                          style: Theme.of(context).textTheme.titleSmall,
+                        ),
+                        Text(
+                          'Status',
+                          style: Theme.of(context).textTheme.titleSmall,
+                        ),
+                        Text(
+                          'Check-in',
+                          style: Theme.of(context).textTheme.titleSmall,
+                        ),
+                        Text(
+                          'Check-out',
+                          style: Theme.of(context).textTheme.titleSmall,
+                        ),
+                        Text(
+                          'Payment',
+                          style: Theme.of(context).textTheme.titleSmall,
+                        ),
+                        const Icon(Iconsax.arrow_bottom),
+                      ],
+                    ),
+                    // Reservations
+                    ...reservations.map((reservation) {
+                      final userRecord = (reservation.expand['user'] as List)
+                          .first as RecordModel;
+                      return InkWell(
+                        onTap: () {
+                          showDialog(
+                            context: context,
+                            builder: (context) => ReservationDetailsDialog(
+                              reservation: HostelReservation.fromJson(
+                                  reservation.toJson()),
                             ),
+                          );
+                        },
+                        child: Padding(
+                          padding: const EdgeInsets.all(7.0),
+                          child: FlexTableItem(
+                            children: [
+                              // User Avatar
+                              Container(
+                                width: 45,
+                                height: 45,
+                                decoration: BoxDecoration(
+                                  shape: BoxShape.circle,
+                                  border: Border.all(
+                                    color:
+                                        Theme.of(context).colorScheme.primary,
+                                    width: 0.5,
+                                  ),
+                                ),
+                                child: Padding(
+                                  padding: const EdgeInsets.all(2),
+                                  child: CircleAvatar(
+                                    backgroundImage:
+                                        userRecord.data['avatar'] != null
+                                            ? NetworkImage(
+                                                'https://bsc-pocketbase.mtdjari.com/api/files/users/${userRecord.id}/${userRecord.data['avatar']}',
+                                              )
+                                            : null,
+                                    child: userRecord.data['avatar'] == null
+                                        ? Text(
+                                            userRecord.data['firstname'][0]
+                                                .toUpperCase(),
+                                          )
+                                        : null,
+                                  ),
+                                ),
+                              ),
+                              // User Name
+                              Text(
+                                '${userRecord.data['firstname']} ${userRecord.data['lastname']}',
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                              ),
+                              // Status
+                              Container(
+                                padding: const EdgeInsets.symmetric(
+                                    horizontal: 8, vertical: 4),
+                                decoration: BoxDecoration(
+                                  color: _getStatusColor(
+                                      reservation.data['status']),
+                                  borderRadius: BorderRadius.circular(12),
+                                ),
+                                child: Text(
+                                  reservation.data['status'],
+                                  style: const TextStyle(
+                                    color: Colors.white,
+                                    fontSize: 12,
+                                  ),
+                                ),
+                              ),
+                              // Check-in
+                              Text(
+                                DateFormat('MMM d, y').format(
+                                  DateTime.parse(reservation.data['login_at']),
+                                ),
+                              ),
+                              // Check-out
+                              Text(
+                                DateFormat('MMM d, y').format(
+                                  DateTime.parse(reservation.data['logout_at']),
+                                ),
+                              ),
+                              // Payment Amount
+                              Text(
+                                '\$${reservation.data['payment_amount']}',
+                                style: Theme.of(context)
+                                    .textTheme
+                                    .bodyMedium!
+                                    .copyWith(
+                                      fontWeight: FontWeight.bold,
+                                    ),
+                              ),
+                              // Actions
+                              IconButton(
+                                icon: const Icon(Icons.more_vert),
+                                onPressed: () {
+                                  // TODO: Show actions menu
+                                },
+                              ),
+                            ],
                           ),
                         ),
-                      // Add Creating button
-                    ],
-                  );
-                }),
-          ],
+                      );
+                    }).toList(),
+                  ],
+                ),
+              );
+            },
+          ),
         ),
-      ),
-    ]);
+      ],
+    );
+  }
+
+  Color _getStatusColor(String status) {
+    switch (status.toLowerCase()) {
+      case 'pending':
+        return Colors.orange;
+      case 'approved':
+        return Colors.green;
+      case 'cancelled':
+        return Colors.red;
+      default:
+        return Colors.grey;
+    }
   }
 }
 
@@ -471,6 +423,7 @@ class _CreateReservationDialogState extends State<CreateReservationDialog> {
                   if (_formKey.currentState!.validate()) {
                     // Create reservation object and return
                     final reservation = HostelReservation(
+                      status: ReservationStatus.approved,
                       id: '', // Will be generated by backend
                       userId: '', // Should be provided by auth context
                       loginAt: _loginAt,

@@ -94,272 +94,363 @@ class _FacilitySettingsScreenState extends State<FacilitySettingsScreen> {
 
   @override
   Widget build(BuildContext context) {
+    if (_isLoading) {
+      return const Center(child: CircularProgressIndicator());
+    }
+
+    if (_facility == null) {
+      return const Center(child: Text('No facility found'));
+    }
+
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('Facility Settings'),
-      ),
-      body: _isLoading
-          ? const Center(child: CircularProgressIndicator())
-          : _facility == null
-              ? Center(
-                  child: Text(_error ?? 'No facility found'),
-                )
-              : AppContainer.md(
-                  child: SingleChildScrollView(
-                    padding: const EdgeInsets.all(16),
-                    child: Form(
-                      key: _formKey,
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          // Facility Image/Logo Section
-                          Card(
-                            child: Padding(
-                              padding: const EdgeInsets.all(16),
-                              child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  const Text(
-                                    'Facility Images',
-                                    style:
-                                        TextStyle(fontWeight: FontWeight.bold),
+      body: CustomScrollView(
+        slivers: [
+          // Cover Image and Logo Section
+          SliverAppBar(
+            backgroundColor: Colors.transparent,
+            expandedHeight: 280,
+            pinned: true,
+            flexibleSpace: Center(
+              child: ConstrainedBox(
+                constraints: const BoxConstraints(maxWidth: 800),
+                child: FlexibleSpaceBar(
+                  background: Stack(
+                    fit: StackFit.expand,
+                    children: [
+                      // Cover Image with constrained width
+                      Container(
+                        decoration: BoxDecoration(
+                          color: Theme.of(context).colorScheme.surfaceVariant,
+                          image: _facility?.cover != null
+                              ? DecorationImage(
+                                  image: NetworkImage(
+                                    'https://bsc-pocketbase.mtdjari.com/api/files/facilities/${_facility!.id}/${_facility!.cover}',
                                   ),
-                                  const SizedBox(height: 16),
-                                  Row(
-                                    children: [
-                                      // Logo
-                                      Expanded(
-                                        child: Column(
-                                          children: [
-                                            AspectRatio(
-                                              aspectRatio: 1,
-                                              child: Container(
-                                                decoration: BoxDecoration(
-                                                  border: Border.all(
-                                                    color: Theme.of(context)
-                                                        .colorScheme
-                                                        .outline,
-                                                  ),
-                                                  borderRadius:
-                                                      BorderRadius.circular(8),
-                                                ),
-                                                child: _facility?.logo != null
-                                                    ? Image.network(
-                                                        _facility!.logo!,
-                                                        fit: BoxFit.cover,
-                                                      )
-                                                    : const Icon(
-                                                        Icons.image_outlined,
-                                                        size: 48,
-                                                      ),
-                                              ),
-                                            ),
-                                            const SizedBox(height: 8),
-                                            const Text('Logo'),
-                                          ],
-                                        ),
-                                      ),
-                                      const SizedBox(width: 16),
-                                      // Cover
-                                      Expanded(
-                                        child: Column(
-                                          children: [
-                                            AspectRatio(
-                                              aspectRatio: 16 / 9,
-                                              child: Container(
-                                                decoration: BoxDecoration(
-                                                  border: Border.all(
-                                                    color: Theme.of(context)
-                                                        .colorScheme
-                                                        .outline,
-                                                  ),
-                                                  borderRadius:
-                                                      BorderRadius.circular(8),
-                                                ),
-                                                child: _facility?.cover != null
-                                                    ? Image.network(
-                                                        _facility!.cover!,
-                                                        fit: BoxFit.cover,
-                                                      )
-                                                    : const Icon(
-                                                        Icons.image_outlined,
-                                                        size: 48,
-                                                      ),
-                                              ),
-                                            ),
-                                            const SizedBox(height: 8),
-                                            const Text('Cover Image'),
-                                          ],
-                                        ),
-                                      ),
-                                    ],
-                                  ),
-                                ],
-                              ),
-                            ),
+                                  fit: BoxFit.cover,
+                                )
+                              : null,
+                        ),
+                        child: _facility?.cover == null
+                            ? Icon(
+                                Icons.business,
+                                size: 64,
+                                color: Theme.of(context)
+                                    .colorScheme
+                                    .onSurfaceVariant,
+                              )
+                            : null,
+                      ),
+                      // Gradient overlay
+                      Container(
+                        decoration: BoxDecoration(
+                          gradient: LinearGradient(
+                            begin: Alignment.topCenter,
+                            end: Alignment.bottomCenter,
+                            colors: [
+                              Colors.transparent,
+                              Theme.of(context)
+                                  .colorScheme
+                                  .surface
+                                  .withOpacity(0.8),
+                            ],
                           ),
-                          const SizedBox(height: 16),
-                          // Basic Information
-                          Card(
-                            child: Padding(
-                              padding: const EdgeInsets.all(16),
-                              child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  const Text(
-                                    'Basic Information',
-                                    style:
-                                        TextStyle(fontWeight: FontWeight.bold),
-                                  ),
-                                  const SizedBox(height: 16),
-                                  TextFormField(
-                                    controller: _nameController,
-                                    decoration: const InputDecoration(
-                                      labelText: 'Facility Name',
-                                      border: OutlineInputBorder(),
-                                    ),
-                                    validator: (value) {
-                                      if (value == null || value.isEmpty) {
-                                        return 'Please enter a name';
-                                      }
-                                      return null;
-                                    },
-                                  ),
-                                  const SizedBox(height: 16),
-                                  TextFormField(
-                                    controller: _descriptionController,
-                                    decoration: const InputDecoration(
-                                      labelText: 'Description',
-                                      border: OutlineInputBorder(),
-                                    ),
-                                    maxLines: 3,
-                                  ),
-                                  const SizedBox(height: 16),
-                                  DropdownButtonFormField<FacilityType>(
-                                    value: _selectedType,
-                                    decoration: const InputDecoration(
-                                      labelText: 'Facility Type',
-                                      border: OutlineInputBorder(),
-                                    ),
-                                    items: FacilityType.values
-                                        .map((type) => DropdownMenuItem(
-                                              value: type,
-                                              child: Text(type.name),
-                                            ))
-                                        .toList(),
-                                    onChanged: (value) {
-                                      if (value != null) {
-                                        setState(() {
-                                          _selectedType = value;
-                                        });
-                                      }
-                                    },
-                                  ),
-                                ],
-                              ),
-                            ),
-                          ),
-                          const SizedBox(height: 16),
-                          // Location Information
-                          Card(
-                            child: Padding(
-                              padding: const EdgeInsets.all(10),
-                              child: Column(
-                                children: [
-                                  ListTile(
-                                    title: Text('Location'),
-                                    leading: const Icon(
-                                      Icons.location_on,
-                                      color: Colors.red,
-                                    ),
-                                    subtitle: Text(_facility!.location ?? ''),
-                                  ),
-                                  Container(
-                                    height: 300,
-                                    width: double.infinity,
-                                    child: FlutterMap(
-                                      options: MapOptions(
-                                        initialCenter: LatLng(
-                                          _facility!.locationLatLng!.latitude,
-                                          _facility!.locationLatLng!.longitude,
+                        ),
+                      ),
+                      // Logo and Facility Name
+                      Positioned(
+                        left: 24,
+                        bottom: 24,
+                        child: Row(
+                          children: [
+                            Container(
+                              width: 80,
+                              height: 80,
+                              decoration: BoxDecoration(
+                                color: Theme.of(context).colorScheme.surface,
+                                borderRadius: BorderRadius.circular(12),
+                                border: Border.all(
+                                  color: Theme.of(context).colorScheme.outline,
+                                  width: 2,
+                                ),
+                                image: _facility?.logo != null
+                                    ? DecorationImage(
+                                        image: NetworkImage(
+                                          'https://bsc-pocketbase.mtdjari.com/api/files/facilities/${_facility!.id}/${_facility!.logo}',
                                         ),
-                                        initialZoom: 13,
-                                      ),
-                                      children: [
-                                        TileLayer(
-                                          urlTemplate:
-                                              'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
-                                        ),
-                                      ],
-                                    ),
-                                  ),
-                                ],
+                                        fit: BoxFit.cover,
+                                      )
+                                    : null,
                               ),
-                              // child: Column(
-                              //   crossAxisAlignment: CrossAxisAlignment.start,
-                              //   children: [
-                              //     // const Text(
-                              //     //   'Location',
-                              //     //   style:
-                              //     //       TextStyle(fontWeight: FontWeight.bold),
-                              //     // ),
-                              //     // const SizedBox(height: 16),
-                              //     // TextFormField(
-                              //     //   controller: _locationController,
-                              //     //   decoration: const InputDecoration(
-                              //     //     labelText: 'Location (lat,lng)',
-                              //     //     border: OutlineInputBorder(),
-                              //     //     helperText:
-                              //     //         'Enter coordinates in format: latitude,longitude',
-                              //     //   ),
-                              //     // ),
-                              //   ],
-                              // ),
-                            ),
-                          ),
-                          const SizedBox(height: 24),
-                          if (_error != null)
-                            Card(
-                              color:
-                                  Theme.of(context).colorScheme.errorContainer,
-                              child: Padding(
-                                padding: const EdgeInsets.all(16),
-                                child: Row(
-                                  children: [
-                                    Icon(
-                                      Icons.error_outline,
+                              child: _facility?.logo == null
+                                  ? Icon(
+                                      Icons.business_outlined,
+                                      size: 32,
                                       color:
-                                          Theme.of(context).colorScheme.error,
-                                    ),
-                                    const SizedBox(width: 8),
-                                    Expanded(
-                                      child: Text(
-                                        _error!,
-                                        style: TextStyle(
-                                          color: Theme.of(context)
-                                              .colorScheme
-                                              .error,
-                                        ),
+                                          Theme.of(context).colorScheme.primary,
+                                    )
+                                  : null,
+                            ),
+                            const SizedBox(width: 16),
+                            Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                Text(
+                                  _facility!.name,
+                                  style: Theme.of(context)
+                                      .textTheme
+                                      .headlineSmall
+                                      ?.copyWith(
+                                        color: Theme.of(context)
+                                            .colorScheme
+                                            .onSurface,
+                                        fontWeight: FontWeight.bold,
                                       ),
-                                    ),
-                                  ],
+                                ),
+                                Text(
+                                  _facility!.type.name,
+                                  style: Theme.of(context)
+                                      .textTheme
+                                      .titleMedium
+                                      ?.copyWith(
+                                        color: Theme.of(context)
+                                            .colorScheme
+                                            .primary,
+                                      ),
+                                ),
+                              ],
+                            ),
+                          ],
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ),
+          ),
+
+          // Content
+          SliverToBoxAdapter(
+            child: Center(
+              child: ConstrainedBox(
+                constraints: const BoxConstraints(maxWidth: 800),
+                child: Padding(
+                  padding: const EdgeInsets.all(24),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      // Basic Information Section
+                      _buildSection(
+                        context,
+                        title: 'Basic Information',
+                        icon: Icons.info_outline,
+                        child: Column(
+                          children: [
+                            TextFormField(
+                              controller: _nameController,
+                              decoration: InputDecoration(
+                                labelText: 'Facility Name',
+                                filled: true,
+                                fillColor: Theme.of(context)
+                                    .colorScheme
+                                    .surfaceVariant
+                                    .withOpacity(0.3),
+                                border: OutlineInputBorder(
+                                  borderRadius: BorderRadius.circular(12),
+                                  borderSide: BorderSide.none,
+                                ),
+                                prefixIcon: Icon(
+                                  Icons.business,
+                                  color: Theme.of(context)
+                                      .colorScheme
+                                      .onSurfaceVariant,
                                 ),
                               ),
                             ),
-                          const SizedBox(height: 24),
-                          SizedBox(
-                            width: double.infinity,
-                            child: FilledButton.icon(
-                              onPressed: _isLoading ? null : _updateFacility,
-                              icon: const Icon(Icons.save),
-                              label: const Text('Save Changes'),
+                            const SizedBox(height: 16),
+                            TextFormField(
+                              controller: _descriptionController,
+                              maxLines: 3,
+                              decoration: InputDecoration(
+                                labelText: 'Description',
+                                filled: true,
+                                fillColor: Theme.of(context)
+                                    .colorScheme
+                                    .surfaceVariant
+                                    .withOpacity(0.3),
+                                border: OutlineInputBorder(
+                                  borderRadius: BorderRadius.circular(12),
+                                  borderSide: BorderSide.none,
+                                ),
+                                prefixIcon: Icon(
+                                  Icons.description,
+                                  color: Theme.of(context)
+                                      .colorScheme
+                                      .onSurfaceVariant,
+                                ),
+                                alignLabelWithHint: true,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+
+                      const SizedBox(height: 24),
+
+                      // Location Section
+                      _buildSection(
+                        context,
+                        title: 'Location',
+                        icon: Icons.location_on_outlined,
+                        child: Column(
+                          children: [
+                            TextFormField(
+                              controller: _locationController,
+                              decoration: InputDecoration(
+                                labelText: 'Location',
+                                filled: true,
+                                fillColor: Theme.of(context)
+                                    .colorScheme
+                                    .surfaceVariant
+                                    .withOpacity(0.3),
+                                border: OutlineInputBorder(
+                                  borderRadius: BorderRadius.circular(12),
+                                  borderSide: BorderSide.none,
+                                ),
+                                prefixIcon: Icon(
+                                  Icons.map,
+                                  color: Theme.of(context)
+                                      .colorScheme
+                                      .onSurfaceVariant,
+                                ),
+                              ),
+                            ),
+                            if (_facility?.location != null) ...[
+                              const SizedBox(height: 16),
+                              ClipRRect(
+                                borderRadius: BorderRadius.circular(12),
+                                child: SizedBox(
+                                  height: 200,
+                                  child: FlutterMap(
+                                    options: MapOptions(
+                                      initialCenter: LatLng(
+                                        double.parse(
+                                            _facility!.location!.split(',')[0]),
+                                        double.parse(
+                                            _facility!.location!.split(',')[1]),
+                                      ),
+                                      initialZoom: 13,
+                                    ),
+                                    children: [
+                                      TileLayer(
+                                        urlTemplate:
+                                            'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
+                                      ),
+                                      MarkerLayer(
+                                        markers: [
+                                          Marker(
+                                            point: LatLng(
+                                              double.parse(_facility!.location!
+                                                  .split(',')[0]),
+                                              double.parse(_facility!.location!
+                                                  .split(',')[1]),
+                                            ),
+                                            child: const Icon(
+                                              Icons.location_on,
+                                              color: Colors.red,
+                                              size: 40,
+                                            ),
+                                          ),
+                                        ],
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ],
+                        ),
+                      ),
+
+                      const SizedBox(height: 24),
+
+                      // Save Button
+                      SizedBox(
+                        width: double.infinity,
+                        child: FilledButton.icon(
+                          style: FilledButton.styleFrom(
+                            padding: const EdgeInsets.symmetric(vertical: 16),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(12),
                             ),
                           ),
-                        ],
+                          onPressed: _isLoading ? null : _updateFacility,
+                          icon: _isLoading
+                              ? const SizedBox(
+                                  width: 20,
+                                  height: 20,
+                                  child:
+                                      CircularProgressIndicator(strokeWidth: 2),
+                                )
+                              : const Icon(Icons.save),
+                          label: const Text('Save Changes'),
+                        ),
                       ),
-                    ),
+                    ],
                   ),
                 ),
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildSection(
+    BuildContext context, {
+    required String title,
+    required IconData icon,
+    required Widget child,
+  }) {
+    return Card(
+      margin: const EdgeInsets.all(24),
+      color: Theme.of(context).colorScheme.surface.withOpacity(0.5),
+      elevation: 0,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(24),
+        side: BorderSide(
+          color: Colors.grey.withOpacity(0.5),
+          width: 1,
+        ),
+      ),
+      clipBehavior: Clip.antiAlias,
+      child: Padding(
+        padding: const EdgeInsets.all(16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                Icon(
+                  icon,
+                  color: Theme.of(context).colorScheme.primary,
+                ),
+                const SizedBox(width: 8),
+                Text(
+                  title,
+                  style: Theme.of(context).textTheme.titleSmall?.copyWith(
+                        color: Theme.of(context).colorScheme.primary,
+                      ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 16),
+            child,
+          ],
+        ),
+      ),
     );
   }
 
