@@ -6,6 +6,7 @@ enum UserType {
   /// Employee user type
   @JsonValue('employee')
   employee,
+
   /// Client user type
   @JsonValue('client')
   client;
@@ -17,6 +18,7 @@ enum Gender {
   /// Male gender
   @JsonValue('male')
   male,
+
   /// Female gender
   @JsonValue('female')
   female;
@@ -28,15 +30,19 @@ enum FacilityType {
   /// Sport club facility
   @JsonValue('sport_club')
   sportClub,
+
   /// Tourist agency facility
   @JsonValue('tourist_agency')
   touristAgency,
+
   /// Hotel facility
   @JsonValue('hotel')
   hotel,
+
   /// Museum facility
   @JsonValue('museum')
   museum,
+
   /// Restaurant facility
   @JsonValue('restaurant')
   restaurant;
@@ -48,9 +54,11 @@ enum HostelStatus {
   /// Active hostel
   @JsonValue('active')
   active,
+
   /// Inactive hostel
   @JsonValue('inactive')
   inactive,
+
   /// Partially active hostel
   @JsonValue('partially')
   partially;
@@ -62,9 +70,11 @@ enum ReservationStatus {
   /// Pending reservation
   @JsonValue('pending')
   pending,
+
   /// Confirmed reservation
   @JsonValue('confirmed')
   confirmed,
+
   /// Completed reservation
   @JsonValue('completed')
   completed;
@@ -73,10 +83,8 @@ enum ReservationStatus {
 /// Enum representing service types
 @JsonEnum()
 enum ServiceType {
-  @JsonValue('hospitality')
   hospitality,
-  @JsonValue('restoration')
+  activities,
   restoration,
-  @JsonValue('activity')
-  activity;
-} 
+  unknown,
+}
