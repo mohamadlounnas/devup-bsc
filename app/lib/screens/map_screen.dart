@@ -126,7 +126,7 @@ class MapScreen extends StatelessWidget {
                       tooltip: 'Center on my location',
                     ),
                     Image.asset(
-                      'assets/images/logo.png',
+                      'assets/logo/icon.png',
                       height: 28,
                       semanticLabel: 'App logo',
                     ),

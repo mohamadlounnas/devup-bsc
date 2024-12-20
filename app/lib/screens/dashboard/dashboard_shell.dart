@@ -1,3 +1,5 @@
+import 'dart:ui';
+
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:go_router/go_router.dart';
@@ -76,7 +78,6 @@ class _DashboardShellState extends State<DashboardShell> with SingleTickerProvid
     }
   }
 
-
   /// Builds a consistent navigation destination with semantic labels
   NavigationDestination _buildDestination({
     required IconData icon,
@@ -144,7 +145,7 @@ class _DashboardShellState extends State<DashboardShell> with SingleTickerProvid
       return NavigationRailDestination(
         icon: destination.icon,
         selectedIcon: destination.selectedIcon,
-        padding: const EdgeInsets.symmetric(vertical: 8),
+        padding: const EdgeInsets.symmetric(vertical: 0),
         label: Text(
           destination.label,
           style: theme.textTheme.labelLarge?.copyWith(
@@ -241,13 +242,11 @@ class _DashboardShellState extends State<DashboardShell> with SingleTickerProvid
                           Hero(
                             tag: 'app_logo',
                             child: Image.asset(
-                              'assets/images/logo.png',
-                              height: 40,
+                              'assets/logo/full.png',
+                              height: 100,
                               semanticLabel: 'App logo',
                             ),
                           ),
-                          const SizedBox(height: 24),
-                          const ThemeToggle(),
                         ],
                       ),
                     ),
@@ -327,17 +326,46 @@ class _DashboardShellState extends State<DashboardShell> with SingleTickerProvid
             body: SafeArea(
               bottom: false,
               child: ClipRRect(
-                child: widget.child,
+                child: Stack(
+                  children: [
+                    widget.child,
+                    // Add a gradient overlay at the bottom to improve navigation bar visibility
+                    Positioned(
+                      bottom: 0,
+                      left: 0,
+                      right: 0,
+                      height: 200, // Adjust height as needed
+                      child: Container(
+                        decoration: BoxDecoration(
+                          gradient: LinearGradient(
+                            begin: Alignment.topCenter,
+                            end: Alignment.bottomCenter,
+                            colors: [
+                              Theme.of(context).colorScheme.surface.withOpacity(0.0),
+                              Theme.of(context).colorScheme.surface.withOpacity(1),
+                            ],
+                          ),
+                        ),
+                      ),
+                    ),
+                    Positioned(
+                      bottom: 0,
+                      left: 0,
+                      right: 0,
+                      child: NavigationBar(
+                        backgroundColor: Colors.transparent,
+                        selectedIndex: selectedIndex,
+                        onDestinationSelected: (index) => _onDestinationSelected(context, index),
+                        destinations: destinations,
+                      ),
+                    ),
+                  ],
+                ),
               ),
-            ),
-            bottomNavigationBar: NavigationBar(
-              selectedIndex: selectedIndex,
-              onDestinationSelected: (index) => _onDestinationSelected(context, index),
-              destinations: destinations,
             ),
           ),
         ),
       );
     }
   }
-} 
+}

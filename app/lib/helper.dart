@@ -43,3 +43,10 @@ extension EventPocketbaseFileUrl on FacilityEvent {
 extension HostelPocketbaseFileUrl on Hostel {
 
 }
+
+
+// facility image url
+extension FacilityPocketbaseFileUrl on Facility {
+  String? get coverUrl => getFileUrl("facilities", id, cover);
+  String? get logoUrl => getFileUrl("facilities", id, logo);
+}

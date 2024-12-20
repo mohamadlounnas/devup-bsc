@@ -1,23 +1,35 @@
 import 'package:flutter/material.dart';
-import 'package:pocketbase/pocketbase.dart';
+import 'package:pocketbase/pocketbase.dart' hide SettingsService;
 import 'package:provider/provider.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 import 'router.dart';
 import 'services/auth_service.dart';
+import 'services/settings_service.dart';
 import 'services/theme_service.dart';
 import 'providers/hostels_provider.dart';
 import 'theme/app_theme.dart';
+import 'logic/timeline_logic.dart';
 
 /// Initialize PocketBase client
 final pb = PocketBase('https://bsc-pocketbase.mtdjari.com/');
 
-void main() {
+Future<void> main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+  
+  // Initialize services
+  final prefs = await SharedPreferences.getInstance();
+  final settingsService = SettingsService(prefs);
+  final timelineLogic = TimelineLogic()..init();
+  
   runApp(
     MultiProvider(
       providers: [
         ChangeNotifierProvider(create: (_) => AuthService(pb)),
         ChangeNotifierProvider(create: (_) => ThemeService()),
         ChangeNotifierProvider(create: (_) => HostelsProvider()),
+        ChangeNotifierProvider.value(value: settingsService),
+        ChangeNotifierProvider.value(value: timelineLogic),
       ],
       child: const MainApp(),
     ),

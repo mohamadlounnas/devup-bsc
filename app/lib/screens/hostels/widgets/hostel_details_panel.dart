@@ -45,14 +45,12 @@ class HostelDetailsPanel extends StatelessWidget {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  _buildImage(context),
-                  const SizedBox(height: 16),
                   _buildDetails(context),
-                  const SizedBox(height: 24),
+                  const SizedBox(height: 8),
                   _buildServices(context),
-                  const SizedBox(height: 24),
+                  const SizedBox(height: 8),
                   _buildLocation(context),
-                  const SizedBox(height: 24),
+                  const SizedBox(height: 8),
                   _buildContact(context),
                 ],
               ),

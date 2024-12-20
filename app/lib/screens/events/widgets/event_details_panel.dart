@@ -196,6 +196,7 @@ class EventDetailsPanel extends StatelessWidget {
                   ),
                 ],
               ),
+              const SizedBox(height: 200),
             ],
           ),
         ),
