@@ -23,6 +23,7 @@ dependencies:
   flutter_svg: ^2.0.9
   url_launcher: ^6.2.4
   flutter_map_cached_tile_provider: ^0.0.2
+  calendar_view: ^1.3.0
 
 dev_dependencies:
   flutter_test:
