@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:malek/pages/map_page.dart';
 import 'package:provider/provider.dart';
 import 'package:pocketbase/pocketbase.dart';
 import 'package:shared/services/api_service.dart';
-import 'pages/service_dashboard_page.dart';
 
 void main() {
   final pb = PocketBase('https://bsc-pocketbase.mtdjari.com');
@@ -30,7 +30,7 @@ class MyApp extends StatelessWidget {
           brightness: Brightness.light,
         ),
       ),
-      home: const ServiceDashboardPage(),
+      home: const MapPage(),
     );
   }
 }
