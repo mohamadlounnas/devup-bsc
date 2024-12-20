@@ -152,8 +152,6 @@ class LoginState extends State<Login> {
                                     prefixIcon:
                                         Icon(Icons.lock_outline_rounded),
                                     labelText: 'Password',
-                                    helperText:
-                                        'a password by default is birthday "DDMMYYYY"',
                                   ),
                                   validator: (value) {
                                     if (value == null || value.isEmpty) {

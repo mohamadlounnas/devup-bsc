@@ -1,3 +1,5 @@
+import 'dart:ui';
+
 import 'package:admin_app/main.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
@@ -34,15 +36,134 @@ class _DashboardShellState extends State<DashboardShell> {
             child: Row(
               children: [
                 // Show navigation rail for extended layout
-                if (!isCompact) _buildNavigationRail(context),
+                if (!isCompact)
+                  ClipRRect(
+                    child: BackdropFilter(
+                      filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
+                      child: Container(
+                        decoration: BoxDecoration(
+                          color: Theme.of(context)
+                              .colorScheme
+                              .surface
+                              .withOpacity(0.5),
+                          border: Border(
+                            right: BorderSide(
+                              color:
+                                  Theme.of(context).colorScheme.outlineVariant,
+                            ),
+                          ),
+                        ),
+                        child: _buildNavigationRail(context),
+                      ),
+                    ),
+                  ),
                 // Main content area
                 Expanded(
                   child: Column(
                     children: [
-                      // Custom app bar
-                      _buildAppBar(context, isCompact),
+                      // Custom app bar with blur
+                      ClipRRect(
+                        child: BackdropFilter(
+                          filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
+                          child: Container(
+                            height: 64,
+                            padding: const EdgeInsets.symmetric(horizontal: 16),
+                            decoration: BoxDecoration(
+                              color: Theme.of(context)
+                                  .colorScheme
+                                  .surface
+                                  .withOpacity(0.5),
+                              border: Border(
+                                bottom: BorderSide(
+                                  color: Theme.of(context)
+                                      .colorScheme
+                                      .outlineVariant,
+                                ),
+                              ),
+                            ),
+                            child: Row(
+                              children: [
+                                if (isCompact)
+                                  IconButton(
+                                    icon: const Icon(Icons.menu),
+                                    onPressed: () {
+                                      Scaffold.of(context).openDrawer();
+                                    },
+                                  ),
+                                Text(
+                                  'DevUp',
+                                  style: Theme.of(context)
+                                      .textTheme
+                                      .titleLarge
+                                      ?.copyWith(
+                                        color: Theme.of(context)
+                                            .colorScheme
+                                            .primary,
+                                      ),
+                                ),
+                                const Spacer(),
+                                IconButton(
+                                  icon: Icon(
+                                    Theme.of(context).brightness ==
+                                            Brightness.light
+                                        ? Icons.dark_mode_outlined
+                                        : Icons.light_mode_outlined,
+                                  ),
+                                  onPressed: () {
+                                    final platform = Theme.of(context).platform;
+                                    if (platform == TargetPlatform.iOS ||
+                                        platform == TargetPlatform.android) {
+                                      ScaffoldMessenger.of(context)
+                                          .showSnackBar(
+                                        const SnackBar(
+                                          content: Text(
+                                              'Please use system settings'),
+                                          duration: Duration(seconds: 2),
+                                        ),
+                                      );
+                                      return;
+                                    }
+                                    setState(() {
+                                      final brightness =
+                                          Theme.of(context).brightness;
+                                      final themeMode =
+                                          brightness == Brightness.light
+                                              ? ThemeMode.dark
+                                              : ThemeMode.light;
+                                      MainApp.of(context)
+                                          ?.updateThemeMode(themeMode);
+                                    });
+                                  },
+                                ),
+                                IconButton(
+                                  icon:
+                                      const Icon(Icons.notifications_outlined),
+                                  onPressed: () {
+                                    // TODO: Implement notifications
+                                  },
+                                ),
+                              ],
+                            ),
+                          ),
+                        ),
+                      ),
                       // Content area
-                      Expanded(child: widget.child),
+                      Expanded(
+                        child: Container(
+                          padding: const EdgeInsets.all(16),
+                          decoration: BoxDecoration(
+                            borderRadius: BorderRadius.circular(16),
+                            // color: Theme.of(context).colorScheme.surface,
+                            border: Border.all(
+                              color: Theme.of(context)
+                                  .colorScheme
+                                  .outlineVariant
+                                  .withOpacity(0.5),
+                            ),
+                          ),
+                          child: widget.child,
+                        ),
+                      ),
                     ],
                   ),
                 ),
@@ -54,78 +175,11 @@ class _DashboardShellState extends State<DashboardShell> {
     );
   }
 
-  /// Builds the app bar with a consistent style
-  Widget _buildAppBar(BuildContext context, bool isCompact) {
-    return Container(
-      height: 64,
-      padding: const EdgeInsets.symmetric(horizontal: 16),
-      decoration: BoxDecoration(
-        color: Theme.of(context).colorScheme.surface,
-        border: Border(
-          bottom: BorderSide(
-            color: Theme.of(context).colorScheme.outlineVariant,
-          ),
-        ),
-      ),
-      child: Row(
-        children: [
-          if (isCompact)
-            IconButton(
-              icon: const Icon(Icons.menu),
-              onPressed: () {
-                Scaffold.of(context).openDrawer();
-              },
-            ),
-          Text(
-            'DevUp',
-            style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                  color: Theme.of(context).colorScheme.primary,
-                ),
-          ),
-          const Spacer(),
-          IconButton(
-            icon: Icon(
-              Theme.of(context).brightness == Brightness.light
-                  ? Icons.dark_mode_outlined
-                  : Icons.light_mode_outlined,
-            ),
-            onPressed: () {
-              final platform = Theme.of(context).platform;
-              if (platform == TargetPlatform.iOS ||
-                  platform == TargetPlatform.android) {
-                ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(
-                    content: Text('Please use system settings'),
-                    duration: Duration(seconds: 2),
-                  ),
-                );
-                return;
-              }
-              setState(() {
-                final brightness = Theme.of(context).brightness;
-                final themeMode = brightness == Brightness.light
-                    ? ThemeMode.dark
-                    : ThemeMode.light;
-                MainApp.of(context)?.updateThemeMode(themeMode);
-              });
-            },
-          ),
-          IconButton(
-            icon: const Icon(Icons.notifications_outlined),
-            onPressed: () {
-              // TODO: Implement notifications
-            },
-          ),
-        ],
-      ),
-    );
-  }
-
   /// Builds the navigation rail for extended layout
   Widget _buildNavigationRail(BuildContext context) {
     return NavigationRail(
       extended: true,
-      backgroundColor: Theme.of(context).colorScheme.surface,
+      backgroundColor: Colors.transparent,
       selectedIndex: _getSelectedIndex(context),
       onDestinationSelected: (index) => _onDestinationSelected(context, index),
       leading: const Padding(
@@ -135,17 +189,8 @@ class _DashboardShellState extends State<DashboardShell> {
           size: 32,
         ),
       ),
+      labelType: NavigationRailLabelType.none,
       destinations: const [
-        NavigationRailDestination(
-          icon: Icon(Icons.event_outlined),
-          selectedIcon: Icon(Icons.event),
-          label: Text('Events'),
-        ),
-        NavigationRailDestination(
-          icon: Icon(Icons.map_outlined),
-          selectedIcon: Icon(Icons.map),
-          label: Text('Map'),
-        ),
         NavigationRailDestination(
           icon: Icon(Icons.hotel_outlined),
           selectedIcon: Icon(Icons.hotel),
@@ -198,16 +243,6 @@ class _DashboardShellState extends State<DashboardShell> {
           ),
         ),
         const NavigationDrawerDestination(
-          icon: Icon(Icons.event_outlined),
-          selectedIcon: Icon(Icons.event),
-          label: Text('Events'),
-        ),
-        const NavigationDrawerDestination(
-          icon: Icon(Icons.map_outlined),
-          selectedIcon: Icon(Icons.map),
-          label: Text('Map'),
-        ),
-        const NavigationDrawerDestination(
           icon: Icon(Icons.hotel_outlined),
           selectedIcon: Icon(Icons.hotel),
           label: Text('Hostels'),
@@ -241,21 +276,21 @@ class _DashboardShellState extends State<DashboardShell> {
   /// Handles navigation when a destination is selected
   void _onDestinationSelected(BuildContext context, int index) {
     switch (index) {
+      // case 0:
+      //   context.go('/events');
+      //   break;
+      // case 1:
+      //   context.go('/map');
+      //   break;
       case 0:
-        context.go('/events');
-        break;
-      case 1:
-        context.go('/map');
-        break;
-      case 2:
         context.go('/reservations');
         break;
-      case 3:
+      case 1:
         context.go('/facilities');
         break;
-      case 4:
+      case 2:
         context.go('/hostelsettings');
-      case 5:
+      case 3:
         context.go('/events');
         break;
     }

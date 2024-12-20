@@ -87,6 +87,7 @@ class _ReservationDialogState extends State<ReservationDialog> {
       });
 
       final reservation = HostelReservation(
+        status: ReservationStatus.pending,
         id: widget.reservation?.id ?? '', // Empty for new reservations
         userId: _selectedUser!.id,
         loginAt: _loginAt,

@@ -20,18 +20,21 @@ class ReservationService extends ChangeNotifier {
       var records = await pb.collection(hostelCollectionName).getFirstListItem(
           'admin = "${pb.authStore.model!.id}"',
           expand: 'reservations,reservations.user');
-      print(records);
+
       if (records.expand != null && records.expand['reservations'] != null) {
         hostelresvalid =
             (records.expand['reservations'] as List).map((reservation) {
-          return HostelReservation.fromJson(reservation.toJson());
+          final data = reservation.toJson();
+          if (data['status'] == null || data['status'] == '') {
+            data['status'] = 'pending';
+          }
+          return HostelReservation.fromJson(data);
         }).toList();
       }
 
-      print(hostelresvalid);
       return hostelresvalid;
     } catch (e) {
-      print(e);
+      print('Error loading reservations: $e');
       throw e;
     }
   }
@@ -46,6 +49,7 @@ class ReservationService extends ChangeNotifier {
         body: {
           ...reservation.toJson(),
           'hostel': hostel.id,
+          'status': 'pending',
         },
       );
 

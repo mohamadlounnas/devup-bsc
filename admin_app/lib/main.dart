@@ -1,3 +1,5 @@
+import 'dart:ui';
+
 import 'package:admin_app/config/router.dart';
 import 'package:admin_app/presentation/dashboard/dashboard_screen.dart';
 import 'package:admin_app/presentation/login/login_screen.dart';
@@ -40,7 +42,7 @@ class MainApp extends StatefulWidget {
 }
 
 class MainAppState extends State<MainApp> {
-  ThemeMode _themeMode = ThemeMode.system;
+  ThemeMode _themeMode = ThemeMode.light;
 
   void updateThemeMode(ThemeMode mode) {
     setState(() {
@@ -60,15 +62,45 @@ class MainAppState extends State<MainApp> {
       title: 'Admin Dashboard',
       themeMode: _themeMode,
       theme: ThemeData(
+        cardColor: Colors.transparent,
         useMaterial3: true,
         colorSchemeSeed: Colors.blue,
         brightness: Brightness.light,
+        scaffoldBackgroundColor: Colors.transparent,
       ),
       darkTheme: ThemeData(
+        cardColor: Colors.transparent,
         useMaterial3: true,
         colorSchemeSeed: Colors.blue,
         brightness: Brightness.dark,
+        scaffoldBackgroundColor: Colors.transparent,
       ),
+      builder: (context, child) {
+        return Container(
+          decoration: const BoxDecoration(
+            image: DecorationImage(
+              image: AssetImage('assets/danist-soh-bviex5lwf3s-unsplash.jpg'),
+              fit: BoxFit.cover,
+            ),
+          ),
+          child: BackdropFilter(
+            filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
+            child: Container(
+              decoration: BoxDecoration(
+                gradient: LinearGradient(
+                  begin: Alignment.topCenter,
+                  end: Alignment.bottomCenter,
+                  colors: [
+                    Theme.of(context).colorScheme.surface.withOpacity(0.5),
+                    Theme.of(context).colorScheme.surface.withOpacity(0.5),
+                  ],
+                ),
+              ),
+              child: child!,
+            ),
+          ),
+        );
+      },
       routerConfig: router,
     );
   }
