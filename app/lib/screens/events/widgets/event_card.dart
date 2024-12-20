@@ -3,9 +3,9 @@ import 'package:flutter/material.dart';
 import 'package:shared/shared.dart';
 import 'package:intl/intl.dart';
 
-/// A card that displays a summary of a facility event with enhanced UI/UX
-/// This widget provides two display modes: list and grid view
-/// Features smooth animations, modern design, and optimal information hierarchy
+/// A responsive card that displays a summary of a facility event with enhanced UI/UX
+/// This widget adapts its layout based on screen size and orientation
+/// Provides optimal viewing experience across mobile, tablet, and desktop
 class EventCard extends StatelessWidget {
   /// The event to display
   final FacilityEvent event;
@@ -25,6 +25,30 @@ class EventCard extends StatelessWidget {
   /// Duration for animations
   static const _animationDuration = Duration(milliseconds: 200);
 
+  /// Breakpoint for desktop layout
+  static const _desktopBreakpoint = 900.0;
+
+  /// Breakpoint for tablet layout
+  static const _tabletBreakpoint = 600.0;
+
+  /// Returns true if the current layout should use desktop optimizations
+  bool _isDesktop(BuildContext context) => 
+      MediaQuery.of(context).size.width >= _desktopBreakpoint;
+
+  /// Returns true if the current layout should use tablet optimizations
+  bool _isTablet(BuildContext context) => 
+      MediaQuery.of(context).size.width >= _tabletBreakpoint;
+
+  /// Returns the appropriate image dimensions based on screen size
+  Size _getImageDimensions(BuildContext context) {
+    if (_isDesktop(context)) {
+      return const Size(180, 180);
+    } else if (_isTablet(context)) {
+      return const Size(150, 150);
+    }
+    return const Size(130, 130);
+  }
+
   /// Creates a new event card
   const EventCard({
     super.key,
@@ -37,17 +61,19 @@ class EventCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final isDesktopView = _isDesktop(context);
+    
     return AnimatedContainer(
       duration: _animationDuration,
       child: Card(
         elevation: 0,
         margin: EdgeInsets.only(
           bottom: isGridView ? 0 : 16,
-          left: 8,
-          right: 8,
+          left: isDesktopView ? 16 : 8,
+          right: isDesktopView ? 16 : 8,
         ),
         shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(16),
+          borderRadius: BorderRadius.circular(isDesktopView ? 20 : 16),
           side: BorderSide(
             color: Theme.of(context).colorScheme.outlineVariant.withOpacity(0.5),
             width: 1,
@@ -55,7 +81,7 @@ class EventCard extends StatelessWidget {
         ),
         child: InkWell(
           onTap: onTap,
-          borderRadius: BorderRadius.circular(16),
+          borderRadius: BorderRadius.circular(isDesktopView ? 20 : 16),
           child: isGridView ? _buildGridContent(context) : _buildListContent(context),
         ),
       ),
@@ -66,20 +92,21 @@ class EventCard extends StatelessWidget {
     final theme = Theme.of(context);
     final colorScheme = theme.colorScheme;
     final dateFormat = DateFormat('MMM d, y • h:mm a');
+    final imageDimensions = _getImageDimensions(context);
+    final isDesktopView = _isDesktop(context);
     
     return Padding(
-      padding: const EdgeInsets.all(12),
+      padding: EdgeInsets.all(isDesktopView ? 20 : 12),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // Event image with shimmer loading effect
           Hero(
             tag: 'event_image_${event.id}',
             child: ClipRRect(
-              borderRadius: BorderRadius.circular(12),
+              borderRadius: BorderRadius.circular(isDesktopView ? 16 : 12),
               child: SizedBox(
-                width: 130,
-                height: 130,
+                width: imageDimensions.width,
+                height: imageDimensions.height,
                 child: event.imageUrl != null
                     ? Image.network(
                         event.imageUrl!,
@@ -92,43 +119,49 @@ class EventCard extends StatelessWidget {
               ),
             ),
           ),
-          const SizedBox(width: 16),
+          SizedBox(width: isDesktopView ? 24 : 16),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
                   event.name,
-                  style: theme.textTheme.titleMedium?.copyWith(
+                  style: (isDesktopView 
+                      ? theme.textTheme.titleLarge 
+                      : theme.textTheme.titleMedium)?.copyWith(
                     color: colorScheme.onSurface,
                     fontWeight: FontWeight.w600,
                     height: 1.2,
                   ),
-                  maxLines: 2,
+                  maxLines: isDesktopView ? 3 : 2,
                   overflow: TextOverflow.ellipsis,
                 ),
-                const SizedBox(height: 8),
+                SizedBox(height: isDesktopView ? 12 : 8),
                 if (event.started != null)
                   Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                    padding: EdgeInsets.symmetric(
+                      horizontal: isDesktopView ? 12 : 8,
+                      vertical: isDesktopView ? 6 : 4,
+                    ),
                     decoration: BoxDecoration(
                       color: colorScheme.primary.withOpacity(0.1),
-                      borderRadius: BorderRadius.circular(6),
+                      borderRadius: BorderRadius.circular(8),
                     ),
                     child: Text(
                       dateFormat.format(event.started!),
                       style: theme.textTheme.bodyMedium?.copyWith(
                         color: colorScheme.primary,
                         fontWeight: FontWeight.w500,
+                        fontSize: isDesktopView ? 15 : null,
                       ),
                     ),
                   ),
-                const SizedBox(height: 8),
+                SizedBox(height: isDesktopView ? 12 : 8),
                 Row(
                   children: [
                     Icon(
                       Icons.location_on,
-                      size: 16,
+                      size: isDesktopView ? 20 : 16,
                       color: colorScheme.onSurfaceVariant,
                     ),
                     const SizedBox(width: 4),
@@ -137,6 +170,7 @@ class EventCard extends StatelessWidget {
                         event.locationLatLng?.toString() ?? 'Location not available',
                         style: theme.textTheme.bodyMedium?.copyWith(
                           color: colorScheme.onSurfaceVariant,
+                          fontSize: isDesktopView ? 15 : null,
                         ),
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
@@ -144,21 +178,23 @@ class EventCard extends StatelessWidget {
                     ),
                   ],
                 ),
-                const SizedBox(height: 12),
+                SizedBox(height: isDesktopView ? 16 : 12),
                 Row(
                   children: [
-                    _buildAnimatedActionButton(
+                    _buildActionButton(
                       context,
                       Icons.calendar_today,
                       'Add to Calendar',
                       onAddToCalendar,
+                      isDesktopView,
                     ),
-                    const SizedBox(width: 8),
-                    _buildAnimatedActionButton(
+                    SizedBox(width: isDesktopView ? 12 : 8),
+                    _buildActionButton(
                       context,
                       Icons.share,
                       'Share',
                       onShare,
+                      isDesktopView,
                     ),
                   ],
                 ),
@@ -174,6 +210,7 @@ class EventCard extends StatelessWidget {
     final theme = Theme.of(context);
     final colorScheme = theme.colorScheme;
     final dateFormat = DateFormat('MMM d, y • h:mm a');
+    final isDesktopView = _isDesktop(context);
     
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -181,9 +218,11 @@ class EventCard extends StatelessWidget {
         Hero(
           tag: 'event_image_grid_${event.id}',
           child: ClipRRect(
-            borderRadius: const BorderRadius.vertical(top: Radius.circular(16)),
+            borderRadius: BorderRadius.vertical(
+              top: Radius.circular(isDesktopView ? 20 : 16),
+            ),
             child: AspectRatio(
-              aspectRatio: 16 / 9,
+              aspectRatio: isDesktopView ? 2 : 16 / 9,
               child: event.imageUrl != null
                   ? Image.network(
                       event.imageUrl!,
@@ -198,42 +237,48 @@ class EventCard extends StatelessWidget {
         ),
         Expanded(
           child: Padding(
-            padding: const EdgeInsets.all(16),
+            padding: EdgeInsets.all(isDesktopView ? 20 : 16),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
                   event.name,
-                  style: theme.textTheme.titleMedium?.copyWith(
+                  style: (isDesktopView 
+                      ? theme.textTheme.titleLarge 
+                      : theme.textTheme.titleMedium)?.copyWith(
                     color: colorScheme.onSurface,
                     fontWeight: FontWeight.w600,
                     height: 1.2,
                   ),
-                  maxLines: 2,
+                  maxLines: isDesktopView ? 3 : 2,
                   overflow: TextOverflow.ellipsis,
                 ),
-                const SizedBox(height: 8),
+                SizedBox(height: isDesktopView ? 12 : 8),
                 if (event.started != null)
                   Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                    padding: EdgeInsets.symmetric(
+                      horizontal: isDesktopView ? 12 : 8,
+                      vertical: isDesktopView ? 6 : 4,
+                    ),
                     decoration: BoxDecoration(
                       color: colorScheme.primary.withOpacity(0.1),
-                      borderRadius: BorderRadius.circular(6),
+                      borderRadius: BorderRadius.circular(8),
                     ),
                     child: Text(
                       dateFormat.format(event.started!),
                       style: theme.textTheme.bodyMedium?.copyWith(
                         color: colorScheme.primary,
                         fontWeight: FontWeight.w500,
+                        fontSize: isDesktopView ? 15 : null,
                       ),
                     ),
                   ),
-                const SizedBox(height: 8),
+                SizedBox(height: isDesktopView ? 12 : 8),
                 Row(
                   children: [
                     Icon(
                       Icons.location_on,
-                      size: 16,
+                      size: isDesktopView ? 20 : 16,
                       color: colorScheme.onSurfaceVariant,
                     ),
                     const SizedBox(width: 4),
@@ -242,6 +287,7 @@ class EventCard extends StatelessWidget {
                         event.locationLatLng?.toString() ?? 'Location not available',
                         style: theme.textTheme.bodyMedium?.copyWith(
                           color: colorScheme.onSurfaceVariant,
+                          fontSize: isDesktopView ? 15 : null,
                         ),
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
@@ -253,18 +299,20 @@ class EventCard extends StatelessWidget {
                 Row(
                   mainAxisAlignment: MainAxisAlignment.end,
                   children: [
-                    _buildAnimatedActionButton(
+                    _buildActionButton(
                       context,
                       Icons.calendar_today,
                       'Add to Calendar',
                       onAddToCalendar,
+                      isDesktopView,
                     ),
-                    const SizedBox(width: 8),
-                    _buildAnimatedActionButton(
+                    SizedBox(width: isDesktopView ? 12 : 8),
+                    _buildActionButton(
                       context,
                       Icons.share,
                       'Share',
                       onShare,
+                      isDesktopView,
                     ),
                   ],
                 ),
@@ -278,37 +326,39 @@ class EventCard extends StatelessWidget {
 
   Widget _buildImagePlaceholder(BuildContext context) {
     final colorScheme = Theme.of(context).colorScheme;
+    final isDesktopView = _isDesktop(context);
     
     return Container(
       color: colorScheme.surfaceVariant.withOpacity(0.5),
       child: Center(
         child: Icon(
           Icons.event,
-          size: 48,
+          size: isDesktopView ? 64 : 48,
           color: colorScheme.onSurfaceVariant.withOpacity(0.8),
         ),
       ),
     );
   }
 
-  Widget _buildAnimatedActionButton(
+  Widget _buildActionButton(
     BuildContext context,
     IconData icon,
     String tooltip,
     VoidCallback onPressed,
+    bool isDesktopView,
   ) {
     return Material(
       color: Colors.transparent,
       child: InkWell(
-        borderRadius: BorderRadius.circular(8),
+        borderRadius: BorderRadius.circular(isDesktopView ? 12 : 8),
         onTap: onPressed,
         child: Padding(
-          padding: const EdgeInsets.all(8),
+          padding: EdgeInsets.all(isDesktopView ? 12 : 8),
           child: Tooltip(
             message: tooltip,
             child: Icon(
               icon,
-              size: 20,
+              size: isDesktopView ? 24 : 20,
               color: Theme.of(context).colorScheme.primary,
             ),
           ),
