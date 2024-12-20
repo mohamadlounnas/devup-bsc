@@ -39,10 +39,7 @@ class HostelCard extends StatelessWidget {
     final theme = Theme.of(context);
     final colorScheme = theme.colorScheme;
 
-    return Material(
-      color: colorScheme.surface,
-      borderRadius: BorderRadius.circular(isCompact ? 12 : 16),
-      clipBehavior: Clip.antiAlias,
+    return Card(
       elevation: 0,
       child: InkWell(
         onTap: onTap,

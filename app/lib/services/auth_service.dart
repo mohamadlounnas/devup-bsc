@@ -1,7 +1,8 @@
 import 'package:flutter/foundation.dart';
 import 'package:pocketbase/pocketbase.dart';
+import 'package:shared/shared.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import '../models/user.dart';
+import 'package:shared/models/user.dart';
 
 /// Service responsible for handling user authentication
 class AuthService extends ChangeNotifier {
@@ -41,12 +42,25 @@ class AuthService extends ChangeNotifier {
 
   /// Handle various error types and return user-friendly messages
   String _handleError(dynamic error) {
+    if (kDebugMode) {
+      print('Auth Error: $error');
+      if (error is ClientException) {
+        print('Response data: ${error.response}');
+      }
+    }
+
     if (error is ClientException) {
       if (error.response['message'] != null) {
         return error.response['message'];
       }
       if (error.statusCode == 400) {
-        return 'Invalid credentials. Please check your phone number and try again.';
+        // Check for validation errors
+        if (error.response['data'] != null) {
+          final data = error.response['data'] as Map<String, dynamic>;
+          final errors = data.entries.map((e) => '${e.key}: ${(e.value as Map)['message']}').join('\n');
+          return 'Validation errors:\n$errors';
+        }
+        return 'Invalid credentials. Please check your email and password.';
       }
       if (error.statusCode == 403) {
         return 'Access denied. Please check your credentials.';
@@ -65,11 +79,17 @@ class AuthService extends ChangeNotifier {
 
   /// Register a new user
   Future<User> register({
+    required String email,
+    required String password,
+    required String passwordConfirm,
+    required String firstname,
+    required String lastname,
     required String phone,
-    required String firstName,
-    required String lastName,
-    String? email,
-    String? address,
+    required Gender gender,
+    required UserType type,
+    String? nationalId,
+    DateTime? dateOfBirth,
+    String? placeOfBirth,
   }) async {
     try {
       _loading = true;
@@ -77,15 +97,27 @@ class AuthService extends ChangeNotifier {
       notifyListeners();
 
       final body = {
+        'email': email,
+        'password': password,
+        'passwordConfirm': passwordConfirm,
+        'firstname': firstname,
+        'lastname': lastname,
         'phone': phone,
-        'firstName': firstName,
-        'lastName': lastName,
-        if (email != null) 'email': email,
-        if (address != null) 'address': address,
+        'gander': gender.name,
+        'type': type.name,
+        if (nationalId != null) 'national_id': nationalId,
+        if (dateOfBirth != null) 'date_of_birth': dateOfBirth.toIso8601String(),
+        if (placeOfBirth != null) 'place_of_birth': placeOfBirth,
       };
 
       final record = await _pb.collection('users').create(body: body);
-      _currentUser = User.fromJson(record.toJson());
+      _currentUser = User.fromJson({
+        'id': record.id,
+        'email': email,
+        ...record.toJson(),
+        'created': record.created,
+        'updated': record.updated,
+      });
 
       _loading = false;
       notifyListeners();
@@ -98,21 +130,21 @@ class AuthService extends ChangeNotifier {
     }
   }
 
-  /// Login with phone number and verification code
-  Future<User> loginWithPhone(String phone, String verificationCode) async {
+  /// Login with email and password
+  Future<User> login(String email, String password) async {
     try {
       _loading = true;
       _error = null;
       notifyListeners();
 
       final authData = await _pb.collection('users').authWithPassword(
-        phone,
-        verificationCode,
+        email,
+        password,
       );
 
       if (authData.record != null) {
         _currentUser = User.fromJson(authData.record!.toJson());
-        await _saveAuthState(phone, verificationCode);
+        await _saveAuthState(email, password);
 
         _loading = false;
         notifyListeners();
@@ -136,8 +168,8 @@ class AuthService extends ChangeNotifier {
 
       _pb.authStore.clear();
       final prefs = await SharedPreferences.getInstance();
-      await prefs.remove('auth_phone');
-      await prefs.remove('auth_code');
+      await prefs.remove('auth_email');
+      await prefs.remove('auth_password');
       _currentUser = null;
 
       _loading = false;
@@ -173,22 +205,22 @@ class AuthService extends ChangeNotifier {
   }
 
   /// Save authentication state
-  Future<void> _saveAuthState(String phone, String code) async {
+  Future<void> _saveAuthState(String email, String password) async {
     final prefs = await SharedPreferences.getInstance();
-    await prefs.setString('auth_phone', phone);
-    await prefs.setString('auth_code', code);
+    await prefs.setString('auth_email', email);
+    await prefs.setString('auth_password', password);
   }
 
   /// Get saved authentication state
   Future<Map<String, String>?> getSavedAuthState() async {
     final prefs = await SharedPreferences.getInstance();
-    final phone = prefs.getString('auth_phone');
-    final code = prefs.getString('auth_code');
+    final email = prefs.getString('auth_email');
+    final password = prefs.getString('auth_password');
 
-    if (phone != null && code != null) {
+    if (email != null && password != null) {
       return {
-        'phone': phone,
-        'code': code,
+        'email': email,
+        'password': password,
       };
     }
     return null;

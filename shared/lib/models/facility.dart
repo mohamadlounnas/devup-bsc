@@ -66,3 +66,5 @@ extension Location on Facility {
     return LatLng(double.parse(parts[0]), double.parse(parts[1]));
   }
 }
+
+
