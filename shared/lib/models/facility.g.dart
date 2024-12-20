@@ -19,6 +19,11 @@ _$FacilityImpl _$$FacilityImplFromJson(Map<String, dynamic> json) =>
       cover: json['cover'] as String?,
       type: $enumDecode(_$FacilityTypeEnumMap, json['type']),
       location: json['location'] as String?,
+      eventIds:
+          (json['events'] as List<dynamic>?)?.map((e) => e as String).toList(),
+      events: (json['events_expand'] as List<dynamic>?)
+          ?.map((e) => FacilityEvent.fromJson(e as Map<String, dynamic>))
+          .toList(),
       created: DateTime.parse(json['created'] as String),
       updated: DateTime.parse(json['updated'] as String),
     );
@@ -34,6 +39,8 @@ Map<String, dynamic> _$$FacilityImplToJson(_$FacilityImpl instance) =>
       'cover': instance.cover,
       'type': _$FacilityTypeEnumMap[instance.type]!,
       'location': instance.location,
+      'events': instance.eventIds,
+      'events_expand': instance.events?.map((e) => e.toJson()).toList(),
       'created': instance.created.toIso8601String(),
       'updated': instance.updated.toIso8601String(),
     };

@@ -22,20 +22,24 @@ FacilityEvent _$FacilityEventFromJson(Map<String, dynamic> json) {
 mixin _$FacilityEvent {
   @JsonKey(name: 'id')
   String get id => throw _privateConstructorUsedError;
-  @JsonKey(name: 'image')
-  String? get image => throw _privateConstructorUsedError;
   @JsonKey(name: 'name')
   String get name => throw _privateConstructorUsedError;
   @JsonKey(name: 'description')
   String? get description => throw _privateConstructorUsedError;
   @JsonKey(name: 'body')
   String? get body => throw _privateConstructorUsedError;
+  @JsonKey(name: 'image')
+  String? get image => throw _privateConstructorUsedError;
   @JsonKey(name: 'started')
   DateTime? get started => throw _privateConstructorUsedError;
   @JsonKey(name: 'ended')
   DateTime? get ended => throw _privateConstructorUsedError;
   @JsonKey(name: 'seats')
   double? get seats => throw _privateConstructorUsedError;
+  @JsonKey(name: 'location')
+  String? get location => throw _privateConstructorUsedError;
+  @JsonKey(name: 'address')
+  String? get address => throw _privateConstructorUsedError;
   @JsonKey(name: 'remaining_seats')
   double? get remainingSeats => throw _privateConstructorUsedError;
   @JsonKey(name: 'created')
@@ -61,13 +65,15 @@ abstract class $FacilityEventCopyWith<$Res> {
   @useResult
   $Res call(
       {@JsonKey(name: 'id') String id,
-      @JsonKey(name: 'image') String? image,
       @JsonKey(name: 'name') String name,
       @JsonKey(name: 'description') String? description,
       @JsonKey(name: 'body') String? body,
+      @JsonKey(name: 'image') String? image,
       @JsonKey(name: 'started') DateTime? started,
       @JsonKey(name: 'ended') DateTime? ended,
       @JsonKey(name: 'seats') double? seats,
+      @JsonKey(name: 'location') String? location,
+      @JsonKey(name: 'address') String? address,
       @JsonKey(name: 'remaining_seats') double? remainingSeats,
       @JsonKey(name: 'created') DateTime created,
       @JsonKey(name: 'updated') DateTime updated});
@@ -89,13 +95,15 @@ class _$FacilityEventCopyWithImpl<$Res, $Val extends FacilityEvent>
   @override
   $Res call({
     Object? id = null,
-    Object? image = freezed,
     Object? name = null,
     Object? description = freezed,
     Object? body = freezed,
+    Object? image = freezed,
     Object? started = freezed,
     Object? ended = freezed,
     Object? seats = freezed,
+    Object? location = freezed,
+    Object? address = freezed,
     Object? remainingSeats = freezed,
     Object? created = null,
     Object? updated = null,
@@ -105,10 +113,6 @@ class _$FacilityEventCopyWithImpl<$Res, $Val extends FacilityEvent>
           ? _value.id
           : id // ignore: cast_nullable_to_non_nullable
               as String,
-      image: freezed == image
-          ? _value.image
-          : image // ignore: cast_nullable_to_non_nullable
-              as String?,
       name: null == name
           ? _value.name
           : name // ignore: cast_nullable_to_non_nullable
@@ -120,6 +124,10 @@ class _$FacilityEventCopyWithImpl<$Res, $Val extends FacilityEvent>
       body: freezed == body
           ? _value.body
           : body // ignore: cast_nullable_to_non_nullable
+              as String?,
+      image: freezed == image
+          ? _value.image
+          : image // ignore: cast_nullable_to_non_nullable
               as String?,
       started: freezed == started
           ? _value.started
@@ -133,6 +141,14 @@ class _$FacilityEventCopyWithImpl<$Res, $Val extends FacilityEvent>
           ? _value.seats
           : seats // ignore: cast_nullable_to_non_nullable
               as double?,
+      location: freezed == location
+          ? _value.location
+          : location // ignore: cast_nullable_to_non_nullable
+              as String?,
+      address: freezed == address
+          ? _value.address
+          : address // ignore: cast_nullable_to_non_nullable
+              as String?,
       remainingSeats: freezed == remainingSeats
           ? _value.remainingSeats
           : remainingSeats // ignore: cast_nullable_to_non_nullable
@@ -159,13 +175,15 @@ abstract class _$$FacilityEventImplCopyWith<$Res>
   @useResult
   $Res call(
       {@JsonKey(name: 'id') String id,
-      @JsonKey(name: 'image') String? image,
       @JsonKey(name: 'name') String name,
       @JsonKey(name: 'description') String? description,
       @JsonKey(name: 'body') String? body,
+      @JsonKey(name: 'image') String? image,
       @JsonKey(name: 'started') DateTime? started,
       @JsonKey(name: 'ended') DateTime? ended,
       @JsonKey(name: 'seats') double? seats,
+      @JsonKey(name: 'location') String? location,
+      @JsonKey(name: 'address') String? address,
       @JsonKey(name: 'remaining_seats') double? remainingSeats,
       @JsonKey(name: 'created') DateTime created,
       @JsonKey(name: 'updated') DateTime updated});
@@ -185,13 +203,15 @@ class __$$FacilityEventImplCopyWithImpl<$Res>
   @override
   $Res call({
     Object? id = null,
-    Object? image = freezed,
     Object? name = null,
     Object? description = freezed,
     Object? body = freezed,
+    Object? image = freezed,
     Object? started = freezed,
     Object? ended = freezed,
     Object? seats = freezed,
+    Object? location = freezed,
+    Object? address = freezed,
     Object? remainingSeats = freezed,
     Object? created = null,
     Object? updated = null,
@@ -201,10 +221,6 @@ class __$$FacilityEventImplCopyWithImpl<$Res>
           ? _value.id
           : id // ignore: cast_nullable_to_non_nullable
               as String,
-      image: freezed == image
-          ? _value.image
-          : image // ignore: cast_nullable_to_non_nullable
-              as String?,
       name: null == name
           ? _value.name
           : name // ignore: cast_nullable_to_non_nullable
@@ -216,6 +232,10 @@ class __$$FacilityEventImplCopyWithImpl<$Res>
       body: freezed == body
           ? _value.body
           : body // ignore: cast_nullable_to_non_nullable
+              as String?,
+      image: freezed == image
+          ? _value.image
+          : image // ignore: cast_nullable_to_non_nullable
               as String?,
       started: freezed == started
           ? _value.started
@@ -229,6 +249,14 @@ class __$$FacilityEventImplCopyWithImpl<$Res>
           ? _value.seats
           : seats // ignore: cast_nullable_to_non_nullable
               as double?,
+      location: freezed == location
+          ? _value.location
+          : location // ignore: cast_nullable_to_non_nullable
+              as String?,
+      address: freezed == address
+          ? _value.address
+          : address // ignore: cast_nullable_to_non_nullable
+              as String?,
       remainingSeats: freezed == remainingSeats
           ? _value.remainingSeats
           : remainingSeats // ignore: cast_nullable_to_non_nullable
@@ -250,13 +278,15 @@ class __$$FacilityEventImplCopyWithImpl<$Res>
 class _$FacilityEventImpl implements _FacilityEvent {
   _$FacilityEventImpl(
       {@JsonKey(name: 'id') required this.id,
-      @JsonKey(name: 'image') this.image,
       @JsonKey(name: 'name') required this.name,
       @JsonKey(name: 'description') this.description,
       @JsonKey(name: 'body') this.body,
+      @JsonKey(name: 'image') this.image,
       @JsonKey(name: 'started') this.started,
       @JsonKey(name: 'ended') this.ended,
       @JsonKey(name: 'seats') this.seats,
+      @JsonKey(name: 'location') this.location,
+      @JsonKey(name: 'address') this.address,
       @JsonKey(name: 'remaining_seats') this.remainingSeats,
       @JsonKey(name: 'created') required this.created,
       @JsonKey(name: 'updated') required this.updated});
@@ -268,9 +298,6 @@ class _$FacilityEventImpl implements _FacilityEvent {
   @JsonKey(name: 'id')
   final String id;
   @override
-  @JsonKey(name: 'image')
-  final String? image;
-  @override
   @JsonKey(name: 'name')
   final String name;
   @override
@@ -280,6 +307,9 @@ class _$FacilityEventImpl implements _FacilityEvent {
   @JsonKey(name: 'body')
   final String? body;
   @override
+  @JsonKey(name: 'image')
+  final String? image;
+  @override
   @JsonKey(name: 'started')
   final DateTime? started;
   @override
@@ -288,6 +318,12 @@ class _$FacilityEventImpl implements _FacilityEvent {
   @override
   @JsonKey(name: 'seats')
   final double? seats;
+  @override
+  @JsonKey(name: 'location')
+  final String? location;
+  @override
+  @JsonKey(name: 'address')
+  final String? address;
   @override
   @JsonKey(name: 'remaining_seats')
   final double? remainingSeats;
@@ -300,7 +336,7 @@ class _$FacilityEventImpl implements _FacilityEvent {
 
   @override
   String toString() {
-    return 'FacilityEvent(id: $id, image: $image, name: $name, description: $description, body: $body, started: $started, ended: $ended, seats: $seats, remainingSeats: $remainingSeats, created: $created, updated: $updated)';
+    return 'FacilityEvent(id: $id, name: $name, description: $description, body: $body, image: $image, started: $started, ended: $ended, seats: $seats, location: $location, address: $address, remainingSeats: $remainingSeats, created: $created, updated: $updated)';
   }
 
   @override
@@ -309,14 +345,17 @@ class _$FacilityEventImpl implements _FacilityEvent {
         (other.runtimeType == runtimeType &&
             other is _$FacilityEventImpl &&
             (identical(other.id, id) || other.id == id) &&
-            (identical(other.image, image) || other.image == image) &&
             (identical(other.name, name) || other.name == name) &&
             (identical(other.description, description) ||
                 other.description == description) &&
             (identical(other.body, body) || other.body == body) &&
+            (identical(other.image, image) || other.image == image) &&
             (identical(other.started, started) || other.started == started) &&
             (identical(other.ended, ended) || other.ended == ended) &&
             (identical(other.seats, seats) || other.seats == seats) &&
+            (identical(other.location, location) ||
+                other.location == location) &&
+            (identical(other.address, address) || other.address == address) &&
             (identical(other.remainingSeats, remainingSeats) ||
                 other.remainingSeats == remainingSeats) &&
             (identical(other.created, created) || other.created == created) &&
@@ -325,8 +364,21 @@ class _$FacilityEventImpl implements _FacilityEvent {
 
   @JsonKey(includeFromJson: false, includeToJson: false)
   @override
-  int get hashCode => Object.hash(runtimeType, id, image, name, description,
-      body, started, ended, seats, remainingSeats, created, updated);
+  int get hashCode => Object.hash(
+      runtimeType,
+      id,
+      name,
+      description,
+      body,
+      image,
+      started,
+      ended,
+      seats,
+      location,
+      address,
+      remainingSeats,
+      created,
+      updated);
 
   /// Create a copy of FacilityEvent
   /// with the given fields replaced by the non-null parameter values.
@@ -347,13 +399,15 @@ class _$FacilityEventImpl implements _FacilityEvent {
 abstract class _FacilityEvent implements FacilityEvent {
   factory _FacilityEvent(
           {@JsonKey(name: 'id') required final String id,
-          @JsonKey(name: 'image') final String? image,
           @JsonKey(name: 'name') required final String name,
           @JsonKey(name: 'description') final String? description,
           @JsonKey(name: 'body') final String? body,
+          @JsonKey(name: 'image') final String? image,
           @JsonKey(name: 'started') final DateTime? started,
           @JsonKey(name: 'ended') final DateTime? ended,
           @JsonKey(name: 'seats') final double? seats,
+          @JsonKey(name: 'location') final String? location,
+          @JsonKey(name: 'address') final String? address,
           @JsonKey(name: 'remaining_seats') final double? remainingSeats,
           @JsonKey(name: 'created') required final DateTime created,
           @JsonKey(name: 'updated') required final DateTime updated}) =
@@ -366,9 +420,6 @@ abstract class _FacilityEvent implements FacilityEvent {
   @JsonKey(name: 'id')
   String get id;
   @override
-  @JsonKey(name: 'image')
-  String? get image;
-  @override
   @JsonKey(name: 'name')
   String get name;
   @override
@@ -378,6 +429,9 @@ abstract class _FacilityEvent implements FacilityEvent {
   @JsonKey(name: 'body')
   String? get body;
   @override
+  @JsonKey(name: 'image')
+  String? get image;
+  @override
   @JsonKey(name: 'started')
   DateTime? get started;
   @override
@@ -386,6 +440,12 @@ abstract class _FacilityEvent implements FacilityEvent {
   @override
   @JsonKey(name: 'seats')
   double? get seats;
+  @override
+  @JsonKey(name: 'location')
+  String? get location;
+  @override
+  @JsonKey(name: 'address')
+  String? get address;
   @override
   @JsonKey(name: 'remaining_seats')
   double? get remainingSeats;
