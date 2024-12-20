@@ -72,14 +72,6 @@ class _DashboardShellState extends State<DashboardShell> with SingleTickerProvid
     }
   }
 
-  void _handleRailHover(bool isHovered) {
-    setState(() => _isRailHovered = isHovered);
-    if (isHovered) {
-      _railController.forward();
-    } else {
-      _railController.reverse();
-    }
-  }
 
   /// Builds a consistent navigation destination with semantic labels
   NavigationDestination _buildDestination({
@@ -155,7 +147,7 @@ class _DashboardShellState extends State<DashboardShell> with SingleTickerProvid
 
     // Common navigation rail properties
     final railProperties = NavigationRailThemeData(
-      backgroundColor: colorScheme.surface.withOpacity(0.95),
+      backgroundColor: colorScheme.surface.withOpacity(0.5),
       selectedIconTheme: IconThemeData(
         color: colorScheme.primary,
         size: 28,
@@ -218,48 +210,44 @@ class _DashboardShellState extends State<DashboardShell> with SingleTickerProvid
           backgroundColor: Colors.transparent,
           body: Row(
             children: [
-              MouseRegion(
-                onEnter: (_) => _handleRailHover(true),
-                onExit: (_) => _handleRailHover(false),
-                child: AnimatedBuilder(
-                  animation: _railWidth,
-                  builder: (context, child) => SizedBox(
-                    width: _railWidth.value,
-                    child: child,
+              AnimatedBuilder(
+                animation: _railWidth,
+                builder: (context, child) => SizedBox(
+                  width: _railWidth.value,
+                  child: child,
+                ),
+                child: Theme(
+                  data: Theme.of(context).copyWith(
+                    navigationRailTheme: railProperties,
                   ),
-                  child: Theme(
-                    data: Theme.of(context).copyWith(
-                      navigationRailTheme: railProperties,
-                    ),
-                    child: NavigationRail(
-                      extended: true,
-                      selectedIndex: selectedIndex,
-                      onDestinationSelected: (index) => _onDestinationSelected(context, index),
-                      leading: Padding(
-                        padding: const EdgeInsets.symmetric(vertical: 24),
-                        child: Column(
-                          children: [
-                            Hero(
-                              tag: 'app_logo',
-                              child: Image.asset(
-                                'assets/images/logo.png',
-                                height: 40,
-                                semanticLabel: 'App logo',
-                              ),
+                  child: NavigationRail(
+                    extended: true,
+                    selectedIndex: selectedIndex,
+                    onDestinationSelected: (index) => _onDestinationSelected(context, index),
+                    leading: Padding(
+                      padding: const EdgeInsets.symmetric(vertical: 24),
+                      child: Column(
+                        children: [
+                          Hero(
+                            tag: 'app_logo',
+                            child: Image.asset(
+                              'assets/images/logo.png',
+                              height: 40,
+                              semanticLabel: 'App logo',
                             ),
-                            const SizedBox(height: 24),
-                            const ThemeToggle(),
-                          ],
-                        ),
+                          ),
+                          const SizedBox(height: 24),
+                          const ThemeToggle(),
+                        ],
                       ),
-                      destinations: railDestinations,
                     ),
+                    destinations: railDestinations,
                   ),
                 ),
               ),
               Container(
                 width: 1,
-                color: colorScheme.outlineVariant.withOpacity(0.2),
+                color: colorScheme.outlineVariant.withOpacity(0.1),
               ),
               Expanded(
                 child: ClipRRect(

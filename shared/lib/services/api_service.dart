@@ -57,6 +57,19 @@ class ApiService {
     return records.map((r) => HostelService.fromJson(r.toJson())).toList();
   }
 
+  /// Update an existing hostel service
+  Future<HostelService> updateHostelService(HostelService service) async {
+    final record = await pb
+        .collection('hostels_services')
+        .update(service.id, body: service.toJson());
+    return HostelService.fromJson(record.toJson());
+  }
+
+  /// Delete a hostel service
+  Future<void> deleteHostelService(String id) async {
+    await pb.collection('hostels_services').delete(id);
+  }
+
   /// Get a hostel reservation by ID
   Future<HostelReservation> getHostelReservation(String id) async {
     final record = await pb.collection('hostels_reservations').getOne(id);

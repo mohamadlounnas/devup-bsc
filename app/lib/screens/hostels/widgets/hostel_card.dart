@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_map/flutter_map.dart';
 import 'package:shared/shared.dart';
 
 /// A responsive card that displays hostel information with enhanced UI/UX
@@ -129,7 +130,38 @@ class HostelCard extends StatelessWidget {
             children: [
               AspectRatio(
                 aspectRatio: 16 / 9,
-                child: Container(
+                child: hostel.latLong != null ? ClipRRect(
+                  borderRadius: BorderRadius.vertical(
+                    top: Radius.circular(isCompact ? 12 : 16),
+                  ),
+                  child: FlutterMap(
+                    options: MapOptions(
+                      center: hostel.latLong,
+                      zoom: 15.0,
+                      interactiveFlags: InteractiveFlag.none,
+                    ),
+                    children: [
+                      TileLayer(
+                        urlTemplate: 'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
+                        userAgentPackageName: 'com.devup.app',
+                      ),
+                      MarkerLayer(
+                        markers: [
+                          Marker(
+                            point: hostel.latLong!,
+                            width: 40,
+                            height: 40,
+                            child: Icon(
+                              Icons.location_on,
+                              color: theme.colorScheme.primary,
+                              size: 40,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ],
+                  ),
+                ) : Container(
                   decoration: BoxDecoration(
                     color: theme.colorScheme.surfaceVariant.withOpacity(0.5),
                     borderRadius: BorderRadius.vertical(
@@ -138,7 +170,7 @@ class HostelCard extends StatelessWidget {
                   ),
                   child: Center(
                     child: Icon(
-                      Icons.apartment_outlined,
+                      Icons.apartment_outlined, 
                       size: 48,
                       color: theme.colorScheme.onSurfaceVariant.withOpacity(0.8),
                     ),
@@ -248,7 +280,6 @@ class HostelCard extends StatelessWidget {
         vertical: isCompact ? 4 : 6,
       ),
       decoration: BoxDecoration(
-        color: color,
         borderRadius: BorderRadius.circular(isCompact ? 6 : 8),
       ),
       child: Row(

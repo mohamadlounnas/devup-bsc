@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:shared/shared.dart';
+import 'package:flutter_map/flutter_map.dart';
+import 'package:latlong2/latlong.dart';
 
 /// A panel that displays detailed information about a hostel
 class HostelDetailsPanel extends StatelessWidget {
@@ -36,33 +38,34 @@ class HostelDetailsPanel extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          _buildHeader(theme),
+          _buildHeader(context),
           Expanded(
             child: SingleChildScrollView(
               padding: const EdgeInsets.all(16),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  _buildImage(theme),
+                  _buildImage(context),
                   const SizedBox(height: 16),
-                  _buildDetails(theme),
+                  _buildDetails(context),
                   const SizedBox(height: 24),
-                  _buildServices(theme),
+                  _buildServices(context),
                   const SizedBox(height: 24),
-                  _buildLocation(theme),
+                  _buildLocation(context),
                   const SizedBox(height: 24),
-                  _buildContact(theme),
+                  _buildContact(context),
                 ],
               ),
             ),
           ),
-          _buildActionButtons(theme),
+          _buildActionButtons(context),
         ],
       ),
     );
   }
 
-  Widget _buildHeader(ThemeData theme) {
+  Widget _buildHeader(BuildContext context) {
+    final theme = Theme.of(context);
     return Container(
       padding: EdgeInsets.fromLTRB(16, isSideSheet ? 16 : 8, 4, 8),
       decoration: BoxDecoration(
@@ -106,7 +109,8 @@ class HostelDetailsPanel extends StatelessWidget {
     );
   }
 
-  Widget _buildImage(ThemeData theme) {
+  Widget _buildImage(BuildContext context) {
+    final theme = Theme.of(context);
     return AspectRatio(
       aspectRatio: 16 / 9,
       child: ClipRRect(
@@ -129,7 +133,8 @@ class HostelDetailsPanel extends StatelessWidget {
     );
   }
 
-  Widget _buildDetails(ThemeData theme) {
+  Widget _buildDetails(BuildContext context) {
+    final theme = Theme.of(context);
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -188,7 +193,8 @@ class HostelDetailsPanel extends StatelessWidget {
     );
   }
 
-  Widget _buildServices(ThemeData theme) {
+  Widget _buildServices(BuildContext context) {
+    final theme = Theme.of(context);
     if (hostel.services == null || hostel.services!.isEmpty) {
       return const SizedBox.shrink();
     }
@@ -222,7 +228,8 @@ class HostelDetailsPanel extends StatelessWidget {
     );
   }
 
-  Widget _buildLocation(ThemeData theme) {
+  Widget _buildLocation(BuildContext context) {
+    final theme = Theme.of(context);
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -233,22 +240,108 @@ class HostelDetailsPanel extends StatelessWidget {
           ),
         ),
         const SizedBox(height: 8),
-        AspectRatio(
-          aspectRatio: 16 / 9,
-          child: ClipRRect(
-            borderRadius: BorderRadius.circular(12),
-            child: Container(
-              color: theme.colorScheme.surfaceVariant.withOpacity(0.5),
-              child: Center(
-                child: Icon(
-                  Icons.map_outlined,
-                  size: 48,
-                  color: theme.colorScheme.onSurfaceVariant.withOpacity(0.8),
+        if (hostel.latLong != null)
+          AspectRatio(
+            aspectRatio: 16 / 9,
+            child: ClipRRect(
+              borderRadius: BorderRadius.circular(12),
+              child: Stack(
+                children: [
+                  FlutterMap(
+                    options: MapOptions(
+                      center: LatLng(hostel.latLong!.latitude, hostel.latLong!.longitude),
+                      zoom: 15.0,
+                      minZoom: 3,
+                      maxZoom: 18,
+                      interactiveFlags: InteractiveFlag.all,
+                    ),
+                    children: [
+                      TileLayer(
+                        urlTemplate: 'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
+                        userAgentPackageName: 'com.devup.app',
+                        tileBuilder: (context, widget, tile) {
+                          return AnimatedSwitcher(
+                            duration: const Duration(milliseconds: 300),
+                            child: widget,
+                          );
+                        },
+                      ),
+                      MarkerLayer(
+                        markers: [
+                          Marker(
+                            point: LatLng(hostel.latLong!.latitude, hostel.latLong!.longitude),
+                            width: 40,
+                            height: 40,
+                            child: _buildMarker(theme),
+                          ),
+                        ],
+                      ),
+                    ],
+                  ),
+                  Positioned(
+                    right: 8,
+                    bottom: 8,
+                    child: Card(
+                      elevation: 4,
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          IconButton(
+                            icon: const Icon(Icons.remove),
+                            onPressed: () {
+                              // TODO: Implement zoom out
+                            },
+                            tooltip: 'Zoom out',
+                          ),
+                          Container(
+                            width: 1,
+                            height: 24,
+                            color: theme.colorScheme.outlineVariant,
+                          ),
+                          IconButton(
+                            icon: const Icon(Icons.add),
+                            onPressed: () {
+                              // TODO: Implement zoom in
+                            },
+                            tooltip: 'Zoom in',
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          )
+        else
+          AspectRatio(
+            aspectRatio: 16 / 9,
+            child: ClipRRect(
+              borderRadius: BorderRadius.circular(12),
+              child: Container(
+                color: theme.colorScheme.surfaceVariant.withOpacity(0.5),
+                child: Center(
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Icon(
+                        Icons.map_outlined,
+                        size: 48,
+                        color: theme.colorScheme.onSurfaceVariant.withOpacity(0.8),
+                      ),
+                      const SizedBox(height: 8),
+                      Text(
+                        'Location not available',
+                        style: theme.textTheme.bodyMedium?.copyWith(
+                          color: theme.colorScheme.onSurfaceVariant,
+                        ),
+                      ),
+                    ],
+                  ),
                 ),
               ),
             ),
           ),
-        ),
         if (hostel.location != null) ...[
           const SizedBox(height: 16),
           Row(
@@ -259,10 +352,12 @@ class HostelDetailsPanel extends StatelessWidget {
                 color: theme.colorScheme.primary,
               ),
               const SizedBox(width: 8),
-              Text(
-                hostel.location!,
-                style: theme.textTheme.bodyMedium?.copyWith(
-                  color: theme.colorScheme.onSurfaceVariant,
+              Expanded(
+                child: Text(
+                  hostel.location!,
+                  style: theme.textTheme.bodyMedium?.copyWith(
+                    color: theme.colorScheme.onSurfaceVariant,
+                  ),
                 ),
               ),
             ],
@@ -272,7 +367,34 @@ class HostelDetailsPanel extends StatelessWidget {
     );
   }
 
-  Widget _buildContact(ThemeData theme) {
+  Widget _buildMarker(ThemeData theme) {
+    return Column(
+      children: [
+        Container(
+          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+          decoration: BoxDecoration(
+            color: theme.colorScheme.primary,
+            borderRadius: BorderRadius.circular(16),
+          ),
+          child: Text(
+            hostel.name,
+            style: theme.textTheme.labelSmall?.copyWith(
+              color: theme.colorScheme.onPrimary,
+            ),
+          ),
+        ),
+        const SizedBox(height: 2),
+        Icon(
+          Icons.location_on,
+          color: theme.colorScheme.primary,
+          size: 32,
+        ),
+      ],
+    );
+  }
+
+  Widget _buildContact(BuildContext context) {
+    final theme = Theme.of(context);
     if (hostel.phone == null) {
       return const SizedBox.shrink();
     }
@@ -307,7 +429,8 @@ class HostelDetailsPanel extends StatelessWidget {
     );
   }
 
-  Widget _buildActionButtons(ThemeData theme) {
+  Widget _buildActionButtons(BuildContext context) {
+    final theme = Theme.of(context);
     return Container(
       padding: EdgeInsets.all(16),
       decoration: BoxDecoration(

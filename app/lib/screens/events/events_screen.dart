@@ -5,6 +5,7 @@ import 'package:shared/shared.dart';
 import '../../providers/events_provider.dart';
 import '../../widgets/theme_toggle.dart';
 import '../../widgets/background_gradient.dart';
+import 'widgets/calendar_view.dart';
 import 'widgets/event_card.dart';
 import 'widgets/event_details_panel.dart';
 import 'widgets/timeline_view.dart';
@@ -69,10 +70,10 @@ class _EventsScreenState extends State<EventsScreen> with SingleTickerProviderSt
     setState(() {
       switch (_viewMode) {
         case ViewMode.list:
-          _viewMode = ViewMode.grid;
+          _viewMode = ViewMode.calinder;
           _viewModeController.forward();
           break;
-        case ViewMode.grid:
+        case ViewMode.calinder:
           _viewMode = ViewMode.timeline;
           _viewModeController.forward();
           break;
@@ -190,22 +191,7 @@ class _EventsScreenState extends State<EventsScreen> with SingleTickerProviderSt
           children: [
             Padding(
               padding: const EdgeInsets.only(right: 16, top: 8),
-              child: Row(
-                children: [
-                  Expanded(
-                    child: _buildSearchAndFilters(colorScheme),
-                  ),
-                  IconButton(
-                    onPressed: _toggleViewMode,
-                    icon: AnimatedIcon(
-                      icon: AnimatedIcons.list_view,
-                      progress: _viewModeAnimation,
-                      semanticLabel: 'Toggle view mode',
-                    ),
-                    tooltip: 'Change view mode',
-                  ),
-                ],
-              ),
+              child: _buildSearchAndFilters(colorScheme),
             ),
           ],
         ),
@@ -219,6 +205,16 @@ class _EventsScreenState extends State<EventsScreen> with SingleTickerProviderSt
       padding: const EdgeInsets.only(left: 20),
       child: Row(
         children: [
+
+                  IconButton(
+                    onPressed: _toggleViewMode,
+                    icon: AnimatedIcon(
+                      icon: AnimatedIcons.list_view,
+                      progress: _viewModeAnimation,
+                      semanticLabel: 'Toggle view mode',
+                    ),
+                    tooltip: 'Change view mode',
+                  ),
           // Optimized search bar with animation
           AnimatedContainer(
             duration: const Duration(milliseconds: 200),
@@ -414,8 +410,8 @@ class _EventsScreenState extends State<EventsScreen> with SingleTickerProviderSt
         switch (_viewMode) {
           case ViewMode.list:
             return _buildListView(events);
-          case ViewMode.grid:
-            return _buildGridView(events);
+          case ViewMode.calinder:
+            return _buildCalendarView(events);
           case ViewMode.timeline:
             return TimelineView(
               events: events,
@@ -607,31 +603,16 @@ class _EventsScreenState extends State<EventsScreen> with SingleTickerProviderSt
             child: AnimatedOpacity(
               opacity: 1.0,
               duration: Duration(milliseconds: 200 + (index * 50)),
-              child: Container(
-                decoration: BoxDecoration(
-                  borderRadius: BorderRadius.circular(isCompact ? 12 : 16),
-                  boxShadow: [
-                    BoxShadow(
-                      color: Theme.of(context).colorScheme.shadow.withOpacity(0.08),
-                      blurRadius: 8,
-                      offset: const Offset(0, 2),
-                    ),
-                  ],
-                ),
-                child: ClipRRect(
-                  borderRadius: BorderRadius.circular(isCompact ? 12 : 16),
-                  child: EventCard(
-                    event: events[index],
-                    isCompact: isCompact,
-                    onTap: () => _showEventDetails(events[index]),
-                    onShare: () {
-                      // TODO: Implement share
-                    },
-                    onAddToCalendar: () {
-                      // TODO: Implement add to calendar
-                    },
-                  ),
-                ),
+              child: EventCard(
+                event: events[index],
+                isCompact: isCompact,
+                onTap: () => _showEventDetails(events[index]),
+                onShare: () {
+                  // TODO: Implement share
+                },
+                onAddToCalendar: () {
+                  // TODO: Implement add to calendar
+                },
               ),
             ),
           );
@@ -639,62 +620,22 @@ class _EventsScreenState extends State<EventsScreen> with SingleTickerProviderSt
       ),
     );
   }
-
-  Widget _buildGridView(List<FacilityEvent> events) {
-    final width = MediaQuery.of(context).size.width;
-    final isCompact = width < 600;
-    final crossAxisCount = (width / (isCompact ? 280 : 320)).floor().clamp(1, 4);
-    
-    return AnimatedSwitcher(
-      duration: const Duration(milliseconds: 300),
-      child: GridView.builder(
-        key: ValueKey(_viewMode),
-        controller: _scrollController,
-        padding: EdgeInsets.all(isCompact ? 12 : 16),
-        gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-          crossAxisCount: crossAxisCount,
-          childAspectRatio: isCompact ? 1.2 : 1.5,
-          mainAxisSpacing: isCompact ? 12 : 16,
-          crossAxisSpacing: isCompact ? 12 : 16,
-        ),
-        itemCount: events.length,
-        itemBuilder: (context, index) {
-          return AnimatedScale(
-            scale: 1.0,
-            duration: Duration(milliseconds: 200 + (index * 50)),
-            child: AnimatedOpacity(
-              opacity: 1.0,
-              duration: Duration(milliseconds: 200 + (index * 50)),
-              child: Container(
-                decoration: BoxDecoration(
-                  borderRadius: BorderRadius.circular(isCompact ? 12 : 16),
-                  boxShadow: [
-                    BoxShadow(
-                      color: Theme.of(context).colorScheme.shadow.withOpacity(0.08),
-                      blurRadius: 8,
-                      offset: const Offset(0, 2),
-                    ),
-                  ],
-                ),
-                child: ClipRRect(
-                  borderRadius: BorderRadius.circular(isCompact ? 12 : 16),
-                  child: EventCard(
-                    event: events[index],
-                    isGridView: true,
-                    isCompact: isCompact,
-                    onTap: () => _showEventDetails(events[index]),
-                    onShare: () {
-                      // TODO: Implement share
-                    },
-                    onAddToCalendar: () {
-                      // TODO: Implement add to calendar
-                    },
-                  ),
-                ),
-              ),
-            ),
-          );
+  Widget _buildCalendarView(List<FacilityEvent> events) {
+    // use CalendarView widget
+    return Card(
+      margin: EdgeInsets.all(12),
+      child: CalendarView(
+        selectedDay: DateTime.now(),
+        onDaySelected: (day) {
+          // TODO: Implement day selected
         },
+        onPreviousMonth: () {
+          // TODO: Implement previous month
+        },
+        onNextMonth: () {
+          // TODO: Implement next month
+        },
+        events: events,
       ),
     );
   }
@@ -709,8 +650,8 @@ enum EventFilter {
 
 enum ViewMode {
   list,
-  grid,
   timeline,
+  calinder,
 }
 
 /// A utility class for debouncing operations

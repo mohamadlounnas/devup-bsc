@@ -33,6 +33,7 @@ dependencies:
   google_fonts: ^6.1.0
   intl: ^0.20.1
   pocketbase: ^0.18.1
+  provider: ^6.1.1
   shared:
     path: ../shared
 

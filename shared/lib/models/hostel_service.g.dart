@@ -10,7 +10,7 @@ _$HostelServiceImpl _$$HostelServiceImplFromJson(Map<String, dynamic> json) =>
     _$HostelServiceImpl(
       id: json['id'] as String,
       name: json['name'] as String,
-      type: $enumDecode(_$ServiceTypeEnumMap, json['type']),
+      type: const ServiceTypeConverter().fromJson(json['type']),
       description: json['description'] as String?,
       icon: json['icon'] as String?,
       created: DateTime.parse(json['created'] as String),
@@ -21,7 +21,7 @@ Map<String, dynamic> _$$HostelServiceImplToJson(_$HostelServiceImpl instance) =>
     <String, dynamic>{
       'id': instance.id,
       'name': instance.name,
-      'type': _$ServiceTypeEnumMap[instance.type]!,
+      'type': const ServiceTypeConverter().toJson(instance.type),
       'description': instance.description,
       'icon': instance.icon,
       'created': instance.created.toIso8601String(),
@@ -30,6 +30,6 @@ Map<String, dynamic> _$$HostelServiceImplToJson(_$HostelServiceImpl instance) =>
 
 const _$ServiceTypeEnumMap = {
   ServiceType.hospitality: 'hospitality',
-  ServiceType.restoration: 'restoration',
   ServiceType.activity: 'activity',
+  ServiceType.restoration: 'restoration',
 };

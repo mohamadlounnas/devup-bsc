@@ -1,14 +1,19 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 import 'package:pocketbase/pocketbase.dart';
 import 'package:shared/services/api_service.dart';
-import 'screens/dashboard_screen.dart';
-
-// Initialize PocketBase and ApiService at app level
-final pb = PocketBase('https://bsc-pocketbase.mtdjari.com/');
-final apiService = ApiService(pb);
+import 'pages/service_dashboard_page.dart';
 
 void main() {
-  runApp(const MyApp());
+  final pb = PocketBase('https://bsc-pocketbase.mtdjari.com');
+  final apiService = ApiService(pb);
+
+  runApp(
+    Provider<ApiService>.value(
+      value: apiService,
+      child: const MyApp(),
+    ),
+  );
 }
 
 class MyApp extends StatelessWidget {
@@ -17,16 +22,15 @@ class MyApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      title: 'Malek Dashboard',
       debugShowCheckedModeBanner: false,
       theme: ThemeData(
+        useMaterial3: true,
         colorScheme: ColorScheme.fromSeed(
           seedColor: Colors.blue,
           brightness: Brightness.light,
         ),
-        useMaterial3: true,
       ),
-      home: const DashboardScreen(),
+      home: const ServiceDashboardPage(),
     );
   }
 }
