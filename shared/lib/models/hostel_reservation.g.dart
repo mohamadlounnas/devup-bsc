@@ -14,6 +14,7 @@ _$HostelReservationImpl _$$HostelReservationImplFromJson(
       user: json['user_expand'] == null
           ? null
           : User.fromJson(json['user_expand'] as Map<String, dynamic>),
+      status: $enumDecode(_$ReservationStatusEnumMap, json['status']),
       parentalLicense: json['parental_license'] as String?,
       loginAt: json['login_at'] == null
           ? null
@@ -35,6 +36,7 @@ Map<String, dynamic> _$$HostelReservationImplToJson(
       'id': instance.id,
       'user': instance.userId,
       'user_expand': instance.user?.toJson(),
+      'status': _$ReservationStatusEnumMap[instance.status]!,
       'parental_license': instance.parentalLicense,
       'login_at': instance.loginAt?.toIso8601String(),
       'logout_at': instance.logoutAt?.toIso8601String(),
@@ -45,3 +47,9 @@ Map<String, dynamic> _$$HostelReservationImplToJson(
       'created': instance.created.toIso8601String(),
       'updated': instance.updated.toIso8601String(),
     };
+
+const _$ReservationStatusEnumMap = {
+  ReservationStatus.pending: 'pending',
+  ReservationStatus.approved: 'approved',
+  ReservationStatus.cancelled: 'cancelled',
+};

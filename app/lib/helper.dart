@@ -41,5 +41,5 @@ extension EventPocketbaseFileUrl on FacilityEvent {
 
 // hostel image url
 extension HostelPocketbaseFileUrl on Hostel {
-  
+
 }

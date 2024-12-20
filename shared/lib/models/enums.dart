@@ -59,15 +59,15 @@ enum HostelStatus {
 /// Enum representing reservation status
 @JsonEnum()
 enum ReservationStatus {
-  /// Pending reservation
+  /// Pending reservation - initial state when reservation is created
   @JsonValue('pending')
   pending,
-  /// Confirmed reservation
-  @JsonValue('confirmed')
-  confirmed,
-  /// Completed reservation
-  @JsonValue('completed')
-  completed;
+  /// Approved reservation - when the reservation is confirmed by admin
+  @JsonValue('approved')
+  approved,
+  /// Cancelled reservation - when the reservation is cancelled by user or admin
+  @JsonValue('cancelled')
+  cancelled;
 }
 
 /// Enum representing service types

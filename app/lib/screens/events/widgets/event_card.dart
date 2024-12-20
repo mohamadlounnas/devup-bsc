@@ -1,3 +1,4 @@
+import 'package:app/helper.dart';
 import 'package:flutter/material.dart';
 import 'package:shared/shared.dart';
 import 'package:intl/intl.dart';
@@ -38,12 +39,8 @@ class EventCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final colorScheme = theme.colorScheme;
 
-    return Material(
-      color: colorScheme.surface,
-      borderRadius: BorderRadius.circular(isCompact ? 12 : 16),
-      clipBehavior: Clip.antiAlias,
+    return Card(
       elevation: 0,
       child: InkWell(
         onTap: onTap,
@@ -62,15 +59,15 @@ class EventCard extends StatelessWidget {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               // Event image
-              if (event.image?.isNotEmpty ?? false) ...[
+              if (event.imageUrl != null) ...[
                 ClipRRect(
                   borderRadius: BorderRadius.circular(isCompact ? 8 : 12),
                   child: Image.network(
-                    event.image!,
+                    event.imageUrl!,
                     width: isCompact ? 80 : 100,
                     height: isCompact ? 80 : 100,
                     fit: BoxFit.cover,
-                    errorBuilder: (context, error, stackTrace) => _buildImagePlaceholder(theme),
+                    // errorBuilder: (context, error, stackTrace) => _buildImagePlaceholder(theme),
                   ),
                 ),
                 SizedBox(width: isCompact ? 12 : 16),

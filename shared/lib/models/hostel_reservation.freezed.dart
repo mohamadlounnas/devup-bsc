@@ -26,6 +26,10 @@ mixin _$HostelReservation {
   String get userId => throw _privateConstructorUsedError;
   @JsonKey(name: 'user_expand')
   User? get user => throw _privateConstructorUsedError;
+
+  /// The status of the reservation (pending, approved, cancelled)
+  @JsonKey(name: 'status')
+  ReservationStatus get status => throw _privateConstructorUsedError;
   @JsonKey(name: 'parental_license')
   String? get parentalLicense => throw _privateConstructorUsedError;
   @JsonKey(name: 'login_at')
@@ -65,6 +69,7 @@ abstract class $HostelReservationCopyWith<$Res> {
       {@JsonKey(name: 'id') String id,
       @JsonKey(name: 'user') String userId,
       @JsonKey(name: 'user_expand') User? user,
+      @JsonKey(name: 'status') ReservationStatus status,
       @JsonKey(name: 'parental_license') String? parentalLicense,
       @JsonKey(name: 'login_at') DateTime? loginAt,
       @JsonKey(name: 'logout_at') DateTime? logoutAt,
@@ -96,6 +101,7 @@ class _$HostelReservationCopyWithImpl<$Res, $Val extends HostelReservation>
     Object? id = null,
     Object? userId = null,
     Object? user = freezed,
+    Object? status = null,
     Object? parentalLicense = freezed,
     Object? loginAt = freezed,
     Object? logoutAt = freezed,
@@ -119,6 +125,10 @@ class _$HostelReservationCopyWithImpl<$Res, $Val extends HostelReservation>
           ? _value.user
           : user // ignore: cast_nullable_to_non_nullable
               as User?,
+      status: null == status
+          ? _value.status
+          : status // ignore: cast_nullable_to_non_nullable
+              as ReservationStatus,
       parentalLicense: freezed == parentalLicense
           ? _value.parentalLicense
           : parentalLicense // ignore: cast_nullable_to_non_nullable
@@ -185,6 +195,7 @@ abstract class _$$HostelReservationImplCopyWith<$Res>
       {@JsonKey(name: 'id') String id,
       @JsonKey(name: 'user') String userId,
       @JsonKey(name: 'user_expand') User? user,
+      @JsonKey(name: 'status') ReservationStatus status,
       @JsonKey(name: 'parental_license') String? parentalLicense,
       @JsonKey(name: 'login_at') DateTime? loginAt,
       @JsonKey(name: 'logout_at') DateTime? logoutAt,
@@ -215,6 +226,7 @@ class __$$HostelReservationImplCopyWithImpl<$Res>
     Object? id = null,
     Object? userId = null,
     Object? user = freezed,
+    Object? status = null,
     Object? parentalLicense = freezed,
     Object? loginAt = freezed,
     Object? logoutAt = freezed,
@@ -238,6 +250,10 @@ class __$$HostelReservationImplCopyWithImpl<$Res>
           ? _value.user
           : user // ignore: cast_nullable_to_non_nullable
               as User?,
+      status: null == status
+          ? _value.status
+          : status // ignore: cast_nullable_to_non_nullable
+              as ReservationStatus,
       parentalLicense: freezed == parentalLicense
           ? _value.parentalLicense
           : parentalLicense // ignore: cast_nullable_to_non_nullable
@@ -285,6 +301,7 @@ class _$HostelReservationImpl implements _HostelReservation {
       {@JsonKey(name: 'id') required this.id,
       @JsonKey(name: 'user') required this.userId,
       @JsonKey(name: 'user_expand') this.user,
+      @JsonKey(name: 'status') required this.status,
       @JsonKey(name: 'parental_license') this.parentalLicense,
       @JsonKey(name: 'login_at') this.loginAt,
       @JsonKey(name: 'logout_at') this.logoutAt,
@@ -307,6 +324,11 @@ class _$HostelReservationImpl implements _HostelReservation {
   @override
   @JsonKey(name: 'user_expand')
   final User? user;
+
+  /// The status of the reservation (pending, approved, cancelled)
+  @override
+  @JsonKey(name: 'status')
+  final ReservationStatus status;
   @override
   @JsonKey(name: 'parental_license')
   final String? parentalLicense;
@@ -337,7 +359,7 @@ class _$HostelReservationImpl implements _HostelReservation {
 
   @override
   String toString() {
-    return 'HostelReservation(id: $id, userId: $userId, user: $user, parentalLicense: $parentalLicense, loginAt: $loginAt, logoutAt: $logoutAt, paymentAmount: $paymentAmount, paymentReceipt: $paymentReceipt, foodAmount: $foodAmount, foodReceipt: $foodReceipt, created: $created, updated: $updated)';
+    return 'HostelReservation(id: $id, userId: $userId, user: $user, status: $status, parentalLicense: $parentalLicense, loginAt: $loginAt, logoutAt: $logoutAt, paymentAmount: $paymentAmount, paymentReceipt: $paymentReceipt, foodAmount: $foodAmount, foodReceipt: $foodReceipt, created: $created, updated: $updated)';
   }
 
   @override
@@ -348,6 +370,7 @@ class _$HostelReservationImpl implements _HostelReservation {
             (identical(other.id, id) || other.id == id) &&
             (identical(other.userId, userId) || other.userId == userId) &&
             (identical(other.user, user) || other.user == user) &&
+            (identical(other.status, status) || other.status == status) &&
             (identical(other.parentalLicense, parentalLicense) ||
                 other.parentalLicense == parentalLicense) &&
             (identical(other.loginAt, loginAt) || other.loginAt == loginAt) &&
@@ -372,6 +395,7 @@ class _$HostelReservationImpl implements _HostelReservation {
       id,
       userId,
       user,
+      status,
       parentalLicense,
       loginAt,
       logoutAt,
@@ -404,6 +428,7 @@ abstract class _HostelReservation implements HostelReservation {
           {@JsonKey(name: 'id') required final String id,
           @JsonKey(name: 'user') required final String userId,
           @JsonKey(name: 'user_expand') final User? user,
+          @JsonKey(name: 'status') required final ReservationStatus status,
           @JsonKey(name: 'parental_license') final String? parentalLicense,
           @JsonKey(name: 'login_at') final DateTime? loginAt,
           @JsonKey(name: 'logout_at') final DateTime? logoutAt,
@@ -427,6 +452,11 @@ abstract class _HostelReservation implements HostelReservation {
   @override
   @JsonKey(name: 'user_expand')
   User? get user;
+
+  /// The status of the reservation (pending, approved, cancelled)
+  @override
+  @JsonKey(name: 'status')
+  ReservationStatus get status;
   @override
   @JsonKey(name: 'parental_license')
   String? get parentalLicense;
