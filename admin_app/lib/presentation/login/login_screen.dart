@@ -56,11 +56,7 @@ class LoginState extends State<Login> {
       }
 
       if (mounted) {
-        Navigator.of(context).push(
-          MaterialPageRoute(
-            builder: (context) => const DashboardScreen(),
-          ),
-        );
+        context.go('/dashboard');
       }
     } catch (error) {
       if (mounted) {

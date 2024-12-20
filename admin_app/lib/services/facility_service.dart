@@ -25,6 +25,14 @@ class FacilityService extends ChangeNotifier {
           .collection(facilityCollectionName)
           .getFirstListItem('manager = "${pb.authStore.model!.id}"');
 
+      record.data.addAll(
+        {
+          'created': record.created,
+          'updated': record.updated,
+          'id': record.id,
+        },
+      );
+
       userFacility = Facility.fromJson(record.data);
 
       _loading = false;
@@ -32,6 +40,7 @@ class FacilityService extends ChangeNotifier {
     } catch (e) {
       _loading = false;
       _error = e.toString();
+      print(e);
       notifyListeners();
       throw e;
     }
@@ -47,7 +56,7 @@ class FacilityService extends ChangeNotifier {
           .collection(facilityCollectionName)
           .update(updatedFacility.id, body: updatedFacility.toJson());
 
-      userFacility = Facility.fromJson(record.data);
+      userFacility = updatedFacility;
 
       _loading = false;
       notifyListeners();

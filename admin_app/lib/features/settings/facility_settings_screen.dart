@@ -25,6 +25,7 @@ class _FacilitySettingsScreenState extends State<FacilitySettingsScreen> {
   @override
   void initState() {
     super.initState();
+    _facility = FacilityService.instance.userFacility;
     _loadFacility();
   }
 

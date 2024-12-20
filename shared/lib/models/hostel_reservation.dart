@@ -23,11 +23,9 @@ class HostelReservation with _$HostelReservation {
     @JsonKey(name: 'food_receipt') String? foodReceipt,
     @JsonKey(name: 'created') required DateTime created,
     @JsonKey(name: 'updated') required DateTime updated,
-    @Default(HostelReservationStatus.pending) HostelReservationStatus status,
   }) = _HostelReservation;
 
   /// Creates a HostelReservation instance from JSON data
-  factory HostelReservation.fromJson(Map<String, dynamic> json) => _$HostelReservationFromJson(json);
-
-  ReservationStatus get status => null;
-} 
+  factory HostelReservation.fromJson(Map<String, dynamic> json) =>
+      _$HostelReservationFromJson(json);
+}

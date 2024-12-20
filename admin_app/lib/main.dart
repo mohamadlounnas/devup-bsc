@@ -1,3 +1,4 @@
+import 'package:admin_app/config/router.dart';
 import 'package:admin_app/presentation/dashboard/dashboard_screen.dart';
 import 'package:admin_app/presentation/login/login_screen.dart';
 import 'package:admin_app/services/auth_service.dart';
@@ -8,6 +9,7 @@ import 'package:pocketbase/pocketbase.dart';
 import 'package:provider/provider.dart';
 import 'package:shared/services/api_service.dart';
 
+var pb = PocketBase('https://bsc-pocketbase.mtdjari.com/');
 void main() {
   // Initialize PocketBase with proper configuration
 
@@ -53,7 +55,7 @@ class MainAppState extends State<MainApp> {
 
   @override
   Widget build(BuildContext context) {
-    return MaterialApp(
+    return MaterialApp.router(
       title: 'Admin Dashboard',
       themeMode: _themeMode,
       theme: ThemeData(
@@ -66,10 +68,7 @@ class MainAppState extends State<MainApp> {
         colorSchemeSeed: Colors.blue,
         brightness: Brightness.dark,
       ),
-      home: const Login(),
-      routes: {
-        '/dashboard': (context) => const DashboardScreen(),
-      },
+      routerConfig: router,
     );
   }
 }
