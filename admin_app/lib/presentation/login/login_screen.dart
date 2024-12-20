@@ -180,56 +180,21 @@ class _LoginState extends State<Login> {
                                             style: TextStyle(
                                                 color: Colors.white))),
                                     onTap: () async {
-                                      // if (_formKey.currentState!.validate()) {
-                                      //   setState(() {
-                                      //     loading = true;
-                                      //     error = null;
-                                      //   });
-                                      //   try {
-                                      //     await BetterProgress.instance.login(
-                                      //       username: _usernameController.text,
-                                      //       password: _passwordController.text,
-                                      //       saveCredentials: _saveCredentials,
-                                      //     );
-                                      //   }
-                                      //   // on DioException
-                                      //   on DioException catch (e) {
-                                      //     error = e.response?.data ??
-                                      //         e.message ??
-                                      //         e.error.toString();
-                                      //     if (mounted) {
-                                      //       ScaffoldMessenger.of(context)
-                                      //           .showSnackBar(SnackBar(
-                                      //         content: Text(error!),
-                                      //         backgroundColor: Theme.of(context)
-                                      //             .colorScheme
-                                      //             .error,
-                                      //         behavior:
-                                      //             SnackBarBehavior.floating,
-                                      //         width: 400,
-                                      //       ));
-                                      //     }
-                                      //   } catch (e) {
-                                      //     error = e.toString();
-                                      //     if (mounted) {
-                                      //       ScaffoldMessenger.of(context)
-                                      //           .showSnackBar(SnackBar(
-                                      //         content: Text(error!),
-                                      //         backgroundColor: Theme.of(context)
-                                      //             .colorScheme
-                                      //             .error,
-                                      //         behavior:
-                                      //             SnackBarBehavior.floating,
-                                      //         width: 400,
-                                      //       ));
-                                      //     }
-                                      //   }
-                                      //   loading = false;
-                                      //   if (mounted) {
-                                      //     setState(() {});
-                                      //   }
+                                      if (_formKey.currentState!.validate()) {
+                                        setState(() {
+                                          loading = true;
+                                          error = null;
+                                        });
 
-                                      // }
+                                        // Simulate login delay
+                                        await Future.delayed(
+                                            const Duration(seconds: 2));
+
+                                        if (mounted) {
+                                          Navigator.pushReplacementNamed(
+                                              context, '/dashboard');
+                                        }
+                                      }
                                     },
                                   ),
                                 ),
