@@ -30,6 +30,6 @@ Map<String, dynamic> _$$HostelServiceImplToJson(_$HostelServiceImpl instance) =>
 
 const _$ServiceTypeEnumMap = {
   ServiceType.hospitality: 'hospitality',
-  ServiceType.restoration: 'restoration',
   ServiceType.activity: 'activity',
+  ServiceType.restoration: 'restoration',
 };
