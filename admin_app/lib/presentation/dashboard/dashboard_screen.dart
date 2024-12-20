@@ -1,5 +1,6 @@
 import 'package:admin_app/main.dart';
 import 'package:flutter/material.dart';
+import 'package:intl/intl.dart';
 
 class DashboardScreen extends StatefulWidget {
   const DashboardScreen({Key? key}) : super(key: key);
@@ -250,6 +251,254 @@ class _DashboardScreenState extends State<DashboardScreen> {
                   },
                   child: const Text('Apply'),
                 ),
+              ],
+            );
+          },
+        );
+      },
+    );
+  }
+
+  void _showReservationDetails(Map<String, dynamic> reservation) {
+    bool isEditing = false;
+    final editedReservation = Map<String, dynamic>.from(reservation);
+    final TextEditingController paymentAmountController = TextEditingController(
+      text: editedReservation['paymentAmount']?.toString() ?? '0.00'
+    );
+    final TextEditingController foodAmountController = TextEditingController(
+      text: editedReservation['foodAmount']?.toString() ?? '0.00'
+    );
+
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return StatefulBuilder(
+          builder: (context, setState) {
+            return AlertDialog(
+              title: Row(
+                children: [
+                  CircleAvatar(
+                    radius: 16,
+                    backgroundColor: _getStatusColor(editedReservation['status']),
+                    child: Text(
+                      editedReservation['customerName'][0],
+                      style: const TextStyle(color: Colors.white),
+                    ),
+                  ),
+                  const SizedBox(width: 8),
+                  Text(isEditing ? 'Edit Reservation' : 'Reservation Details'),
+                ],
+              ),
+              content: SingleChildScrollView(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    _DetailItem(
+                      title: 'ID',
+                      value: editedReservation['id'],
+                    ),
+                    _DetailItem(
+                      title: 'Customer',
+                      value: editedReservation['customerName'],
+                    ),
+                    _DetailItem(
+                      title: 'Status',
+                      value: editedReservation['status'],
+                      customWidget: isEditing
+                          ? DropdownButton<String>(
+                              value: editedReservation['status'],
+                              items: ['Confirmed', 'Pending', 'Completed']
+                                  .map((String value) {
+                                return DropdownMenuItem<String>(
+                                  value: value,
+                                  child: Text(value),
+                                );
+                              }).toList(),
+                              onChanged: (String? newValue) {
+                                if (newValue != null) {
+                                  setState(() {
+                                    editedReservation['status'] = newValue;
+                                  });
+                                }
+                              },
+                            )
+                          : Container(
+                              padding: const EdgeInsets.symmetric(
+                                  horizontal: 8, vertical: 4),
+                              decoration: BoxDecoration(
+                                color: _getStatusColor(editedReservation['status'])
+                                    .withOpacity(0.1),
+                                borderRadius: BorderRadius.circular(12),
+                                border: Border.all(
+                                  color:
+                                      _getStatusColor(editedReservation['status']),
+                                  width: 1,
+                                ),
+                              ),
+                              child: Text(
+                                editedReservation['status'],
+                                style: TextStyle(
+                                  color:
+                                      _getStatusColor(editedReservation['status']),
+                                  fontWeight: FontWeight.w500,
+                                ),
+                              ),
+                            ),
+                    ),
+                    _DetailItem(
+                      title: 'Login Date',
+                      value: editedReservation['loginAt'] ?? 'Not set',
+                      customWidget: isEditing
+                          ? TextButton.icon(
+                              icon: const Icon(Icons.calendar_today),
+                              label: Text(editedReservation['loginAt']?.toString().split(' ')[0] ?? 'Select Date'),
+                              onPressed: () async {
+                                final date = await showDatePicker(
+                                  context: context,
+                                  initialDate: DateTime.now(),
+                                  firstDate: DateTime(2020),
+                                  lastDate: DateTime(2025),
+                                );
+                                if (date != null) {
+                                  setState(() {
+                                    editedReservation['loginAt'] = date.toIso8601String();
+                                  });
+                                }
+                              },
+                            )
+                          : null,
+                    ),
+                    _DetailItem(
+                      title: 'Logout Date',
+                      value: editedReservation['logoutAt'] ?? 'Not set',
+                      customWidget: isEditing
+                          ? TextButton.icon(
+                              icon: const Icon(Icons.calendar_today),
+                              label: Text(editedReservation['logoutAt']?.toString().split(' ')[0] ?? 'Select Date'),
+                              onPressed: () async {
+                                final date = await showDatePicker(
+                                  context: context,
+                                  initialDate: DateTime.now(),
+                                  firstDate: DateTime(2020),
+                                  lastDate: DateTime(2025),
+                                );
+                                if (date != null) {
+                                  setState(() {
+                                    editedReservation['logoutAt'] = date.toIso8601String();
+                                  });
+                                }
+                              },
+                            )
+                          : null,
+                    ),
+                    _DetailItem(
+                      title: 'Payment Amount',
+                      value: '\$${(editedReservation['paymentAmount'] ?? 0.0).toStringAsFixed(2)}',
+                      customWidget: isEditing
+                          ? TextField(
+                              controller: paymentAmountController,
+                              decoration: const InputDecoration(
+                                prefixText: '\$',
+                                isDense: true,
+                              ),
+                              keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                              onChanged: (value) {
+                                editedReservation['paymentAmount'] = double.tryParse(value) ?? 0.0;
+                              },
+                            )
+                          : null,
+                    ),
+                    if (editedReservation['paymentReceipt'] != null)
+                      _DetailItem(
+                        title: 'Payment Receipt',
+                        value: 'View Receipt',
+                        isLink: true,
+                        onTap: () {
+                          // Handle receipt view
+                        },
+                      ),
+                    _DetailItem(
+                      title: 'Food Amount',
+                      value: '\$${(editedReservation['foodAmount'] ?? 0.0).toStringAsFixed(2)}',
+                      customWidget: isEditing
+                          ? TextField(
+                              controller: foodAmountController,
+                              decoration: const InputDecoration(
+                                prefixText: '\$',
+                                isDense: true,
+                              ),
+                              keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                              onChanged: (value) {
+                                editedReservation['foodAmount'] = double.tryParse(value) ?? 0.0;
+                              },
+                            )
+                          : null,
+                    ),
+                    if (editedReservation['foodReceipt'] != null)
+                      _DetailItem(
+                        title: 'Food Receipt',
+                        value: 'View Receipt',
+                        isLink: true,
+                        onTap: () {
+                          // Handle receipt view
+                        },
+                      ),
+                    _DetailItem(
+                      title: 'Created',
+                      value: DateFormat('yyyy-MM-dd HH:mm').format(
+                          DateTime.parse(editedReservation['created'] ??
+                              DateTime.now().toString())),
+                    ),
+                    _DetailItem(
+                      title: 'Last Updated',
+                      value: DateFormat('yyyy-MM-dd HH:mm').format(
+                          DateTime.parse(editedReservation['updated'] ??
+                              DateTime.now().toString())),
+                    ),
+                    if (editedReservation['parentalLicense'] != null)
+                      _DetailItem(
+                        title: 'Parental License',
+                        value: 'View License',
+                        isLink: true,
+                        onTap: () {
+                          // Handle license view
+                        },
+                      ),
+                  ],
+                ),
+              ),
+              actions: [
+                TextButton(
+                  onPressed: () => Navigator.of(context).pop(),
+                  child: const Text('Cancel'),
+                ),
+                if (!isEditing)
+                  FilledButton(
+                    onPressed: () {
+                      setState(() {
+                        isEditing = true;
+                      });
+                    },
+                    child: const Text('Edit'),
+                  )
+                else
+                  FilledButton(
+                    onPressed: () {
+                      // Update the reservation in the list
+                      setState(() {
+                        final index = reservations.indexWhere(
+                            (r) => r['id'] == editedReservation['id']);
+                        if (index != -1) {
+                          reservations[index] = editedReservation;
+                        }
+                      });
+                      Navigator.of(context).pop();
+                      // Refresh the main screen
+                      this.setState(() {});
+                    },
+                    child: const Text('Save'),
+                  ),
               ],
             );
           },
@@ -625,6 +874,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                                           ],
                                           rows: filteredReservations.map((reservation) {
                                             return DataRow(
+                                              onSelectChanged: (_) => _showReservationDetails(reservation),
                                               cells: [
                                                 DataCell(Text(reservation['id'])),
                                                 DataCell(
@@ -726,4 +976,57 @@ class MenuItem {
   final String label;
 
   MenuItem({required this.icon, required this.label});
+}
+
+class _DetailItem extends StatelessWidget {
+  final String title;
+  final String value;
+  final bool isLink;
+  final VoidCallback? onTap;
+  final Widget? customWidget;
+
+  const _DetailItem({
+    required this.title,
+    required this.value,
+    this.isLink = false,
+    this.onTap,
+    this.customWidget,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 8.0),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            title,
+            style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                  color: Theme.of(context).colorScheme.onSurfaceVariant,
+                ),
+          ),
+          const SizedBox(height: 4),
+          if (customWidget != null)
+            customWidget!
+          else if (isLink)
+            InkWell(
+              onTap: onTap,
+              child: Text(
+                value,
+                style: TextStyle(
+                  color: Theme.of(context).colorScheme.primary,
+                  decoration: TextDecoration.underline,
+                ),
+              ),
+            )
+          else
+            Text(
+              value,
+              style: Theme.of(context).textTheme.bodyLarge,
+            ),
+        ],
+      ),
+    );
+  }
 }
