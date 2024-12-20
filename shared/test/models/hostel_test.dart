@@ -17,6 +17,7 @@ void main() {
           {
             'id': 'service1',
             'name': 'Service 1',
+            'type': 'hospitality',
             'description': 'Service 1 description',
             'icon': 'icon1.jpg',
             'created': '2023-01-01T00:00:00.000Z',
@@ -25,6 +26,7 @@ void main() {
           {
             'id': 'service2',
             'name': 'Service 2',
+            'type': 'activity',
             'description': 'Service 2 description',
             'icon': 'icon2.jpg',
             'created': '2023-01-01T00:00:00.000Z',
@@ -58,7 +60,11 @@ void main() {
       expect(hostel.serviceIds, ['service1', 'service2']);
       expect(hostel.services?.length, 2);
       expect(hostel.services?[0].id, 'service1');
+      expect(hostel.services?[0].name, 'Service 1');
+      expect(hostel.services?[0].type, ServiceType.hospitality);
       expect(hostel.services?[1].id, 'service2');
+      expect(hostel.services?[1].name, 'Service 2');
+      expect(hostel.services?[1].type, ServiceType.activity);
       expect(hostel.adminId, 'admin123');
       expect(hostel.admin?.id, 'admin123');
       expect(hostel.admin?.email, 'admin@example.com');

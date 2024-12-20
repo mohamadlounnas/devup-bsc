@@ -25,6 +25,7 @@ class User with _$User {
     @JsonKey(name: 'post') String? post,
     @JsonKey(name: 'type') required UserType type,
     @JsonKey(name: 'gander') required Gender gender,
+    @JsonKey(name: 'phone') String? phone,
     @JsonKey(name: 'created') required DateTime created,
     @JsonKey(name: 'updated') required DateTime updated,
   }) = _User;

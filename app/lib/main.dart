@@ -1,79 +1,64 @@
-import 'package:calendar_view/calendar_view.dart';
 import 'package:flutter/material.dart';
-import 'package:pocketbase/pocketbase.dart';
 import 'package:provider/provider.dart';
-import 'router.dart';
-import 'providers/providers.dart';
-import 'services/pb_service.dart';
-import 'theme/app_theme.dart';
+import 'package:pocketbase/pocketbase.dart';
+import 'config/router.dart';
+import 'services/auth_service.dart';
 
-// Initialize PocketBase client
-final pb = PocketBase('https://bsc-pocketbase.mtdjari.com');
+/// Initialize PocketBase client
+final pb = PocketBase('https://bsc-pocketbase.mtdjari.com/');
 
 void main() {
-  runApp(App(pb: pb));
+  runApp(
+    MultiProvider(
+      providers: [
+        ChangeNotifierProvider(create: (_) => AuthService(pb)),
+      ],
+      child: const MainApp(),
+    ),
+  );
 }
 
-/// Root widget of the application
-class App extends StatefulWidget {
-  final PocketBase pb;
-
-  const App({super.key, required this.pb});
+class MainApp extends StatefulWidget {
+  const MainApp({super.key});
 
   @override
-  State<App> createState() => _AppState();
+  State<MainApp> createState() => _MainAppState();
 }
 
-class _AppState extends State<App> {
+class _MainAppState extends State<MainApp> {
   ThemeMode _themeMode = ThemeMode.system;
 
-  void _toggleTheme() {
+  void updateThemeMode(ThemeMode mode) {
     setState(() {
-      if (_themeMode == ThemeMode.dark) {
-        _themeMode = ThemeMode.light;
-      } else {
-        _themeMode = ThemeMode.dark;
-      }
+      _themeMode = mode;
+    });
+  }
+
+  @override
+  void initState() {
+    super.initState();
+    // Check auth state when app starts
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      context.read<AuthService>().checkAuthState();
     });
   }
 
   @override
   Widget build(BuildContext context) {
-    return MultiProvider(
-      providers: [
-        ChangeNotifierProvider(
-          create: (context) => PbService(widget.pb),
-        ),
-        Provider<ThemeService>(
-          create: (_) => ThemeService(
-            toggleTheme: _toggleTheme,
-            themeMode: _themeMode,
-          ),
-        ),
-      ],
-      child: CalendarControllerProvider(
-        controller: EventController(),
-        child: MaterialApp.router(
-          title: 'BSC App',
-          theme: AppTheme.getLightTheme(),
-          darkTheme: AppTheme.getDarkTheme(),
-          themeMode: _themeMode,
-          routerConfig: router,
-        ),
+    return MaterialApp.router(
+      title: 'DevUp',
+      themeMode: _themeMode,
+      theme: ThemeData(
+        useMaterial3: true,
+        colorSchemeSeed: Colors.blue,
+        brightness: Brightness.light,
       ),
+      darkTheme: ThemeData(
+        useMaterial3: true,
+        colorSchemeSeed: Colors.blue,
+        brightness: Brightness.dark,
+      ),
+      routerConfig: router,
     );
   }
-}
-
-/// Service for managing theme mode
-class ThemeService {
-  final VoidCallback toggleTheme;
-  final ThemeMode themeMode;
-
-  const ThemeService({
-    required this.toggleTheme,
-    required this.themeMode,
-  });
-
-  bool get isDarkMode => themeMode == ThemeMode.dark;
 }

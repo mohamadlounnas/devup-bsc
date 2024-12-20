@@ -81,7 +81,15 @@ enum ReservationStatus {
 /// Enum representing service types
 @JsonEnum()
 enum ServiceType {
+  /// Hospitality service type (e.g., room service, housekeeping)
+  @JsonValue('hospitality')
   hospitality,
+
+  /// Activity service type (e.g., gym, pool, spa)
+  @JsonValue('activity')
   activity,
+
+  /// Restoration service type (e.g., restaurant, cafe)
+  @JsonValue('restoration')
   restoration,
 }

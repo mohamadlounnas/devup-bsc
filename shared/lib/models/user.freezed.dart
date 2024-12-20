@@ -50,6 +50,8 @@ mixin _$User {
   UserType get type => throw _privateConstructorUsedError;
   @JsonKey(name: 'gander')
   Gender get gender => throw _privateConstructorUsedError;
+  @JsonKey(name: 'phone')
+  String? get phone => throw _privateConstructorUsedError;
   @JsonKey(name: 'created')
   DateTime get created => throw _privateConstructorUsedError;
   @JsonKey(name: 'updated')
@@ -85,6 +87,7 @@ abstract class $UserCopyWith<$Res> {
       @JsonKey(name: 'post') String? post,
       @JsonKey(name: 'type') UserType type,
       @JsonKey(name: 'gander') Gender gender,
+      @JsonKey(name: 'phone') String? phone,
       @JsonKey(name: 'created') DateTime created,
       @JsonKey(name: 'updated') DateTime updated});
 }
@@ -119,6 +122,7 @@ class _$UserCopyWithImpl<$Res, $Val extends User>
     Object? post = freezed,
     Object? type = null,
     Object? gender = null,
+    Object? phone = freezed,
     Object? created = null,
     Object? updated = null,
   }) {
@@ -183,6 +187,10 @@ class _$UserCopyWithImpl<$Res, $Val extends User>
           ? _value.gender
           : gender // ignore: cast_nullable_to_non_nullable
               as Gender,
+      phone: freezed == phone
+          ? _value.phone
+          : phone // ignore: cast_nullable_to_non_nullable
+              as String?,
       created: null == created
           ? _value.created
           : created // ignore: cast_nullable_to_non_nullable
@@ -218,6 +226,7 @@ abstract class _$$UserImplCopyWith<$Res> implements $UserCopyWith<$Res> {
       @JsonKey(name: 'post') String? post,
       @JsonKey(name: 'type') UserType type,
       @JsonKey(name: 'gander') Gender gender,
+      @JsonKey(name: 'phone') String? phone,
       @JsonKey(name: 'created') DateTime created,
       @JsonKey(name: 'updated') DateTime updated});
 }
@@ -249,6 +258,7 @@ class __$$UserImplCopyWithImpl<$Res>
     Object? post = freezed,
     Object? type = null,
     Object? gender = null,
+    Object? phone = freezed,
     Object? created = null,
     Object? updated = null,
   }) {
@@ -313,6 +323,10 @@ class __$$UserImplCopyWithImpl<$Res>
           ? _value.gender
           : gender // ignore: cast_nullable_to_non_nullable
               as Gender,
+      phone: freezed == phone
+          ? _value.phone
+          : phone // ignore: cast_nullable_to_non_nullable
+              as String?,
       created: null == created
           ? _value.created
           : created // ignore: cast_nullable_to_non_nullable
@@ -344,6 +358,7 @@ class _$UserImpl implements _User {
       @JsonKey(name: 'post') this.post,
       @JsonKey(name: 'type') required this.type,
       @JsonKey(name: 'gander') required this.gender,
+      @JsonKey(name: 'phone') this.phone,
       @JsonKey(name: 'created') required this.created,
       @JsonKey(name: 'updated') required this.updated});
 
@@ -396,6 +411,9 @@ class _$UserImpl implements _User {
   @JsonKey(name: 'gander')
   final Gender gender;
   @override
+  @JsonKey(name: 'phone')
+  final String? phone;
+  @override
   @JsonKey(name: 'created')
   final DateTime created;
   @override
@@ -404,7 +422,7 @@ class _$UserImpl implements _User {
 
   @override
   String toString() {
-    return 'User(id: $id, email: $email, emailVisibility: $emailVisibility, verified: $verified, avatar: $avatar, firstname: $firstname, lastname: $lastname, nationalId: $nationalId, dateOfBirth: $dateOfBirth, placeOfBirth: $placeOfBirth, banned: $banned, grade: $grade, post: $post, type: $type, gender: $gender, created: $created, updated: $updated)';
+    return 'User(id: $id, email: $email, emailVisibility: $emailVisibility, verified: $verified, avatar: $avatar, firstname: $firstname, lastname: $lastname, nationalId: $nationalId, dateOfBirth: $dateOfBirth, placeOfBirth: $placeOfBirth, banned: $banned, grade: $grade, post: $post, type: $type, gender: $gender, phone: $phone, created: $created, updated: $updated)';
   }
 
   @override
@@ -434,6 +452,7 @@ class _$UserImpl implements _User {
             (identical(other.post, post) || other.post == post) &&
             (identical(other.type, type) || other.type == type) &&
             (identical(other.gender, gender) || other.gender == gender) &&
+            (identical(other.phone, phone) || other.phone == phone) &&
             (identical(other.created, created) || other.created == created) &&
             (identical(other.updated, updated) || other.updated == updated));
   }
@@ -457,6 +476,7 @@ class _$UserImpl implements _User {
       post,
       type,
       gender,
+      phone,
       created,
       updated);
 
@@ -493,6 +513,7 @@ abstract class _User implements User {
       @JsonKey(name: 'post') final String? post,
       @JsonKey(name: 'type') required final UserType type,
       @JsonKey(name: 'gander') required final Gender gender,
+      @JsonKey(name: 'phone') final String? phone,
       @JsonKey(name: 'created') required final DateTime created,
       @JsonKey(name: 'updated') required final DateTime updated}) = _$UserImpl;
 
@@ -543,6 +564,9 @@ abstract class _User implements User {
   @override
   @JsonKey(name: 'gander')
   Gender get gender;
+  @override
+  @JsonKey(name: 'phone')
+  String? get phone;
   @override
   @JsonKey(name: 'created')
   DateTime get created;
