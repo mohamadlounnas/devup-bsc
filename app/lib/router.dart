@@ -2,23 +2,30 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'screens/dashboard/dashboard_shell.dart';
 import 'screens/events/events_screen.dart';
+import 'screens/events/events_timeline_screen.dart';
 import 'screens/map_screen.dart';
 import 'screens/not_found_screen.dart';
 
 /// Router configuration for the app
 /// This handles all the routing logic and navigation
 final router = GoRouter(
-  initialLocation: '/events',
+  initialLocation: '/',
   errorBuilder: (context, state) => const NotFoundScreen(),
   routes: [
     ShellRoute(
       builder: (context, state, child) => DashboardShell(child: child),
       routes: [
-        // Events route
+        GoRoute(
+          path: '/',
+          redirect: (_, __) => '/events',
+        ),
         GoRoute(
           path: '/events',
-          name: 'events',
           builder: (context, state) => const EventsScreen(),
+        ),
+        GoRoute(
+          path: '/events/timeline',
+          builder: (context, state) => const EventsTimelineScreen(),
         ),
         // Map route
         GoRoute(

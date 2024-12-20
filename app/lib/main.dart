@@ -1,3 +1,4 @@
+import 'package:calendar_view/calendar_view.dart';
 import 'package:flutter/material.dart';
 import 'package:pocketbase/pocketbase.dart';
 import 'package:provider/provider.dart';
@@ -26,13 +27,16 @@ class App extends StatelessWidget {
           create: (context) => PbService(pb),
         ),
       ],
-      child: MaterialApp.router(
-        title: 'BSC App',
-        theme: ThemeData(
-          colorScheme: ColorScheme.fromSeed(seedColor: Colors.blue),
-          useMaterial3: true,
+      child: CalendarControllerProvider(
+        controller: EventController(),
+        child: MaterialApp.router(
+          title: 'BSC App',
+          theme: ThemeData(
+            colorScheme: ColorScheme.fromSeed(seedColor: Colors.blue),
+            useMaterial3: true,
+          ),
+          routerConfig: router,
         ),
-        routerConfig: router,
       ),
     );
   }

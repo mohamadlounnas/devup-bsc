@@ -1,94 +1,35 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
-/// A shell widget that provides the common layout for all dashboard screens
-/// This includes the navigation rail/drawer and app bar
+/// A shell widget that provides a consistent layout for dashboard screens
 class DashboardShell extends StatelessWidget {
   /// The child widget to display in the content area
   final Widget child;
 
   /// Creates a new dashboard shell
   const DashboardShell({
-    required this.child,
     super.key,
+    required this.child,
   });
 
   @override
   Widget build(BuildContext context) {
-    // Use LayoutBuilder to make the dashboard responsive
-    return LayoutBuilder(
-      builder: (context, constraints) {
-        // Check if we should use compact layout (like a drawer) or extended layout (like a rail)
-        final isCompact = constraints.maxWidth < 1200;
+    final screenWidth = MediaQuery.of(context).size.width;
+    final isWideScreen = screenWidth > 1200;
+    final isCompactScreen = screenWidth < 600;
 
-        return Scaffold(
-          // Show drawer for compact layout
-          drawer: isCompact ? _buildDrawer(context) : null,
-          body: SafeArea(
-            child: Row(
-              children: [
-                // Show navigation rail for extended layout
-                if (!isCompact) _buildNavigationRail(context),
-                // Main content area
-                Expanded(
-                  child: Column(
-                    children: [
-                      // Custom app bar
-                      _buildAppBar(context, isCompact),
-                      // Content area
-                      Expanded(child: child),
-                    ],
-                  ),
-                ),
-              ],
-            ),
-          ),
-        );
-      },
-    );
-  }
-
-  /// Builds the app bar with a consistent style
-  Widget _buildAppBar(BuildContext context, bool isCompact) {
-    return Container(
-      height: 64,
-      padding: const EdgeInsets.symmetric(horizontal: 16),
-      decoration: BoxDecoration(
-        color: Theme.of(context).colorScheme.surface,
-        border: Border(
-          bottom: BorderSide(
-            color: Theme.of(context).colorScheme.outlineVariant,
-          ),
-        ),
-      ),
-      child: Row(
+    return Scaffold(
+      appBar: isCompactScreen
+          ? AppBar(
+              title: const Text('DevUp'),
+              centerTitle: true,
+            )
+          : null,
+      drawer: isCompactScreen ? _buildDrawer(context) : null,
+      body: Row(
         children: [
-          if (isCompact)
-            IconButton(
-              icon: const Icon(Icons.menu),
-              onPressed: () {
-                Scaffold.of(context).openDrawer();
-              },
-            ),
-          Text(
-            'DevUp',
-            style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                  color: Theme.of(context).colorScheme.primary,
-                ),
-          ),
-          const Spacer(),
-          IconButton(
-            icon: const Icon(Icons.search),
-            onPressed: () {
-              // TODO: Implement search
-            },
-          ),
-          IconButton(
-            icon: const Icon(Icons.notifications_outlined),
-            onPressed: () {
-              // TODO: Implement notifications
-            },
-          ),
+          if (!isCompactScreen) _buildNavigationRail(context),
+          Expanded(child: child),
         ],
       ),
     );
@@ -113,6 +54,11 @@ class DashboardShell extends StatelessWidget {
           icon: Icon(Icons.event_outlined),
           selectedIcon: Icon(Icons.event),
           label: Text('Events'),
+        ),
+        NavigationRailDestination(
+          icon: Icon(Icons.timeline_outlined),
+          selectedIcon: Icon(Icons.timeline),
+          label: Text('Timeline'),
         ),
         NavigationRailDestination(
           icon: Icon(Icons.map_outlined),
@@ -166,6 +112,11 @@ class DashboardShell extends StatelessWidget {
           label: Text('Events'),
         ),
         const NavigationDrawerDestination(
+          icon: Icon(Icons.timeline_outlined),
+          selectedIcon: Icon(Icons.timeline),
+          label: Text('Timeline'),
+        ),
+        const NavigationDrawerDestination(
           icon: Icon(Icons.map_outlined),
           selectedIcon: Icon(Icons.map),
           label: Text('Map'),
@@ -190,12 +141,14 @@ class DashboardShell extends StatelessWidget {
     switch (location) {
       case '/events':
         return 0;
-      case '/map':
+      case '/events/timeline':
         return 1;
-      case '/hostels':
+      case '/map':
         return 2;
-      case '/facilities':
+      case '/hostels':
         return 3;
+      case '/facilities':
+        return 4;
       default:
         return 0;
     }
@@ -208,12 +161,15 @@ class DashboardShell extends StatelessWidget {
         context.go('/events');
         break;
       case 1:
-        context.go('/map');
+        context.go('/events/timeline');
         break;
       case 2:
-        context.go('/hostels');
+        context.go('/map');
         break;
       case 3:
+        context.go('/hostels');
+        break;
+      case 4:
         context.go('/facilities');
         break;
     }
