@@ -6,6 +6,7 @@ import 'package:intl/intl.dart';
 /// A responsive card that displays a summary of a facility event with enhanced UI/UX
 /// This widget adapts its layout based on screen size and orientation
 /// Provides optimal viewing experience across mobile, tablet, and desktop
+/// Uses bottom navigation for mobile view for better thumb accessibility
 class EventCard extends StatelessWidget {
   /// The event to display
   final FacilityEvent event;
@@ -95,113 +96,197 @@ class EventCard extends StatelessWidget {
     final imageDimensions = _getImageDimensions(context);
     final isDesktopView = _isDesktop(context);
     
-    return Padding(
-      padding: EdgeInsets.all(isDesktopView ? 20 : 12),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Hero(
-            tag: 'event_image_${event.id}',
-            child: ClipRRect(
-              borderRadius: BorderRadius.circular(isDesktopView ? 16 : 12),
-              child: SizedBox(
-                width: imageDimensions.width,
-                height: imageDimensions.height,
-                child: event.imageUrl != null
-                    ? Image.network(
-                        event.imageUrl!,
-                        fit: BoxFit.cover,
-                        errorBuilder: (context, error, stackTrace) {
-                          return _buildImagePlaceholder(context);
-                        },
-                      )
-                    : _buildImagePlaceholder(context),
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Padding(
+          padding: EdgeInsets.all(isDesktopView ? 20 : 12),
+          child: Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Hero(
+                tag: 'event_image_${event.id}',
+                child: ClipRRect(
+                  borderRadius: BorderRadius.circular(isDesktopView ? 16 : 12),
+                  child: SizedBox(
+                    width: imageDimensions.width,
+                    height: imageDimensions.height,
+                    child: event.imageUrl != null
+                        ? Image.network(
+                            event.imageUrl!,
+                            fit: BoxFit.cover,
+                            errorBuilder: (context, error, stackTrace) {
+                              return _buildImagePlaceholder(context);
+                            },
+                          )
+                        : _buildImagePlaceholder(context),
+                  ),
+                ),
               ),
-            ),
-          ),
-          SizedBox(width: isDesktopView ? 24 : 16),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  event.name,
-                  style: (isDesktopView 
-                      ? theme.textTheme.titleLarge 
-                      : theme.textTheme.titleMedium)?.copyWith(
-                    color: colorScheme.onSurface,
-                    fontWeight: FontWeight.w600,
-                    height: 1.2,
-                  ),
-                  maxLines: isDesktopView ? 3 : 2,
-                  overflow: TextOverflow.ellipsis,
-                ),
-                SizedBox(height: isDesktopView ? 12 : 8),
-                if (event.started != null)
-                  Container(
-                    padding: EdgeInsets.symmetric(
-                      horizontal: isDesktopView ? 12 : 8,
-                      vertical: isDesktopView ? 6 : 4,
-                    ),
-                    decoration: BoxDecoration(
-                      color: colorScheme.primary.withOpacity(0.1),
-                      borderRadius: BorderRadius.circular(8),
-                    ),
-                    child: Text(
-                      dateFormat.format(event.started!),
-                      style: theme.textTheme.bodyMedium?.copyWith(
-                        color: colorScheme.primary,
-                        fontWeight: FontWeight.w500,
-                        fontSize: isDesktopView ? 15 : null,
-                      ),
-                    ),
-                  ),
-                SizedBox(height: isDesktopView ? 12 : 8),
-                Row(
+              SizedBox(width: isDesktopView ? 24 : 16),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Icon(
-                      Icons.location_on,
-                      size: isDesktopView ? 20 : 16,
-                      color: colorScheme.onSurfaceVariant,
+                    Text(
+                      event.name,
+                      style: (isDesktopView 
+                          ? theme.textTheme.titleLarge 
+                          : theme.textTheme.titleMedium)?.copyWith(
+                        color: colorScheme.onSurface,
+                        fontWeight: FontWeight.w600,
+                        height: 1.2,
+                      ),
+                      maxLines: isDesktopView ? 3 : 2,
+                      overflow: TextOverflow.ellipsis,
                     ),
-                    const SizedBox(width: 4),
-                    Expanded(
-                      child: Text(
-                        event.locationLatLng?.toString() ?? 'Location not available',
-                        style: theme.textTheme.bodyMedium?.copyWith(
-                          color: colorScheme.onSurfaceVariant,
-                          fontSize: isDesktopView ? 15 : null,
+                    SizedBox(height: isDesktopView ? 12 : 8),
+                    if (event.started != null)
+                      Container(
+                        padding: EdgeInsets.symmetric(
+                          horizontal: isDesktopView ? 12 : 8,
+                          vertical: isDesktopView ? 6 : 4,
                         ),
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
+                        decoration: BoxDecoration(
+                          color: colorScheme.primary.withOpacity(0.1),
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                        child: Text(
+                          dateFormat.format(event.started!),
+                          style: theme.textTheme.bodyMedium?.copyWith(
+                            color: colorScheme.primary,
+                            fontWeight: FontWeight.w500,
+                            fontSize: isDesktopView ? 15 : null,
+                          ),
+                        ),
                       ),
+                    SizedBox(height: isDesktopView ? 12 : 8),
+                    Row(
+                      children: [
+                        Icon(
+                          Icons.location_on,
+                          size: isDesktopView ? 20 : 16,
+                          color: colorScheme.onSurfaceVariant,
+                        ),
+                        const SizedBox(width: 4),
+                        Expanded(
+                          child: Text(
+                            event.locationLatLng?.toString() ?? 'Location not available',
+                            style: theme.textTheme.bodyMedium?.copyWith(
+                              color: colorScheme.onSurfaceVariant,
+                              fontSize: isDesktopView ? 15 : null,
+                            ),
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                        ),
+                      ],
                     ),
+                    if (isDesktopView) ...[
+                      SizedBox(height: isDesktopView ? 16 : 12),
+                      Row(
+                        children: [
+                          _buildActionButton(
+                            context,
+                            Icons.calendar_today,
+                            'Add to Calendar',
+                            onAddToCalendar,
+                            isDesktopView,
+                          ),
+                          SizedBox(width: isDesktopView ? 12 : 8),
+                          _buildActionButton(
+                            context,
+                            Icons.share,
+                            'Share',
+                            onShare,
+                            isDesktopView,
+                          ),
+                        ],
+                      ),
+                    ],
                   ],
                 ),
-                SizedBox(height: isDesktopView ? 16 : 12),
-                Row(
-                  children: [
-                    _buildActionButton(
-                      context,
-                      Icons.calendar_today,
-                      'Add to Calendar',
-                      onAddToCalendar,
-                      isDesktopView,
-                    ),
-                    SizedBox(width: isDesktopView ? 12 : 8),
-                    _buildActionButton(
-                      context,
-                      Icons.share,
-                      'Share',
-                      onShare,
-                      isDesktopView,
-                    ),
-                  ],
-                ),
-              ],
-            ),
+              ),
+            ],
           ),
-        ],
+        ),
+        if (!isDesktopView) _buildMobileActions(context),
+      ],
+    );
+  }
+
+  Widget _buildMobileActions(BuildContext context) {
+    final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
+    
+    return Container(
+      decoration: BoxDecoration(
+        border: Border(
+          top: BorderSide(
+            color: colorScheme.outlineVariant.withOpacity(0.5),
+            width: 1,
+          ),
+        ),
+      ),
+      child: SafeArea(
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+            children: [
+              _buildMobileActionButton(
+                context,
+                Icons.calendar_today_outlined,
+                'Add to Calendar',
+                onAddToCalendar,
+              ),
+              _buildMobileActionButton(
+                context,
+                Icons.share_outlined,
+                'Share',
+                onShare,
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildMobileActionButton(
+    BuildContext context,
+    IconData icon,
+    String label,
+    VoidCallback onPressed,
+  ) {
+    final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
+
+    return Material(
+      color: Colors.transparent,
+      child: InkWell(
+        onTap: onPressed,
+        borderRadius: BorderRadius.circular(8),
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 8),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Icon(
+                icon,
+                size: 24,
+                color: colorScheme.primary,
+              ),
+              const SizedBox(height: 4),
+              Text(
+                label,
+                style: theme.textTheme.labelSmall?.copyWith(
+                  color: colorScheme.primary,
+                ),
+              ),
+            ],
+          ),
+        ),
       ),
     );
   }
