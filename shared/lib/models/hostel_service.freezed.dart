@@ -24,6 +24,7 @@ mixin _$HostelService {
   String get id => throw _privateConstructorUsedError;
   @JsonKey(name: 'name')
   String get name => throw _privateConstructorUsedError;
+  @ServiceTypeConverter()
   @JsonKey(name: 'type')
   ServiceType get type => throw _privateConstructorUsedError;
   @JsonKey(name: 'description')
@@ -54,7 +55,7 @@ abstract class $HostelServiceCopyWith<$Res> {
   $Res call(
       {@JsonKey(name: 'id') String id,
       @JsonKey(name: 'name') String name,
-      @JsonKey(name: 'type') ServiceType type,
+      @ServiceTypeConverter() @JsonKey(name: 'type') ServiceType type,
       @JsonKey(name: 'description') String? description,
       @JsonKey(name: 'icon') String? icon,
       @JsonKey(name: 'created') DateTime created,
@@ -128,7 +129,7 @@ abstract class _$$HostelServiceImplCopyWith<$Res>
   $Res call(
       {@JsonKey(name: 'id') String id,
       @JsonKey(name: 'name') String name,
-      @JsonKey(name: 'type') ServiceType type,
+      @ServiceTypeConverter() @JsonKey(name: 'type') ServiceType type,
       @JsonKey(name: 'description') String? description,
       @JsonKey(name: 'icon') String? icon,
       @JsonKey(name: 'created') DateTime created,
@@ -195,7 +196,7 @@ class _$HostelServiceImpl implements _HostelService {
   const _$HostelServiceImpl(
       {@JsonKey(name: 'id') required this.id,
       @JsonKey(name: 'name') required this.name,
-      @JsonKey(name: 'type') required this.type,
+      @ServiceTypeConverter() @JsonKey(name: 'type') required this.type,
       @JsonKey(name: 'description') this.description,
       @JsonKey(name: 'icon') this.icon,
       @JsonKey(name: 'created') required this.created,
@@ -211,6 +212,7 @@ class _$HostelServiceImpl implements _HostelService {
   @JsonKey(name: 'name')
   final String name;
   @override
+  @ServiceTypeConverter()
   @JsonKey(name: 'type')
   final ServiceType type;
   @override
@@ -271,7 +273,9 @@ abstract class _HostelService implements HostelService {
   const factory _HostelService(
           {@JsonKey(name: 'id') required final String id,
           @JsonKey(name: 'name') required final String name,
-          @JsonKey(name: 'type') required final ServiceType type,
+          @ServiceTypeConverter()
+          @JsonKey(name: 'type')
+          required final ServiceType type,
           @JsonKey(name: 'description') final String? description,
           @JsonKey(name: 'icon') final String? icon,
           @JsonKey(name: 'created') required final DateTime created,
@@ -288,6 +292,7 @@ abstract class _HostelService implements HostelService {
   @JsonKey(name: 'name')
   String get name;
   @override
+  @ServiceTypeConverter()
   @JsonKey(name: 'type')
   ServiceType get type;
   @override

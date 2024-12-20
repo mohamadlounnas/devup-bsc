@@ -1,8 +1,19 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
+import 'package:pocketbase/pocketbase.dart';
+import 'package:shared/services/api_service.dart';
 import 'pages/service_dashboard_page.dart';
 
 void main() {
-  runApp(const MyApp());
+  final pb = PocketBase('https://bsc-pocketbase.mtdjari.com');
+  final apiService = ApiService(pb);
+
+  runApp(
+    Provider<ApiService>.value(
+      value: apiService,
+      child: const MyApp(),
+    ),
+  );
 }
 
 class MyApp extends StatelessWidget {
