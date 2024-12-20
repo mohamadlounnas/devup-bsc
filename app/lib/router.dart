@@ -1,8 +1,8 @@
+import 'package:app/screens/hostels/hostels_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'screens/dashboard/dashboard_shell.dart';
 import 'screens/events/events_screen.dart';
-import 'screens/events/events_timeline_screen.dart';
 import 'screens/map_screen.dart';
 import 'screens/not_found_screen.dart';
 
@@ -21,13 +21,9 @@ final router = GoRouter(
         ),
         GoRoute(
           path: '/events',
+          name: 'events',
           builder: (context, state) => const EventsScreen(),
         ),
-        GoRoute(
-          path: '/events/timeline',
-          builder: (context, state) => const EventsTimelineScreen(),
-        ),
-        // Map route
         GoRoute(
           path: '/map',
           name: 'map',
@@ -37,19 +33,36 @@ final router = GoRouter(
         GoRoute(
           path: '/hostels',
           name: 'hostels',
-          builder: (context, state) => const Scaffold(
-            body: Center(
-              child: Text('Hostels Screen - Coming Soon'),
-            ),
-          ),
+          builder: (context, state) => HostelsScreen()
         ),
         // Facilities route (placeholder)
         GoRoute(
           path: '/facilities',
           name: 'facilities',
-          builder: (context, state) => const Scaffold(
+          builder: (context, state) => Scaffold(
             body: Center(
-              child: Text('Facilities Screen - Coming Soon'),
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Icon(
+                    Icons.business_outlined,
+                    size: 64,
+                    color: Theme.of(context).colorScheme.primary,
+                  ),
+                  const SizedBox(height: 16),
+                  Text(
+                    'Facilities',
+                    style: Theme.of(context).textTheme.headlineMedium,
+                  ),
+                  const SizedBox(height: 8),
+                  Text(
+                    'Coming Soon',
+                    style: Theme.of(context).textTheme.bodyLarge?.copyWith(
+                          color: Theme.of(context).colorScheme.secondary,
+                        ),
+                  ),
+                ],
+              ),
             ),
           ),
         ),

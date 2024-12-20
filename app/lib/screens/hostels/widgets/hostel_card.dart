@@ -1,14 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:shared/shared.dart';
-import 'package:intl/intl.dart';
 
-/// A responsive card that displays a summary of a facility event with enhanced UI/UX
+/// A responsive card that displays hostel information with enhanced UI/UX
 /// This widget adapts its layout based on screen size and orientation
 /// Provides optimal viewing experience across mobile, tablet, and desktop
-/// Uses bottom navigation for mobile view for better thumb accessibility
-class EventCard extends StatelessWidget {
-  /// The event to display
-  final FacilityEvent event;
+class HostelCard extends StatelessWidget {
+  /// The hostel to display
+  final Hostel hostel;
   
   /// Whether the card should be displayed in grid view mode
   final bool isGridView;
@@ -19,20 +17,20 @@ class EventCard extends StatelessWidget {
   /// Callback when the card is tapped
   final VoidCallback onTap;
   
+  /// Callback when the directions button is tapped
+  final VoidCallback onGetDirections;
+  
   /// Callback when the share button is tapped
   final VoidCallback onShare;
-  
-  /// Callback when the add to calendar button is tapped
-  final VoidCallback onAddToCalendar;
 
-  const EventCard({
+  const HostelCard({
     super.key,
-    required this.event,
+    required this.hostel,
     this.isGridView = false,
     this.isCompact = false,
     required this.onTap,
+    required this.onGetDirections,
     required this.onShare,
-    required this.onAddToCalendar,
   });
 
   @override
@@ -61,42 +59,36 @@ class EventCard extends StatelessWidget {
           Row(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              // Event image
-              if (event.image?.isNotEmpty ?? false) ...[
-                ClipRRect(
-                  borderRadius: BorderRadius.circular(isCompact ? 8 : 12),
-                  child: Image.network(
-                    event.image!,
-                    width: isCompact ? 80 : 100,
-                    height: isCompact ? 80 : 100,
-                    fit: BoxFit.cover,
-                    errorBuilder: (context, error, stackTrace) => _buildImagePlaceholder(theme),
-                  ),
-                ),
-                SizedBox(width: isCompact ? 12 : 16),
-              ] else ...[
-                _buildImagePlaceholder(theme),
-                SizedBox(width: isCompact ? 12 : 16),
-              ],
-              // Event details
+              // Hostel image or placeholder
+              _buildImagePlaceholder(theme),
+              SizedBox(width: isCompact ? 12 : 16),
+              // Hostel details
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text(
-                      event.name,
-                      style: theme.textTheme.titleMedium?.copyWith(
-                        fontWeight: FontWeight.w600,
-                        fontSize: isCompact ? 16 : 18,
-                        height: 1.2,
-                      ),
-                      maxLines: 2,
-                      overflow: TextOverflow.ellipsis,
+                    Row(
+                      children: [
+                        Expanded(
+                          child: Text(
+                            hostel.name,
+                            style: theme.textTheme.titleMedium?.copyWith(
+                              fontWeight: FontWeight.w600,
+                              fontSize: isCompact ? 16 : 18,
+                              height: 1.2,
+                            ),
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                        ),
+                        if (hostel.status == HostelStatus.active)
+                          _buildStatusBadge(theme),
+                      ],
                     ),
                     const SizedBox(height: 4),
-                    if (event.description?.isNotEmpty ?? false) ...[
+                    if (hostel.address != null) ...[
                       Text(
-                        event.description!,
+                        hostel.address!,
                         style: theme.textTheme.bodyMedium?.copyWith(
                           color: theme.colorScheme.onSurfaceVariant,
                           fontSize: isCompact ? 13 : 14,
@@ -107,7 +99,7 @@ class EventCard extends StatelessWidget {
                       ),
                       const SizedBox(height: 8),
                     ],
-                    _buildEventTiming(theme),
+                    _buildHostelInfo(theme),
                   ],
                 ),
               ),
@@ -124,19 +116,23 @@ class EventCard extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        // Event image
+        // Hostel image or placeholder
         Expanded(
           flex: 3,
-          child: event.image?.isNotEmpty ?? false
-              ? Image.network(
-                  event.image!,
-                  width: double.infinity,
-                  fit: BoxFit.cover,
-                  errorBuilder: (context, error, stackTrace) => _buildImagePlaceholder(theme),
-                )
-              : _buildImagePlaceholder(theme),
+          child: Stack(
+            fit: StackFit.expand,
+            children: [
+              _buildImagePlaceholder(theme),
+              if (hostel.status == HostelStatus.active)
+                Positioned(
+                  top: 8,
+                  right: 8,
+                  child: _buildStatusBadge(theme),
+                ),
+            ],
+          ),
         ),
-        // Event details
+        // Hostel details
         Expanded(
           flex: 2,
           child: Padding(
@@ -145,7 +141,7 @@ class EventCard extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  event.name,
+                  hostel.name,
                   style: theme.textTheme.titleMedium?.copyWith(
                     fontWeight: FontWeight.w600,
                     fontSize: isCompact ? 15 : 16,
@@ -155,10 +151,10 @@ class EventCard extends StatelessWidget {
                   overflow: TextOverflow.ellipsis,
                 ),
                 const SizedBox(height: 4),
-                if (event.description?.isNotEmpty ?? false)
+                if (hostel.address != null)
                   Expanded(
                     child: Text(
-                      event.description!,
+                      hostel.address!,
                       style: theme.textTheme.bodyMedium?.copyWith(
                         color: theme.colorScheme.onSurfaceVariant,
                         fontSize: isCompact ? 12 : 13,
@@ -169,7 +165,7 @@ class EventCard extends StatelessWidget {
                     ),
                   ),
                 const Spacer(),
-                _buildEventTiming(theme),
+                _buildHostelInfo(theme),
               ],
             ),
           ),
@@ -188,7 +184,7 @@ class EventCard extends StatelessWidget {
       ),
       child: Center(
         child: Icon(
-          Icons.event_outlined,
+          Icons.apartment_outlined,
           size: isCompact ? 32 : 40,
           color: theme.colorScheme.onSurfaceVariant.withOpacity(0.8),
         ),
@@ -196,10 +192,57 @@ class EventCard extends StatelessWidget {
     );
   }
 
-  Widget _buildEventTiming(ThemeData theme) {
-    final dateFormat = DateFormat('MMM d, y');
-    final timeFormat = DateFormat('h:mm a');
-    
+  Widget _buildStatusBadge(ThemeData theme) {
+    final (color, icon, text) = switch (hostel.status) {
+      HostelStatus.active => (
+        theme.colorScheme.secondaryContainer,
+        Icons.check_circle_rounded,
+        'Available'
+      ),
+      HostelStatus.inactive => (
+        theme.colorScheme.errorContainer,
+        Icons.cancel_rounded,
+        'Unavailable'
+      ),
+      HostelStatus.partially => (
+        theme.colorScheme.tertiaryContainer,
+        Icons.warning_rounded,
+        'Limited'
+      ),
+    };
+
+    return Container(
+      padding: EdgeInsets.symmetric(
+        horizontal: isCompact ? 6 : 8,
+        vertical: isCompact ? 4 : 6,
+      ),
+      decoration: BoxDecoration(
+        color: color,
+        borderRadius: BorderRadius.circular(isCompact ? 6 : 8),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(
+            icon,
+            size: isCompact ? 14 : 16,
+            color: theme.colorScheme.onSecondaryContainer,
+          ),
+          const SizedBox(width: 4),
+          Text(
+            text,
+            style: theme.textTheme.labelMedium?.copyWith(
+              color: theme.colorScheme.onSecondaryContainer,
+              fontWeight: FontWeight.w600,
+              fontSize: isCompact ? 12 : 13,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildHostelInfo(ThemeData theme) {
     return DefaultTextStyle(
       style: theme.textTheme.bodySmall!.copyWith(
         color: theme.colorScheme.primary,
@@ -209,27 +252,28 @@ class EventCard extends StatelessWidget {
       child: Row(
         children: [
           Icon(
-            Icons.calendar_today_rounded,
+            Icons.location_on_rounded,
             size: isCompact ? 14 : 16,
             color: theme.colorScheme.primary,
           ),
           const SizedBox(width: 4),
-          if (event.started != null) ...[
-            Text(dateFormat.format(event.started!)),
-            if (event.ended != null) ...[
-              Text(' - '),
-              Text(dateFormat.format(event.ended!)),
-            ],
+          Expanded(
+            child: Text(
+              hostel.location ?? 'Location not available',
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+            ),
+          ),
+          if (hostel.capacity != null) ...[
+            const SizedBox(width: 12),
+            Icon(
+              Icons.people_outline_rounded,
+              size: isCompact ? 14 : 16,
+              color: theme.colorScheme.primary,
+            ),
+            const SizedBox(width: 4),
+            Text('${hostel.capacity!.toStringAsFixed(0)} beds'),
           ],
-          const SizedBox(width: 12),
-          Icon(
-            Icons.access_time_rounded,
-            size: isCompact ? 14 : 16,
-            color: theme.colorScheme.primary,
-          ),
-          const SizedBox(width: 4),
-          if (event.started != null)
-            Text(timeFormat.format(event.started!)),
         ],
       ),
     );
@@ -246,7 +290,7 @@ class EventCard extends StatelessWidget {
             size: isCompact ? 20 : 24,
             color: theme.colorScheme.onSurfaceVariant,
           ),
-          tooltip: 'Share event',
+          tooltip: 'Share hostel',
           padding: EdgeInsets.zero,
           constraints: BoxConstraints.tightFor(
             width: isCompact ? 32 : 40,
@@ -254,13 +298,13 @@ class EventCard extends StatelessWidget {
           ),
         ),
         IconButton(
-          onPressed: onAddToCalendar,
+          onPressed: onGetDirections,
           icon: Icon(
-            Icons.calendar_month_rounded,
+            Icons.directions_rounded,
             size: isCompact ? 20 : 24,
             color: theme.colorScheme.onSurfaceVariant,
           ),
-          tooltip: 'Add to calendar',
+          tooltip: 'Get directions',
           padding: EdgeInsets.zero,
           constraints: BoxConstraints.tightFor(
             width: isCompact ? 32 : 40,

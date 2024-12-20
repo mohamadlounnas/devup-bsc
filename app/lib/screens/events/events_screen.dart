@@ -1,23 +1,31 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:shared/shared.dart';
 import '../../providers/events_provider.dart';
+import '../../widgets/theme_toggle.dart';
+import '../../widgets/background_gradient.dart';
 import 'widgets/event_card.dart';
 import 'widgets/event_details_panel.dart';
 import 'widgets/timeline_view.dart';
 
 /// Screen that displays a list of facility events with real-time updates
 class EventsScreen extends StatefulWidget {
-  /// Creates a new events screen
   const EventsScreen({super.key});
 
   @override
   State<EventsScreen> createState() => _EventsScreenState();
 }
 
-class _EventsScreenState extends State<EventsScreen> {
+class _EventsScreenState extends State<EventsScreen> with SingleTickerProviderStateMixin {
   late final EventsProvider _eventsProvider;
+  late final AnimationController _viewModeController;
+  late final Animation<double> _viewModeAnimation;
+  
   final _searchController = TextEditingController();
   final _scrollController = ScrollController();
+  final _debouncer = Debouncer(milliseconds: 300);
+  
   EventFilter _currentFilter = EventFilter.all;
   ViewMode _viewMode = ViewMode.list;
   DateTimeRange? _selectedDateRange;
@@ -29,9 +37,16 @@ class _EventsScreenState extends State<EventsScreen> {
     super.initState();
     _eventsProvider = EventsProvider();
     _eventsProvider.subscribeToEvents();
-    _searchController.addListener(() {
-      setState(() {}); // Rebuild when search text changes
-    });
+    _searchController.addListener(_handleSearch);
+
+    _viewModeController = AnimationController(
+      duration: const Duration(milliseconds: 300),
+      vsync: this,
+    );
+    _viewModeAnimation = CurvedAnimation(
+      parent: _viewModeController,
+      curve: Curves.easeInOutCubic,
+    );
   }
 
   @override
@@ -39,16 +54,41 @@ class _EventsScreenState extends State<EventsScreen> {
     _eventsProvider.dispose();
     _searchController.dispose();
     _scrollController.dispose();
+    _viewModeController.dispose();
     super.dispose();
+  }
+
+  // Debounced search handler for better performance
+  void _handleSearch() {
+    _debouncer.run(() {
+      setState(() {}); // Rebuild when search text changes
+    });
+  }
+
+  void _toggleViewMode() {
+    setState(() {
+      switch (_viewMode) {
+        case ViewMode.list:
+          _viewMode = ViewMode.grid;
+          _viewModeController.forward();
+          break;
+        case ViewMode.grid:
+          _viewMode = ViewMode.timeline;
+          _viewModeController.forward();
+          break;
+        case ViewMode.timeline:
+          _viewMode = ViewMode.list;
+          _viewModeController.reverse();
+          break;
+      }
+    });
   }
 
   void _showEventDetails(FacilityEvent event) {
     final isWideScreen = MediaQuery.of(context).size.width > 1200;
     
     if (isWideScreen) {
-      setState(() {
-        _selectedEvent = event;
-      });
+      setState(() => _selectedEvent = event);
     } else {
       showModalBottomSheet(
         context: context,
@@ -69,9 +109,7 @@ class _EventsScreenState extends State<EventsScreen> {
   }
 
   void _hideEventDetails() {
-    setState(() {
-      _selectedEvent = null;
-    });
+    setState(() => _selectedEvent = null);
   }
 
   Future<void> _showDateRangePicker() async {
@@ -88,17 +126,8 @@ class _EventsScreenState extends State<EventsScreen> {
       builder: (context, child) {
         return Theme(
           data: Theme.of(context).copyWith(
-            appBarTheme: AppBarTheme(
-              backgroundColor: Theme.of(context).colorScheme.primary,
-              foregroundColor: Theme.of(context).colorScheme.onPrimary,
-            ),
             dialogBackgroundColor: Theme.of(context).colorScheme.surface,
-            colorScheme: Theme.of(context).colorScheme.copyWith(
-              primary: Theme.of(context).colorScheme.primary,
-              onPrimary: Theme.of(context).colorScheme.onPrimary,
-              surface: Theme.of(context).colorScheme.surface,
-              onSurface: Theme.of(context).colorScheme.onSurface,
-            ),
+            colorScheme: Theme.of(context).colorScheme,
           ),
           child: child!,
         );
@@ -106,16 +135,17 @@ class _EventsScreenState extends State<EventsScreen> {
     );
 
     if (pickedRange != null) {
-      setState(() {
-        _selectedDateRange = pickedRange;
-      });
-      // Scroll to top when filter changes
-      _scrollController.animateTo(
-        0,
-        duration: const Duration(milliseconds: 300),
-        curve: Curves.easeOut,
-      );
+      setState(() => _selectedDateRange = pickedRange);
+      _scrollToTop();
     }
+  }
+
+  void _scrollToTop() {
+    _scrollController.animateTo(
+      0,
+      duration: const Duration(milliseconds: 300),
+      curve: Curves.easeOut,
+    );
   }
 
   @override
@@ -125,250 +155,15 @@ class _EventsScreenState extends State<EventsScreen> {
     final isWideScreen = MediaQuery.of(context).size.width > 1200;
     
     return Scaffold(
+      backgroundColor: Colors.transparent,
       body: Row(
         children: [
           Expanded(
             child: Column(
               children: [
-                // Header with search and filters
-                Container(
-                  decoration: BoxDecoration(
-                    color: colorScheme.surface,
-                    boxShadow: [
-                      BoxShadow(
-                        color: colorScheme.shadow.withOpacity(0.05),
-                        blurRadius: 8,
-                        offset: const Offset(0, 2),
-                      ),
-                    ],
-                  ),
-                  child: SafeArea(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.stretch,
-                      children: [
-                        // Top bar with search and view toggle
-                        Padding(
-                          padding: const EdgeInsets.all(16),
-                          child: Row(
-                            children: [
-                              // Search bar with animation
-                              Expanded(
-                                child: AnimatedContainer(
-                                  duration: const Duration(milliseconds: 200),
-                                  width: _isSearchExpanded ? double.infinity : 300,
-                                  child: SearchBar(
-                                    controller: _searchController,
-                                    hintText: 'Search events...',
-                                    leading: Icon(
-                                      Icons.search,
-                                      color: _searchController.text.isEmpty
-                                          ? colorScheme.outline
-                                          : colorScheme.primary,
-                                    ),
-                                    trailing: [
-                                      if (_searchController.text.isNotEmpty)
-                                        IconButton(
-                                          icon: const Icon(Icons.clear),
-                                          onPressed: () {
-                                            _searchController.clear();
-                                            setState(() {
-                                              _isSearchExpanded = false;
-                                            });
-                                          },
-                                        ),
-                                    ],
-                                    padding: const MaterialStatePropertyAll(
-                                      EdgeInsets.symmetric(horizontal: 16),
-                                    ),
-                                    onTap: () {
-                                      setState(() {
-                                        _isSearchExpanded = true;
-                                      });
-                                    },
-                                    onSubmitted: (_) {
-                                      setState(() {
-                                        _isSearchExpanded = false;
-                                      });
-                                    },
-                                  ),
-                                ),
-                              ),
-                              if (!_isSearchExpanded) ...[
-                                const SizedBox(width: 8),
-                                SegmentedButton<ViewMode>(
-                                  segments: const [
-                                    ButtonSegment(
-                                      value: ViewMode.list,
-                                      icon: Icon(Icons.view_list),
-                                      tooltip: 'List View',
-                                    ),
-                                    ButtonSegment(
-                                      value: ViewMode.grid,
-                                      icon: Icon(Icons.grid_view),
-                                      tooltip: 'Grid View',
-                                    ),
-                                    ButtonSegment(
-                                      value: ViewMode.timeline,
-                                      icon: Icon(Icons.timeline),
-                                      tooltip: 'Timeline View',
-                                    ),
-                                  ],
-                                  selected: {_viewMode},
-                                  onSelectionChanged: (Set<ViewMode> selected) {
-                                    setState(() {
-                                      _viewMode = selected.first;
-                                    });
-                                  },
-                                  style: ButtonStyle(
-                                    side: MaterialStateProperty.resolveWith((states) {
-                                      return BorderSide(
-                                        color: states.contains(MaterialState.selected)
-                                            ? colorScheme.primary
-                                            : colorScheme.outline.withOpacity(0.5),
-                                      );
-                                    }),
-                                  ),
-                                ),
-                              ],
-                            ],
-                          ),
-                        ),
-                        // Date range and filters
-                        AnimatedSwitcher(
-                          duration: const Duration(milliseconds: 200),
-                          child: !_isSearchExpanded
-                              ? Column(
-                                  crossAxisAlignment: CrossAxisAlignment.stretch,
-                                  children: [
-                                    // Date range picker
-                                    Padding(
-                                      padding: const EdgeInsets.symmetric(horizontal: 16),
-                                      child: Row(
-                                        children: [
-                                          Expanded(
-                                            child: FilledButton.tonalIcon(
-                                              onPressed: _showDateRangePicker,
-                                              icon: Icon(
-                                                Icons.date_range,
-                                                color: _selectedDateRange != null
-                                                    ? colorScheme.primary
-                                                    : null,
-                                              ),
-                                              label: Text(
-                                                _selectedDateRange == null
-                                                    ? 'Select Date Range'
-                                                    : '${_formatDate(_selectedDateRange!.start)} - ${_formatDate(_selectedDateRange!.end)}',
-                                                maxLines: 1,
-                                                overflow: TextOverflow.ellipsis,
-                                              ),
-                                              style: FilledButton.styleFrom(
-                                                padding: const EdgeInsets.symmetric(
-                                                  horizontal: 16,
-                                                  vertical: 12,
-                                                ),
-                                              ),
-                                            ),
-                                          ),
-                                          if (_selectedDateRange != null) ...[
-                                            const SizedBox(width: 8),
-                                            IconButton.filled(
-                                              onPressed: () {
-                                                setState(() {
-                                                  _selectedDateRange = null;
-                                                });
-                                                // Scroll to top when filter changes
-                                                _scrollController.animateTo(
-                                                  0,
-                                                  duration: const Duration(milliseconds: 300),
-                                                  curve: Curves.easeOut,
-                                                );
-                                              },
-                                              icon: const Icon(Icons.clear),
-                                              tooltip: 'Clear Date Range',
-                                            ),
-                                          ],
-                                        ],
-                                      ),
-                                    ),
-                                    const SizedBox(height: 16),
-                                    // Filter chips
-                                    SingleChildScrollView(
-                                      scrollDirection: Axis.horizontal,
-                                      padding: const EdgeInsets.symmetric(horizontal: 16),
-                                      child: Row(
-                                        children: [
-                                          _FilterChip(
-                                            label: 'All Events',
-                                            icon: Icons.event,
-                                            isSelected: _currentFilter == EventFilter.all,
-                                            onSelected: (_) {
-                                              setState(() => _currentFilter = EventFilter.all);
-                                              // Scroll to top when filter changes
-                                              _scrollController.animateTo(
-                                                0,
-                                                duration: const Duration(milliseconds: 300),
-                                                curve: Curves.easeOut,
-                                              );
-                                            },
-                                          ),
-                                          const SizedBox(width: 8),
-                                          _FilterChip(
-                                            label: 'Upcoming',
-                                            icon: Icons.upcoming,
-                                            isSelected: _currentFilter == EventFilter.upcoming,
-                                            onSelected: (_) {
-                                              setState(() => _currentFilter = EventFilter.upcoming);
-                                              // Scroll to top when filter changes
-                                              _scrollController.animateTo(
-                                                0,
-                                                duration: const Duration(milliseconds: 300),
-                                                curve: Curves.easeOut,
-                                              );
-                                            },
-                                          ),
-                                          const SizedBox(width: 8),
-                                          _FilterChip(
-                                            label: 'Ongoing',
-                                            icon: Icons.play_circle_outline,
-                                            isSelected: _currentFilter == EventFilter.ongoing,
-                                            onSelected: (_) {
-                                              setState(() => _currentFilter = EventFilter.ongoing);
-                                              // Scroll to top when filter changes
-                                              _scrollController.animateTo(
-                                                0,
-                                                duration: const Duration(milliseconds: 300),
-                                                curve: Curves.easeOut,
-                                              );
-                                            },
-                                          ),
-                                          const SizedBox(width: 8),
-                                          _FilterChip(
-                                            label: 'Past',
-                                            icon: Icons.history,
-                                            isSelected: _currentFilter == EventFilter.past,
-                                            onSelected: (_) {
-                                              setState(() => _currentFilter = EventFilter.past);
-                                              // Scroll to top when filter changes
-                                              _scrollController.animateTo(
-                                                0,
-                                                duration: const Duration(milliseconds: 300),
-                                                curve: Curves.easeOut,
-                                              );
-                                            },
-                                          ),
-                                        ],
-                                      ),
-                                    ),
-                                    const SizedBox(height: 16),
-                                  ],
-                                )
-                              : const SizedBox(height: 16),
-                        ),
-                      ],
-                    ),
-                  ),
-                ),
-                // Events List/Grid/Timeline
+                // Modern header with search and filters
+                _buildHeader(colorScheme),
+                // Events List with optimized rendering
                 Expanded(
                   child: _buildEventsList(),
                 ),
@@ -386,12 +181,229 @@ class _EventsScreenState extends State<EventsScreen> {
     );
   }
 
+  Widget _buildHeader(ColorScheme colorScheme) {
+    return Container(
+      child: SafeArea(
+        bottom: false,
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            Padding(
+              padding: const EdgeInsets.only(right: 16, top: 8),
+              child: Row(
+                children: [
+                  Expanded(
+                    child: _buildSearchAndFilters(colorScheme),
+                  ),
+                  IconButton(
+                    onPressed: _toggleViewMode,
+                    icon: AnimatedIcon(
+                      icon: AnimatedIcons.list_view,
+                      progress: _viewModeAnimation,
+                      semanticLabel: 'Toggle view mode',
+                    ),
+                    tooltip: 'Change view mode',
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildSearchAndFilters(ColorScheme colorScheme) {
+    return SingleChildScrollView(
+      scrollDirection: Axis.horizontal,
+      padding: const EdgeInsets.only(left: 20),
+      child: Row(
+        children: [
+          // Optimized search bar with animation
+          AnimatedContainer(
+            duration: const Duration(milliseconds: 200),
+            width: _isSearchExpanded ? 300 : 200,
+            child: _buildSearchBar(colorScheme),
+          ),
+          _buildFilterChip(
+            label: 'All',
+            icon: Icons.event_rounded,
+            isSelected: _currentFilter == EventFilter.all,
+            onSelected: (_) => setState(() => _currentFilter = EventFilter.all),
+          ),
+          const SizedBox(width: 12),
+          _buildFilterChip(
+            label: 'Upcoming',
+            icon: Icons.upcoming_rounded,
+            isSelected: _currentFilter == EventFilter.upcoming,
+            onSelected: (_) => setState(() => _currentFilter = EventFilter.upcoming),
+          ),
+          const SizedBox(width: 12),
+          _buildFilterChip(
+            label: 'Ongoing',
+            icon: Icons.play_circle_outline_rounded,
+            isSelected: _currentFilter == EventFilter.ongoing,
+            onSelected: (_) => setState(() => _currentFilter = EventFilter.ongoing),
+          ),
+          const SizedBox(width: 12),
+          _buildFilterChip(
+            label: 'Past',
+            icon: Icons.history_rounded,
+            isSelected: _currentFilter == EventFilter.past,
+            onSelected: (_) => setState(() => _currentFilter = EventFilter.past),
+          ),
+          const SizedBox(width: 12),
+          Container(
+            height: 32,
+            width: 1,
+            color: colorScheme.outlineVariant.withOpacity(0.2),
+          ),
+          const SizedBox(width: 12),
+          _buildDateRangeChip(),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildSearchBar(ColorScheme colorScheme) {
+    return MouseRegion(
+      onEnter: (_) => setState(() => _isSearchExpanded = true),
+      onExit: (_) => setState(() => _isSearchExpanded = false),
+      child: Container(
+        height: 32,
+        margin: const EdgeInsets.only(right: 12),
+        child: TextField(
+          controller: _searchController,
+          decoration: InputDecoration(
+            isDense: true,
+            contentPadding: const EdgeInsets.symmetric(
+              horizontal: 12,
+              vertical: 6,
+            ),
+            hintText: 'Search events...',
+            prefixIcon: Icon(
+              Icons.search_rounded,
+              size: 20,
+              color: colorScheme.onSurfaceVariant,
+            ),
+            border: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(16),
+              borderSide: BorderSide(
+                color: colorScheme.outline.withOpacity(0.2),
+              ),
+            ),
+            enabledBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(16),
+              borderSide: BorderSide(
+                color: colorScheme.outline.withOpacity(0.2),
+              ),
+            ),
+            focusedBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(16),
+              borderSide: BorderSide(
+                color: colorScheme.primary,
+                width: 2,
+              ),
+            ),
+            filled: true,
+            fillColor: colorScheme.surface,
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildFilterChip({
+    required String label,
+    required IconData icon,
+    required bool isSelected,
+    required ValueChanged<bool>? onSelected,
+  }) {
+    final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
+
+    return FilterChip(
+      selected: isSelected,
+      showCheckmark: false,
+      avatar: Icon(
+        icon,
+        size: 18,
+        color: isSelected
+            ? colorScheme.onSecondaryContainer
+            : colorScheme.onSurfaceVariant,
+      ),
+      label: Text(label),
+      labelStyle: theme.textTheme.labelLarge?.copyWith(
+        color: isSelected
+            ? colorScheme.onSecondaryContainer
+            : colorScheme.onSurfaceVariant,
+        letterSpacing: 0.5,
+      ),
+      onSelected: onSelected,
+      backgroundColor: Colors.transparent,
+      selectedColor: colorScheme.secondaryContainer.withOpacity(0.3),
+      side: BorderSide(
+        color: isSelected
+            ? Colors.transparent
+            : colorScheme.outline.withOpacity(0.2),
+        width: 1,
+      ),
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(12),
+      ),
+    );
+  }
+
+  Widget _buildDateRangeChip() {
+    final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
+
+    return FilterChip(
+      selected: _selectedDateRange != null,
+      showCheckmark: false,
+      avatar: Icon(
+        Icons.calendar_month_rounded,
+        size: 18,
+        color: _selectedDateRange != null
+            ? colorScheme.primary
+            : colorScheme.onSurfaceVariant,
+      ),
+      label: Text(
+        _selectedDateRange != null
+            ? '${_formatDate(_selectedDateRange!.start)} - ${_formatDate(_selectedDateRange!.end)}'
+            : 'Date Range',
+      ),
+      labelStyle: theme.textTheme.labelLarge?.copyWith(
+        color: _selectedDateRange != null
+            ? colorScheme.primary
+            : colorScheme.onSurfaceVariant,
+        letterSpacing: 0.5,
+      ),
+      onSelected: (_) => _showDateRangePicker(),
+      backgroundColor: Colors.transparent,
+      selectedColor: colorScheme.primary.withOpacity(0.1),
+      side: BorderSide(
+        color: _selectedDateRange != null
+            ? Colors.transparent
+            : colorScheme.outline.withOpacity(0.2),
+        width: 1,
+      ),
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(12),
+      ),
+    );
+  }
+
   Widget _buildEventsList() {
     return ListenableBuilder(
       listenable: _eventsProvider,
       builder: (context, _) {
         if (_eventsProvider.isLoading) {
-          return const Center(child: CircularProgressIndicator());
+          return const Center(
+            child: CircularProgressIndicator.adaptive(),
+          );
         }
 
         final events = _getFilteredEvents();
@@ -407,7 +419,7 @@ class _EventsScreenState extends State<EventsScreen> {
           case ViewMode.timeline:
             return TimelineView(
               events: events,
-              onEventTap: (event) => _showEventDetails(event),
+              onEventTap: _showEventDetails,
               onEventShare: () {
                 // TODO: Implement share
               },
@@ -524,9 +536,7 @@ class _EventsScreenState extends State<EventsScreen> {
   }
 
   IconData _getEmptyStateIcon() {
-    if (_selectedDateRange != null) {
-      return Icons.date_range;
-    }
+    if (_selectedDateRange != null) return Icons.date_range;
     switch (_currentFilter) {
       case EventFilter.upcoming:
         return Icons.upcoming;
@@ -542,9 +552,7 @@ class _EventsScreenState extends State<EventsScreen> {
   }
 
   String _getEmptyStateMessage() {
-    if (_selectedDateRange != null) {
-      return 'No events in selected date range';
-    }
+    if (_selectedDateRange != null) return 'No events in selected date range';
     switch (_currentFilter) {
       case EventFilter.upcoming:
         return 'No upcoming events';
@@ -560,9 +568,7 @@ class _EventsScreenState extends State<EventsScreen> {
   }
 
   String _getEmptyStateSubmessage() {
-    if (_selectedDateRange != null) {
-      return 'Try selecting a different date range';
-    }
+    if (_selectedDateRange != null) return 'Try selecting a different date range';
     switch (_currentFilter) {
       case EventFilter.upcoming:
         return 'Stay tuned for new events';
@@ -578,98 +584,118 @@ class _EventsScreenState extends State<EventsScreen> {
   }
 
   Widget _buildListView(List<FacilityEvent> events) {
-    return ListView.builder(
-      controller: _scrollController,
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
-      itemCount: events.length,
-      itemBuilder: (context, index) {
-        return EventCard(
-          event: events[index],
-          onTap: () => _showEventDetails(events[index]),
-          onShare: () {
-            // TODO: Implement share
-          },
-          onAddToCalendar: () {
-            // TODO: Implement add to calendar
-          },
-        );
-      },
+    final width = MediaQuery.of(context).size.width;
+    final isCompact = width < 600;
+    
+    return AnimatedSwitcher(
+      duration: const Duration(milliseconds: 300),
+      child: ListView.builder(
+        key: ValueKey(_viewMode),
+        controller: _scrollController,
+        padding: EdgeInsets.symmetric(
+          horizontal: isCompact ? 12 : 16,
+          vertical: isCompact ? 12 : 16,
+        ),
+        itemCount: events.length,
+        itemBuilder: (context, index) {
+          return Padding(
+            padding: EdgeInsets.only(
+              bottom: isCompact ? 12 : 16,
+              left: isCompact ? 4 : 0,
+              right: isCompact ? 4 : 0,
+            ),
+            child: AnimatedOpacity(
+              opacity: 1.0,
+              duration: Duration(milliseconds: 200 + (index * 50)),
+              child: Container(
+                decoration: BoxDecoration(
+                  borderRadius: BorderRadius.circular(isCompact ? 12 : 16),
+                  boxShadow: [
+                    BoxShadow(
+                      color: Theme.of(context).colorScheme.shadow.withOpacity(0.08),
+                      blurRadius: 8,
+                      offset: const Offset(0, 2),
+                    ),
+                  ],
+                ),
+                child: ClipRRect(
+                  borderRadius: BorderRadius.circular(isCompact ? 12 : 16),
+                  child: EventCard(
+                    event: events[index],
+                    isCompact: isCompact,
+                    onTap: () => _showEventDetails(events[index]),
+                    onShare: () {
+                      // TODO: Implement share
+                    },
+                    onAddToCalendar: () {
+                      // TODO: Implement add to calendar
+                    },
+                  ),
+                ),
+              ),
+            ),
+          );
+        },
+      ),
     );
   }
 
   Widget _buildGridView(List<FacilityEvent> events) {
-    final crossAxisCount = MediaQuery.of(context).size.width ~/ 300;
+    final width = MediaQuery.of(context).size.width;
+    final isCompact = width < 600;
+    final crossAxisCount = (width / (isCompact ? 280 : 320)).floor().clamp(1, 4);
     
-    return GridView.builder(
-      controller: _scrollController,
-      padding: const EdgeInsets.all(16),
-      gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-        crossAxisCount: crossAxisCount.clamp(1, 3),
-        childAspectRatio: 1.5,
-        mainAxisSpacing: 16,
-        crossAxisSpacing: 16,
+    return AnimatedSwitcher(
+      duration: const Duration(milliseconds: 300),
+      child: GridView.builder(
+        key: ValueKey(_viewMode),
+        controller: _scrollController,
+        padding: EdgeInsets.all(isCompact ? 12 : 16),
+        gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+          crossAxisCount: crossAxisCount,
+          childAspectRatio: isCompact ? 1.2 : 1.5,
+          mainAxisSpacing: isCompact ? 12 : 16,
+          crossAxisSpacing: isCompact ? 12 : 16,
+        ),
+        itemCount: events.length,
+        itemBuilder: (context, index) {
+          return AnimatedScale(
+            scale: 1.0,
+            duration: Duration(milliseconds: 200 + (index * 50)),
+            child: AnimatedOpacity(
+              opacity: 1.0,
+              duration: Duration(milliseconds: 200 + (index * 50)),
+              child: Container(
+                decoration: BoxDecoration(
+                  borderRadius: BorderRadius.circular(isCompact ? 12 : 16),
+                  boxShadow: [
+                    BoxShadow(
+                      color: Theme.of(context).colorScheme.shadow.withOpacity(0.08),
+                      blurRadius: 8,
+                      offset: const Offset(0, 2),
+                    ),
+                  ],
+                ),
+                child: ClipRRect(
+                  borderRadius: BorderRadius.circular(isCompact ? 12 : 16),
+                  child: EventCard(
+                    event: events[index],
+                    isGridView: true,
+                    isCompact: isCompact,
+                    onTap: () => _showEventDetails(events[index]),
+                    onShare: () {
+                      // TODO: Implement share
+                    },
+                    onAddToCalendar: () {
+                      // TODO: Implement add to calendar
+                    },
+                  ),
+                ),
+              ),
+            ),
+          );
+        },
       ),
-      itemCount: events.length,
-      itemBuilder: (context, index) {
-        return EventCard(
-          event: events[index],
-          isGridView: true,
-          onTap: () => _showEventDetails(events[index]),
-          onShare: () {
-            // TODO: Implement share
-          },
-          onAddToCalendar: () {
-            // TODO: Implement add to calendar
-          },
-        );
-      },
-    );
-  }
-}
-
-class _FilterChip extends StatelessWidget {
-  final String label;
-  final IconData icon;
-  final bool isSelected;
-  final ValueChanged<bool>? onSelected;
-
-  const _FilterChip({
-    required this.label,
-    required this.icon,
-    required this.isSelected,
-    this.onSelected,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    
-    return FilterChip(
-      selected: isSelected,
-      label: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Icon(
-            icon,
-            size: 18,
-            color: isSelected
-                ? theme.colorScheme.onSecondaryContainer
-                : theme.colorScheme.onSurfaceVariant,
-          ),
-          const SizedBox(width: 8),
-          Text(label),
-        ],
-      ),
-      showCheckmark: false,
-      onSelected: onSelected,
-      elevation: 0,
-      pressElevation: 0,
-      side: BorderSide(
-        color: isSelected
-            ? Colors.transparent
-            : theme.colorScheme.outline.withOpacity(0.5),
-      ),
-      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
     );
   }
 }
@@ -685,4 +711,17 @@ enum ViewMode {
   list,
   grid,
   timeline,
+}
+
+/// A utility class for debouncing operations
+class Debouncer {
+  final int milliseconds;
+  Timer? _timer;
+
+  Debouncer({required this.milliseconds});
+
+  void run(VoidCallback action) {
+    _timer?.cancel();
+    _timer = Timer(Duration(milliseconds: milliseconds), action);
+  }
 } 

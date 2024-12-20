@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:shared/shared.dart';
+import 'package:shared/models/hostel.dart';
 
 /// Card widget to display hostel information
 class HostelCard extends StatelessWidget {
@@ -23,8 +23,8 @@ class HostelCard extends StatelessWidget {
                   hostel!.name,
                   style: Theme.of(context).textTheme.titleMedium,
                 ),
-                Text(hostel!.address),
-                Text('Status: ${hostel!.status.name}'),
+                Text(hostel!.address ?? '<No address>'),
+                Text('Status: ${hostel!.address}'),
               ],
             ),
       ),

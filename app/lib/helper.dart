@@ -37,3 +37,9 @@ String? getFileUrl(String collectionIdOrName, String recordId, String? fileName)
 extension EventPocketbaseFileUrl on FacilityEvent {
   String? get imageUrl => getFileUrl("facilities_events", id, image);
 }
+
+
+// hostel image url
+extension HostelPocketbaseFileUrl on Hostel {
+  // String? get imageUrl => getFileUrl("hostels", id, image);
+}
