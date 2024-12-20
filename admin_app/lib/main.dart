@@ -1,9 +1,21 @@
 import 'package:admin_app/presentation/dashboard/dashboard_screen.dart';
 import 'package:admin_app/presentation/login/login_screen.dart';
+import 'package:admin_app/services/auth_service.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:pocketbase/pocketbase.dart';
+import 'package:provider/provider.dart';
 
 void main() {
-  runApp(const MainApp());
+  // Initialize PocketBase with proper configuration
+  final pb = PocketBase('https://bsc-pocketbase.mtdjari.com');
+
+  runApp(
+    ChangeNotifierProvider(
+      create: (_) => AuthService(pb),
+      child: const MainApp(),
+    ),
+  );
 }
 
 class MainApp extends StatefulWidget {
@@ -24,6 +36,12 @@ class MainAppState extends State<MainApp> {
     setState(() {
       _themeMode = mode;
     });
+  }
+
+  @override
+  void initState() {
+    super.initState();
+    // Check auth state when app starts
   }
 
   @override

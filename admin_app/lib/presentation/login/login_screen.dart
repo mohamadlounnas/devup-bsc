@@ -1,39 +1,84 @@
 import 'package:admin_app/app_container.dart';
+import 'package:admin_app/services/auth_service.dart';
 import 'package:flutter/material.dart';
-import 'package:motif/motif.dart';
+import 'package:provider/provider.dart';
 
 class Login extends StatefulWidget {
   const Login({Key? key}) : super(key: key);
 
   @override
-  State<Login> createState() => _LoginState();
+  State<Login> createState() => LoginState();
 }
 
-class _LoginState extends State<Login> {
+class LoginState extends State<Login> {
   final _formKey = GlobalKey<FormState>();
   final TextEditingController _usernameController =
-      TextEditingController(text: "202432237503");
+      TextEditingController(text: "aminemenadi11@gmail.com");
   final TextEditingController _passwordController =
-      TextEditingController(text: "HXhpGuJ4");
+      TextEditingController(text: "amine2005");
   bool _saveCredentials = true;
-  bool loading = false;
-  String? error;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadSavedCredentials();
+  }
+
+  Future<void> _loadSavedCredentials() async {
+    final authService = context.read<AuthService>();
+    final savedCredentials = await authService.getSavedCredentials();
+    if (savedCredentials != null) {
+      setState(() {
+        _usernameController.text = savedCredentials['username']!;
+        _passwordController.text = savedCredentials['password']!;
+      });
+    }
+  }
+
+  Future<void> _handleLogin() async {
+    if (!_formKey.currentState!.validate()) return;
+
+    final authService = context.read<AuthService>();
+
+    try {
+      await authService.loginWithCredentials(
+        _usernameController.text,
+        _passwordController.text,
+      );
+
+      if (_saveCredentials) {
+        await authService.saveCredentials(
+          _usernameController.text,
+          _passwordController.text,
+        );
+      }
+
+      if (mounted) {
+        Navigator.of(context).pushReplacementNamed('/dashboard');
+      }
+    } catch (error) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(error.toString()),
+            backgroundColor: Theme.of(context).colorScheme.error,
+          ),
+        );
+      }
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      // appBar: AppBar(
-      //   title: const Text('Login'),
-      // ),
       body: Stack(
         children: [
-          const Positioned.fill(child: SinosoidalMotif()),
           Center(
             child: SingleChildScrollView(
               child: AppContainer.sm(
                 child: Column(
                   children: [
                     const SizedBox(height: 20),
-                    // const AppLogo(),
                     const SizedBox(height: 20),
                     Card(
                       margin: const EdgeInsets.all(24),
@@ -74,6 +119,7 @@ class _LoginState extends State<Login> {
                                             Icons.person_outline_outlined),
                                         labelText: 'Username',
                                         hintText: '202YXXXXXXX',
+                                        alignLabelWithHint: true,
                                       ),
                                       validator: (value) {
                                         if (value == null || value.isEmpty) {
@@ -83,30 +129,9 @@ class _LoginState extends State<Login> {
                                       },
                                     );
                                   },
-                                  menuChildren: [
-                                    // for (var entry in BetterProgress
-                                    //     .instance.savedCredentials.entries)
-                                    //   MenuItemButton(
-                                    //     leadingIcon: const Icon(
-                                    //         Icons.person_outline_outlined),
-                                    //     onPressed: () {
-                                    //       _usernameController.text = entry.key;
-                                    //       _passwordController.text =
-                                    //           entry.value['password'] ?? '';
-                                    //     },
-                                    //     child: Column(
-                                    //       crossAxisAlignment:
-                                    //           CrossAxisAlignment.start,
-                                    //       children: [
-                                    //         Text(entry.key),
-                                    //         Text(entry.value['name']!,
-                                    //             style: Theme.of(context)
-                                    //                 .textTheme
-                                    //                 .bodySmall),
-                                    //       ],
-                                    //     ),
-                                    //   ),
-                                  ],
+
+                                  // items is credentials
+                                  menuChildren: [],
                                 ),
                               ),
                               const SizedBox(height: 20),
@@ -167,38 +192,49 @@ class _LoginState extends State<Login> {
                               Padding(
                                 padding:
                                     const EdgeInsets.symmetric(horizontal: 12),
-                                child: Material(
-                                  borderRadius: BorderRadius.circular(12),
-                                  color: Theme.of(context).colorScheme.primary,
-                                  elevation: 3,
-                                  child: ListTile(
-                                    leading: const Icon(
-                                        Icons.fingerprint_rounded,
-                                        color: Colors.white),
-                                    title: const Center(
-                                        child: Text('Signin with progress',
-                                            style: TextStyle(
-                                                color: Colors.white))),
-                                    onTap: () async {
-                                      if (_formKey.currentState!.validate()) {
-                                        setState(() {
-                                          loading = true;
-                                          error = null;
-                                        });
+                                child: Consumer<AuthService>(
+                                  builder: (context, authService, child) {
+                                    if (authService.loading) {
+                                      return const Center(
+                                        child: CircularProgressIndicator(),
+                                      );
+                                    }
 
-                                        // Simulate login delay
-                                        await Future.delayed(
-                                            const Duration(seconds: 2));
-
-                                        if (mounted) {
-                                          Navigator.pushReplacementNamed(
-                                              context, '/dashboard');
-                                        }
-                                      }
-                                    },
-                                  ),
+                                    return Material(
+                                      borderRadius: BorderRadius.circular(12),
+                                      color:
+                                          Theme.of(context).colorScheme.primary,
+                                      elevation: 3,
+                                      child: ListTile(
+                                        leading: const Icon(
+                                          Icons.fingerprint_rounded,
+                                          color: Colors.white,
+                                        ),
+                                        title: const Center(
+                                          child: Text(
+                                            'Sign in',
+                                            style:
+                                                TextStyle(color: Colors.white),
+                                          ),
+                                        ),
+                                        onTap: _handleLogin,
+                                      ),
+                                    );
+                                  },
                                 ),
                               ),
+
+                              if (context.watch<AuthService>().error != null)
+                                Padding(
+                                  padding: const EdgeInsets.all(8.0),
+                                  child: Text(
+                                    context.watch<AuthService>().error!,
+                                    style: TextStyle(
+                                      color:
+                                          Theme.of(context).colorScheme.error,
+                                    ),
+                                  ),
+                                ),
                             ],
                           ),
                         ),
@@ -209,17 +245,15 @@ class _LoginState extends State<Login> {
               ),
             ),
           ),
-          if (loading)
-            Positioned.fill(
-              child: Container(
-                color: Theme.of(context).colorScheme.surface.withOpacity(0.8),
-                child: const Center(
-                  child: CircularProgressIndicator(strokeWidth: 3),
-                ),
-              ),
-            ),
         ],
       ),
     );
+  }
+
+  @override
+  void dispose() {
+    _usernameController.dispose();
+    _passwordController.dispose();
+    super.dispose();
   }
 }
