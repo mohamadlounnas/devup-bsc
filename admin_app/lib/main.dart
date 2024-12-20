@@ -8,15 +8,17 @@ import 'package:flutter/material.dart';
 import 'package:pocketbase/pocketbase.dart';
 import 'package:provider/provider.dart';
 
+final pb = PocketBase('https://bsc-pocketbase.mtdjari.com');
+
 void main() {
   // Initialize PocketBase with proper configuration
-  final pb = PocketBase('https://bsc-pocketbase.mtdjari.com');
 
   runApp(
     MultiProvider(
       providers: [
         ChangeNotifierProvider(create: (_) => AuthService(pb)),
         ChangeNotifierProvider(create: (_) => ReservationService(pb)),
+        ChangeNotifierProvider.value(value: FacilityService.instance),
       ],
       child: const MainApp(),
     ),

@@ -1,9 +1,11 @@
+import 'package:admin_app/features/settings/facility_settings.dart';
 import 'package:admin_app/main.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
+import 'package:shared/models/facility.dart';
 
 class DashboardScreen extends StatefulWidget {
-  const DashboardScreen({Key? key}) : super(key: key);
+  const DashboardScreen({super.key});
 
   @override
   State<DashboardScreen> createState() => _DashboardScreenState();
@@ -793,6 +795,17 @@ class _DashboardScreenState extends State<DashboardScreen> {
                               setState(() {
                                 selectedIndex = index;
                               });
+
+                              // Handle navigation based on selected menu item
+                              if (menuItems[index].label == 'Settings') {
+                                Navigator.push(
+                                  context,
+                                  MaterialPageRoute(
+                                    builder: (context) =>
+                                        const FacilitySettingsScreen(),
+                                  ),
+                                );
+                              }
                             },
                           ),
                         );
@@ -802,336 +815,339 @@ class _DashboardScreenState extends State<DashboardScreen> {
                 ),
                 const VerticalDivider(width: 1),
                 // Content Area
-                Expanded(
-                  child: Container(
-                    color: Theme.of(context).colorScheme.surface,
-                    padding: const EdgeInsets.all(16),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        // Search and Filter Bar
-                        Row(
-                          children: [
-                            Expanded(
-                              child: TextField(
-                                decoration: InputDecoration(
-                                  hintText: 'Search reservations...',
-                                  prefixIcon: const Icon(Icons.search),
-                                  border: OutlineInputBorder(
-                                    borderRadius: BorderRadius.circular(8),
-                                  ),
-                                ),
-                                onChanged: (value) {
-                                  setState(() {
-                                    searchQuery = value;
-                                  });
-                                },
-                              ),
-                            ),
-                            const SizedBox(width: 16),
-                            Wrap(
-                              spacing: 8,
-                              children: [
-                                ChoiceChip(
-                                  label: const Text('All'),
-                                  selected: selectedFilter == 'All',
-                                  onSelected: (selected) {
-                                    if (selected) {
-                                      setState(() {
-                                        selectedFilter = 'All';
-                                      });
-                                    }
-                                  },
-                                ),
-                                ChoiceChip(
-                                  label: const Text('Confirmed'),
-                                  selected: selectedFilter == 'Confirmed',
-                                  selectedColor: Colors.green.withOpacity(0.2),
-                                  onSelected: (selected) {
-                                    if (selected) {
-                                      setState(() {
-                                        selectedFilter = 'Confirmed';
-                                      });
-                                    }
-                                  },
-                                ),
-                                ChoiceChip(
-                                  label: const Text('Pending'),
-                                  selected: selectedFilter == 'Pending',
-                                  selectedColor: Colors.orange.withOpacity(0.2),
-                                  onSelected: (selected) {
-                                    if (selected) {
-                                      setState(() {
-                                        selectedFilter = 'Pending';
-                                      });
-                                    }
-                                  },
-                                ),
-                                ChoiceChip(
-                                  label: const Text('Completed'),
-                                  selected: selectedFilter == 'Completed',
-                                  selectedColor: Colors.blue.withOpacity(0.2),
-                                  onSelected: (selected) {
-                                    if (selected) {
-                                      setState(() {
-                                        selectedFilter = 'Completed';
-                                      });
-                                    }
-                                  },
-                                ),
-                              ],
-                            ),
-                            const SizedBox(width: 16),
-                            IconButton(
-                              icon: Icon(isAscending
-                                  ? Icons.arrow_upward
-                                  : Icons.arrow_downward),
-                              onPressed: () {
-                                setState(() {
-                                  isAscending = !isAscending;
-                                });
-                              },
-                              tooltip: 'Sort by date',
-                            ),
-                            const SizedBox(width: 8),
-                            IconButton(
-                              icon: const Icon(Icons.filter_list),
-                              onPressed: _showFilterDialog,
-                              tooltip: 'Advanced filters',
-                              style: IconButton.styleFrom(
-                                backgroundColor: (startDate != null ||
-                                        endDate != null ||
-                                        idFilter != null ||
-                                        minAmount != null ||
-                                        maxAmount != null)
-                                    ? Theme.of(context)
-                                        .colorScheme
-                                        .primaryContainer
-                                    : null,
-                              ),
-                            ),
-                            const SizedBox(width: 16),
-                            FilledButton.icon(
-                              icon: const Icon(Icons.add),
-                              label: const Text('New Reservation'),
-                              onPressed: _showAddReservationDialog,
-                            ),
-                          ],
-                        ),
-                        const SizedBox(height: 16),
-                        // Reservations List
-                        Expanded(
-                          child: Card(
-                            margin: EdgeInsets.zero,
-                            child: Column(
-                              children: [
-                                Expanded(
-                                  child: SingleChildScrollView(
-                                    scrollDirection: Axis.vertical,
-                                    child: SingleChildScrollView(
-                                      scrollDirection: Axis.horizontal,
-                                      child: ConstrainedBox(
-                                        constraints: BoxConstraints(
-                                          minWidth: MediaQuery.of(context)
-                                                  .size
-                                                  .width -
-                                              (isExpanded ? 250 : 70) -
-                                              33,
-                                        ),
-                                        child: DataTable(
-                                          columnSpacing: 24,
-                                          horizontalMargin: 24,
-                                          headingRowHeight: 48,
-                                          dataRowHeight: 52,
-                                          columns: [
-                                            DataColumn(
-                                              label: Row(
-                                                children: [
-                                                  const Text('ID'),
-                                                  const SizedBox(width: 4),
-                                                  if (sortColumn == 'id')
-                                                    Icon(
-                                                      isAscending
-                                                          ? Icons.arrow_upward
-                                                          : Icons
-                                                              .arrow_downward,
-                                                      size: 16,
-                                                    ),
-                                                ],
-                                              ),
-                                              onSort: (_, __) => onSort('id'),
-                                            ),
-                                            DataColumn(
-                                              label: Row(
-                                                children: [
-                                                  const Text('Customer Name'),
-                                                  const SizedBox(width: 4),
-                                                  if (sortColumn ==
-                                                      'customerName')
-                                                    Icon(
-                                                      isAscending
-                                                          ? Icons.arrow_upward
-                                                          : Icons
-                                                              .arrow_downward,
-                                                      size: 16,
-                                                    ),
-                                                ],
-                                              ),
-                                              onSort: (_, __) =>
-                                                  onSort('customerName'),
-                                            ),
-                                            DataColumn(
-                                              label: Row(
-                                                children: [
-                                                  const Text('Date'),
-                                                  const SizedBox(width: 4),
-                                                  if (sortColumn == 'date')
-                                                    Icon(
-                                                      isAscending
-                                                          ? Icons.arrow_upward
-                                                          : Icons
-                                                              .arrow_downward,
-                                                      size: 16,
-                                                    ),
-                                                ],
-                                              ),
-                                              onSort: (_, __) => onSort('date'),
-                                            ),
-                                            DataColumn(
-                                              label: Row(
-                                                children: [
-                                                  const Text('Status'),
-                                                  const SizedBox(width: 4),
-                                                  if (sortColumn == 'status')
-                                                    Icon(
-                                                      isAscending
-                                                          ? Icons.arrow_upward
-                                                          : Icons
-                                                              .arrow_downward,
-                                                      size: 16,
-                                                    ),
-                                                ],
-                                              ),
-                                              onSort: (_, __) =>
-                                                  onSort('status'),
-                                            ),
-                                            DataColumn(
-                                              label: Row(
-                                                children: [
-                                                  const Text('Amount'),
-                                                  const SizedBox(width: 4),
-                                                  if (sortColumn == 'amount')
-                                                    Icon(
-                                                      isAscending
-                                                          ? Icons.arrow_upward
-                                                          : Icons
-                                                              .arrow_downward,
-                                                      size: 16,
-                                                    ),
-                                                ],
-                                              ),
-                                              numeric: true,
-                                              onSort: (_, __) =>
-                                                  onSort('amount'),
-                                            ),
-                                          ],
-                                          rows: filteredReservations
-                                              .map((reservation) {
-                                            return DataRow(
-                                              onSelectChanged: (_) =>
-                                                  _showReservationDetails(
-                                                      reservation),
-                                              cells: [
-                                                DataCell(
-                                                    Text(reservation['id'])),
-                                                DataCell(
-                                                  Row(
-                                                    mainAxisSize:
-                                                        MainAxisSize.min,
-                                                    children: [
-                                                      CircleAvatar(
-                                                        radius: 14,
-                                                        backgroundColor:
-                                                            _getStatusColor(
-                                                                reservation[
-                                                                    'status']),
-                                                        child: Text(
-                                                          reservation[
-                                                              'customerName'][0],
-                                                          style:
-                                                              const TextStyle(
-                                                                  color: Colors
-                                                                      .white,
-                                                                  fontSize: 12),
-                                                        ),
-                                                      ),
-                                                      const SizedBox(width: 8),
-                                                      Text(reservation[
-                                                          'customerName']),
-                                                    ],
-                                                  ),
-                                                ),
-                                                DataCell(
-                                                    Text(reservation['date'])),
-                                                DataCell(
-                                                  Container(
-                                                    padding: const EdgeInsets
-                                                        .symmetric(
-                                                        horizontal: 8,
-                                                        vertical: 4),
-                                                    decoration: BoxDecoration(
-                                                      color: _getStatusColor(
-                                                              reservation[
-                                                                  'status'])
-                                                          .withOpacity(0.1),
-                                                      borderRadius:
-                                                          BorderRadius.circular(
-                                                              12),
-                                                      border: Border.all(
-                                                        color: _getStatusColor(
-                                                            reservation[
-                                                                'status']),
-                                                        width: 1,
-                                                      ),
-                                                    ),
-                                                    child: Text(
-                                                      reservation['status'],
-                                                      style: TextStyle(
-                                                        color: _getStatusColor(
-                                                            reservation[
-                                                                'status']),
-                                                        fontSize: 12,
-                                                        fontWeight:
-                                                            FontWeight.w500,
-                                                      ),
-                                                    ),
-                                                  ),
-                                                ),
-                                                DataCell(
-                                                  Text(
-                                                    '\$${reservation['amount'].toStringAsFixed(2)}',
-                                                    style: const TextStyle(
-                                                      fontWeight:
-                                                          FontWeight.w500,
-                                                    ),
-                                                  ),
-                                                ),
-                                              ],
-                                            );
-                                          }).toList(),
-                                        ),
-                                      ),
-                                    ),
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                ),
+                if (selectedIndex == 0)
+                  // Expanded(
+                  //   child: Container(
+                  //     color: Theme.of(context).colorScheme.surface,
+                  //     padding: const EdgeInsets.all(16),
+                  //     child: Column(
+                  //       crossAxisAlignment: CrossAxisAlignment.start,
+                  //       children: [
+                  //         // Search and Filter Bar
+                  //         Row(
+                  //           children: [
+                  //             Expanded(
+                  //               child: TextField(
+                  //                 decoration: InputDecoration(
+                  //                   hintText: 'Search reservations...',
+                  //                   prefixIcon: const Icon(Icons.search),
+                  //                   border: OutlineInputBorder(
+                  //                     borderRadius: BorderRadius.circular(8),
+                  //                   ),
+                  //                 ),
+                  //                 onChanged: (value) {
+                  //                   setState(() {
+                  //                     searchQuery = value;
+                  //                   });
+                  //                 },
+                  //               ),
+                  //             ),
+                  //             const SizedBox(width: 16),
+                  //             Wrap(
+                  //               spacing: 8,
+                  //               children: [
+                  //                 ChoiceChip(
+                  //                   label: const Text('All'),
+                  //                   selected: selectedFilter == 'All',
+                  //                   onSelected: (selected) {
+                  //                     if (selected) {
+                  //                       setState(() {
+                  //                         selectedFilter = 'All';
+                  //                       });
+                  //                     }
+                  //                   },
+                  //                 ),
+                  //                 ChoiceChip(
+                  //                   label: const Text('Confirmed'),
+                  //                   selected: selectedFilter == 'Confirmed',
+                  //                   selectedColor: Colors.green.withOpacity(0.2),
+                  //                   onSelected: (selected) {
+                  //                     if (selected) {
+                  //                       setState(() {
+                  //                         selectedFilter = 'Confirmed';
+                  //                       });
+                  //                     }
+                  //                   },
+                  //                 ),
+                  //                 ChoiceChip(
+                  //                   label: const Text('Pending'),
+                  //                   selected: selectedFilter == 'Pending',
+                  //                   selectedColor: Colors.orange.withOpacity(0.2),
+                  //                   onSelected: (selected) {
+                  //                     if (selected) {
+                  //                       setState(() {
+                  //                         selectedFilter = 'Pending';
+                  //                       });
+                  //                     }
+                  //                   },
+                  //                 ),
+                  //                 ChoiceChip(
+                  //                   label: const Text('Completed'),
+                  //                   selected: selectedFilter == 'Completed',
+                  //                   selectedColor: Colors.blue.withOpacity(0.2),
+                  //                   onSelected: (selected) {
+                  //                     if (selected) {
+                  //                       setState(() {
+                  //                         selectedFilter = 'Completed';
+                  //                       });
+                  //                     }
+                  //                   },
+                  //                 ),
+                  //               ],
+                  //             ),
+                  //             const SizedBox(width: 16),
+                  //             IconButton(
+                  //               icon: Icon(isAscending
+                  //                   ? Icons.arrow_upward
+                  //                   : Icons.arrow_downward),
+                  //               onPressed: () {
+                  //                 setState(() {
+                  //                   isAscending = !isAscending;
+                  //                 });
+                  //               },
+                  //               tooltip: 'Sort by date',
+                  //             ),
+                  //             const SizedBox(width: 8),
+                  //             IconButton(
+                  //               icon: const Icon(Icons.filter_list),
+                  //               onPressed: _showFilterDialog,
+                  //               tooltip: 'Advanced filters',
+                  //               style: IconButton.styleFrom(
+                  //                 backgroundColor: (startDate != null ||
+                  //                         endDate != null ||
+                  //                         idFilter != null ||
+                  //                         minAmount != null ||
+                  //                         maxAmount != null)
+                  //                     ? Theme.of(context)
+                  //                         .colorScheme
+                  //                         .primaryContainer
+                  //                     : null,
+                  //               ),
+                  //             ),
+                  //             const SizedBox(width: 16),
+                  //             FilledButton.icon(
+                  //               icon: const Icon(Icons.add),
+                  //               label: const Text('New Reservation'),
+                  //               onPressed: _showAddReservationDialog,
+                  //             ),
+                  //           ],
+                  //         ),
+                  //         const SizedBox(height: 16),
+                  //         // Reservations List
+                  //         Expanded(
+                  //           child: Card(
+                  //             margin: EdgeInsets.zero,
+                  //             child: Column(
+                  //               children: [
+                  //                 Expanded(
+                  //                   child: SingleChildScrollView(
+                  //                     scrollDirection: Axis.vertical,
+                  //                     child: SingleChildScrollView(
+                  //                       scrollDirection: Axis.horizontal,
+                  //                       child: ConstrainedBox(
+                  //                         constraints: BoxConstraints(
+                  //                           minWidth: MediaQuery.of(context)
+                  //                                   .size
+                  //                                   .width -
+                  //                               (isExpanded ? 250 : 70) -
+                  //                               33,
+                  //                         ),
+                  //                         child: DataTable(
+                  //                           columnSpacing: 24,
+                  //                           horizontalMargin: 24,
+                  //                           headingRowHeight: 48,
+                  //                           dataRowHeight: 52,
+                  //                           columns: [
+                  //                             DataColumn(
+                  //                               label: Row(
+                  //                                 children: [
+                  //                                   const Text('ID'),
+                  //                                   const SizedBox(width: 4),
+                  //                                   if (sortColumn == 'id')
+                  //                                     Icon(
+                  //                                       isAscending
+                  //                                           ? Icons.arrow_upward
+                  //                                           : Icons
+                  //                                               .arrow_downward,
+                  //                                       size: 16,
+                  //                                     ),
+                  //                                 ],
+                  //                               ),
+                  //                               onSort: (_, __) => onSort('id'),
+                  //                             ),
+                  //                             DataColumn(
+                  //                               label: Row(
+                  //                                 children: [
+                  //                                   const Text('Customer Name'),
+                  //                                   const SizedBox(width: 4),
+                  //                                   if (sortColumn ==
+                  //                                       'customerName')
+                  //                                     Icon(
+                  //                                       isAscending
+                  //                                           ? Icons.arrow_upward
+                  //                                           : Icons
+                  //                                               .arrow_downward,
+                  //                                       size: 16,
+                  //                                     ),
+                  //                                 ],
+                  //                               ),
+                  //                               onSort: (_, __) =>
+                  //                                   onSort('customerName'),
+                  //                             ),
+                  //                             DataColumn(
+                  //                               label: Row(
+                  //                                 children: [
+                  //                                   const Text('Date'),
+                  //                                   const SizedBox(width: 4),
+                  //                                   if (sortColumn == 'date')
+                  //                                     Icon(
+                  //                                       isAscending
+                  //                                           ? Icons.arrow_upward
+                  //                                           : Icons
+                  //                                               .arrow_downward,
+                  //                                       size: 16,
+                  //                                     ),
+                  //                                 ],
+                  //                               ),
+                  //                               onSort: (_, __) => onSort('date'),
+                  //                             ),
+                  //                             DataColumn(
+                  //                               label: Row(
+                  //                                 children: [
+                  //                                   const Text('Status'),
+                  //                                   const SizedBox(width: 4),
+                  //                                   if (sortColumn == 'status')
+                  //                                     Icon(
+                  //                                       isAscending
+                  //                                           ? Icons.arrow_upward
+                  //                                           : Icons
+                  //                                               .arrow_downward,
+                  //                                       size: 16,
+                  //                                     ),
+                  //                                 ],
+                  //                               ),
+                  //                               onSort: (_, __) =>
+                  //                                   onSort('status'),
+                  //                             ),
+                  //                             DataColumn(
+                  //                               label: Row(
+                  //                                 children: [
+                  //                                   const Text('Amount'),
+                  //                                   const SizedBox(width: 4),
+                  //                                   if (sortColumn == 'amount')
+                  //                                     Icon(
+                  //                                       isAscending
+                  //                                           ? Icons.arrow_upward
+                  //                                           : Icons
+                  //                                               .arrow_downward,
+                  //                                       size: 16,
+                  //                                     ),
+                  //                                 ],
+                  //                               ),
+                  //                               numeric: true,
+                  //                               onSort: (_, __) =>
+                  //                                   onSort('amount'),
+                  //                             ),
+                  //                           ],
+                  //                           rows: filteredReservations
+                  //                               .map((reservation) {
+                  //                             return DataRow(
+                  //                               onSelectChanged: (_) =>
+                  //                                   _showReservationDetails(
+                  //                                       reservation),
+                  //                               cells: [
+                  //                                 DataCell(
+                  //                                     Text(reservation['id'])),
+                  //                                 DataCell(
+                  //                                   Row(
+                  //                                     mainAxisSize:
+                  //                                         MainAxisSize.min,
+                  //                                     children: [
+                  //                                       CircleAvatar(
+                  //                                         radius: 14,
+                  //                                         backgroundColor:
+                  //                                             _getStatusColor(
+                  //                                                 reservation[
+                  //                                                     'status']),
+                  //                                         child: Text(
+                  //                                           reservation[
+                  //                                               'customerName'][0],
+                  //                                           style:
+                  //                                               const TextStyle(
+                  //                                                   color: Colors
+                  //                                                       .white,
+                  //                                                   fontSize: 12),
+                  //                                         ),
+                  //                                       ),
+                  //                                       const SizedBox(width: 8),
+                  //                                       Text(reservation[
+                  //                                           'customerName']),
+                  //                                     ],
+                  //                                   ),
+                  //                                 ),
+                  //                                 DataCell(
+                  //                                     Text(reservation['date'])),
+                  //                                 DataCell(
+                  //                                   Container(
+                  //                                     padding: const EdgeInsets
+                  //                                         .symmetric(
+                  //                                         horizontal: 8,
+                  //                                         vertical: 4),
+                  //                                     decoration: BoxDecoration(
+                  //                                       color: _getStatusColor(
+                  //                                               reservation[
+                  //                                                   'status'])
+                  //                                           .withOpacity(0.1),
+                  //                                       borderRadius:
+                  //                                           BorderRadius.circular(
+                  //                                               12),
+                  //                                       border: Border.all(
+                  //                                         color: _getStatusColor(
+                  //                                             reservation[
+                  //                                                 'status']),
+                  //                                         width: 1,
+                  //                                       ),
+                  //                                     ),
+                  //                                     child: Text(
+                  //                                       reservation['status'],
+                  //                                       style: TextStyle(
+                  //                                         color: _getStatusColor(
+                  //                                             reservation[
+                  //                                                 'status']),
+                  //                                         fontSize: 12,
+                  //                                         fontWeight:
+                  //                                             FontWeight.w500,
+                  //                                       ),
+                  //                                     ),
+                  //                                   ),
+                  //                                 ),
+                  //                                 DataCell(
+                  //                                   Text(
+                  //                                     '\$${reservation['amount'].toStringAsFixed(2)}',
+                  //                                     style: const TextStyle(
+                  //                                       fontWeight:
+                  //                                           FontWeight.w500,
+                  //                                     ),
+                  //                                   ),
+                  //                                 ),
+                  //                               ],
+                  //                             );
+                  //                           }).toList(),
+                  //                         ),
+                  //                       ),
+                  //                     ),
+                  //                   ),
+                  //                 ),
+                  //               ],
+                  //             ),
+                  //           ),
+                  //         ),
+                  //       ],
+                  //     ),
+                  //   ),
+                  // ),
+
+                  if (selectedIndex == 2) const FacilitySettingsScreen()
               ],
             ),
           ),
