@@ -4,7 +4,7 @@ class Validators {
   /// Returns null if valid, error message if invalid
   static String? validatePhone(String? value) {
     if (value == null || value.isEmpty) {
-      return 'Please enter your phone number';
+      return 'Phone number is required';
     }
 
     // Remove any whitespace and special characters except + and digits
@@ -12,7 +12,7 @@ class Validators {
 
     // Check if the phone number starts with + and has 10-15 digits
     if (!RegExp(r'^\+?\d{10,15}$').hasMatch(cleanPhone)) {
-      return 'Please enter a valid phone number';
+      return 'Please enter a valid phone number (e.g., +213XXXXXXXXX)';
     }
 
     return null;
@@ -22,7 +22,7 @@ class Validators {
   /// Returns null if valid, error message if invalid
   static String? validateEmail(String? value) {
     if (value == null || value.isEmpty) {
-      return null; // Email is optional
+      return 'Email is required';
     }
 
     if (!RegExp(r'^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$').hasMatch(value)) {
@@ -45,6 +45,45 @@ class Validators {
 
     if (!RegExp(r'^[a-zA-Z\s-]+$').hasMatch(value)) {
       return 'Name can only contain letters, spaces, and hyphens';
+    }
+
+    return null;
+  }
+
+  /// Validates a national ID
+  /// Returns null if valid, error message if invalid
+  static String? validateNationalId(String? value) {
+    if (value == null || value.isEmpty) {
+      return 'National ID is required';
+    }
+
+    // Add your specific national ID validation rules here
+    if (value.length < 5) {
+      return 'National ID must be at least 5 characters';
+    }
+
+    return null;
+  }
+
+  /// Validates a place of birth
+  /// Returns null if valid, error message if invalid
+  static String? validatePlaceOfBirth(String? value) {
+    if (value == null || value.isEmpty) {
+      return 'Place of birth is required';
+    }
+
+    if (value.length < 2) {
+      return 'Place of birth must be at least 2 characters';
+    }
+
+    return null;
+  }
+
+  /// Validates a date of birth
+  /// Returns null if valid, error message if invalid
+  static String? validateDateOfBirth(String? value) {
+    if (value == null || value.isEmpty) {
+      return 'Date of birth is required';
     }
 
     return null;

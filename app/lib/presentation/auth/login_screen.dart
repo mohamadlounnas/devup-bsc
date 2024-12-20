@@ -3,9 +3,10 @@ import 'package:provider/provider.dart';
 import 'package:go_router/go_router.dart';
 import '../../services/auth_service.dart';
 import '../../utils/validators.dart';
+import '../../utils/responsive.dart';
 import 'register_screen.dart';
 
-/// A screen that handles user login with phone number
+/// A screen that handles user login with email and password
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
 
@@ -15,9 +16,10 @@ class LoginScreen extends StatefulWidget {
 
 class _LoginScreenState extends State<LoginScreen> {
   final _formKey = GlobalKey<FormState>();
-  final TextEditingController _phoneController = TextEditingController();
-  final TextEditingController _codeController = TextEditingController();
+  final TextEditingController _emailController = TextEditingController();
+  final TextEditingController _passwordController = TextEditingController();
   bool _saveCredentials = true;
+  bool _obscurePassword = true;
 
   @override
   void initState() {
@@ -30,8 +32,8 @@ class _LoginScreenState extends State<LoginScreen> {
     final savedAuth = await authService.getSavedAuthState();
     if (savedAuth != null) {
       setState(() {
-        _phoneController.text = savedAuth['phone']!;
-        _codeController.text = savedAuth['code']!;
+        _emailController.text = savedAuth['email']!;
+        _passwordController.text = savedAuth['password']!;
       });
     }
   }
@@ -42,13 +44,13 @@ class _LoginScreenState extends State<LoginScreen> {
     final authService = context.read<AuthService>();
 
     try {
-      await authService.loginWithPhone(
-        _phoneController.text,
-        _codeController.text,
+      await authService.login(
+        _emailController.text,
+        _passwordController.text,
       );
 
       if (mounted) {
-        context.go('/dashboard');
+        context.go('/events');
       }
     } catch (error) {
       if (mounted) {
@@ -64,117 +66,133 @@ class _LoginScreenState extends State<LoginScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final isDesktop = Responsive.isDesktop(context);
+    final isTablet = Responsive.isTablet(context);
+
     return Scaffold(
-      body: Stack(
-        children: [
-          Center(
-            child: SingleChildScrollView(
+      body: Center(
+        child: SingleChildScrollView(
+          padding: Responsive.getAuthPadding(context),
+          child: ConstrainedBox(
+            constraints: BoxConstraints(
+              maxWidth: Responsive.getAuthMaxWidth(context),
+            ),
+            child: Card(
+              elevation: isDesktop ? 4 : 0,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(24),
+                side: BorderSide(
+                  color: Colors.grey.withOpacity(0.5),
+                  width: 1,
+                ),
+              ),
               child: Padding(
-                padding: const EdgeInsets.all(24.0),
-                child: Card(
-                  elevation: 0,
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(24),
-                    side: BorderSide(
-                      color: Colors.grey.withOpacity(0.5),
-                      width: 1,
-                    ),
-                  ),
-                  child: Padding(
-                    padding: const EdgeInsets.all(24.0),
-                    child: Form(
-                      key: _formKey,
-                      child: Column(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          Text(
-                            'Welcome Back',
-                            style: Theme.of(context).textTheme.headlineMedium,
-                          ),
-                          const SizedBox(height: 24),
-                          TextFormField(
-                            controller: _phoneController,
-                            decoration: const InputDecoration(
-                              labelText: 'Phone Number',
-                              hintText: '+1234567890',
-                              prefixIcon: Icon(Icons.phone),
-                              border: OutlineInputBorder(),
+                padding: EdgeInsets.all(isDesktop || isTablet ? 24.0 : 12.0),
+                child: Form(
+                  key: _formKey,
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Text(
+                        'Welcome Back',
+                        style: Theme.of(context).textTheme.headlineMedium?.copyWith(
+                          fontSize: isDesktop ? 32 : 24,
+                        ),
+                      ),
+                      SizedBox(height: isDesktop ? 48 : 24),
+                      TextFormField(
+                        controller: _emailController,
+                        decoration: const InputDecoration(
+                          labelText: 'Email',
+                          hintText: 'your.email@example.com',
+                          prefixIcon: Icon(Icons.email_outlined),
+                          border: OutlineInputBorder(),
+                        ),
+                        keyboardType: TextInputType.emailAddress,
+                        validator: Validators.validateEmail,
+                        textInputAction: TextInputAction.next,
+                      ),
+                      const SizedBox(height: 16),
+                      TextFormField(
+                        controller: _passwordController,
+                        decoration: InputDecoration(
+                          labelText: 'Password',
+                          prefixIcon: const Icon(Icons.lock_outline),
+                          border: const OutlineInputBorder(),
+                          suffixIcon: IconButton(
+                            icon: Icon(
+                              _obscurePassword ? Icons.visibility_off : Icons.visibility,
                             ),
-                            keyboardType: TextInputType.phone,
-                            validator: Validators.validatePhone,
-                          ),
-                          const SizedBox(height: 16),
-                          TextFormField(
-                            controller: _codeController,
-                            decoration: const InputDecoration(
-                              labelText: 'Verification Code',
-                              hintText: '123456',
-                              prefixIcon: Icon(Icons.lock_outline),
-                              border: OutlineInputBorder(),
-                            ),
-                            obscureText: true,
-                            validator: (value) {
-                              if (value == null || value.isEmpty) {
-                                return 'Please enter the verification code';
-                              }
-                              if (value.length < 6) {
-                                return 'Verification code must be at least 6 characters';
-                              }
-                              return null;
-                            },
-                          ),
-                          const SizedBox(height: 16),
-                          SwitchListTile(
-                            title: const Text('Remember Me'),
-                            subtitle: const Text('Save credentials for next time'),
-                            value: _saveCredentials,
-                            onChanged: (bool value) {
+                            onPressed: () {
                               setState(() {
-                                _saveCredentials = value;
+                                _obscurePassword = !_obscurePassword;
                               });
                             },
                           ),
-                          const SizedBox(height: 24),
-                          Consumer<AuthService>(
-                            builder: (context, authService, child) {
-                              return ElevatedButton(
-                                onPressed: authService.loading ? null : _handleLogin,
-                                style: ElevatedButton.styleFrom(
-                                  minimumSize: const Size.fromHeight(50),
-                                  shape: RoundedRectangleBorder(
-                                    borderRadius: BorderRadius.circular(8),
-                                  ),
-                                ),
-                                child: authService.loading
-                                    ? const CircularProgressIndicator()
-                                    : const Text('Login'),
-                              );
-                            },
-                          ),
-                          const SizedBox(height: 16),
-                          TextButton(
-                            onPressed: () {
-                              context.push('/register');
-                            },
-                            child: const Text('Don\'t have an account? Register'),
-                          ),
-                        ],
+                        ),
+                        obscureText: _obscurePassword,
+                        validator: (value) {
+                          if (value == null || value.isEmpty) {
+                            return 'Please enter your password';
+                          }
+                          return null;
+                        },
+                        textInputAction: TextInputAction.done,
+                        onFieldSubmitted: (_) => _handleLogin(),
                       ),
-                    ),
+                      const SizedBox(height: 16),
+                      SwitchListTile(
+                        title: const Text('Remember Me'),
+                        subtitle: const Text('Save credentials for next time'),
+                        value: _saveCredentials,
+                        onChanged: (bool value) {
+                          setState(() {
+                            _saveCredentials = value;
+                          });
+                        },
+                      ),
+                      SizedBox(height: isDesktop ? 48 : 24),
+                      Consumer<AuthService>(
+                        builder: (context, authService, child) {
+                          return ElevatedButton(
+                            onPressed: authService.loading ? null : _handleLogin,
+                            style: ElevatedButton.styleFrom(
+                              minimumSize: Size(isDesktop ? 300 : double.infinity, 50),
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(8),
+                              ),
+                            ),
+                            child: authService.loading
+                                ? const CircularProgressIndicator()
+                                : Text(
+                                    'Login',
+                                    style: TextStyle(fontSize: isDesktop ? 18 : 16),
+                                  ),
+                          );
+                        },
+                      ),
+                      const SizedBox(height: 16),
+                      TextButton(
+                        onPressed: () {
+                          context.push('/register');
+                        },
+                        child: const Text('Don\'t have an account? Register'),
+                      ),
+                    ],
                   ),
                 ),
               ),
             ),
           ),
-        ],
+        ),
       ),
     );
   }
 
   @override
   void dispose() {
-    _phoneController.dispose();
-    _codeController.dispose();
+    _emailController.dispose();
+    _passwordController.dispose();
     super.dispose();
   }
 } 

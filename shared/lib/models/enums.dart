@@ -91,5 +91,5 @@ enum ServiceType {
 
   /// Restoration service type (e.g., restaurant, cafe)
   @JsonValue('restoration')
-  restoration,
+  restoration;
 }

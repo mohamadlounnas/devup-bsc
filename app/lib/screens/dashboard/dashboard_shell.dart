@@ -51,6 +51,7 @@ class _DashboardShellState extends State<DashboardShell> with SingleTickerProvid
     if (location.startsWith('/map')) return 1;
     if (location.startsWith('/hostels')) return 2;
     if (location.startsWith('/facilities')) return 3;
+    if (location.startsWith('/profile')) return 4;
     return 0;
   }
 
@@ -68,6 +69,9 @@ class _DashboardShellState extends State<DashboardShell> with SingleTickerProvid
         break;
       case 3:
         context.go('/facilities');
+        break;
+      case 4:
+        context.go('/profile');
         break;
     }
   }
@@ -125,6 +129,12 @@ class _DashboardShellState extends State<DashboardShell> with SingleTickerProvid
         icon: Icons.business_outlined,
         selectedIcon: Icons.business,
         label: 'Facilities',
+        colorScheme: colorScheme,
+      ),
+      _buildDestination(
+        icon: Icons.person_outline,
+        selectedIcon: Icons.person,
+        label: 'Profile',
         colorScheme: colorScheme,
       ),
     ];
