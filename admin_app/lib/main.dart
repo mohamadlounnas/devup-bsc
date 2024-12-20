@@ -2,6 +2,7 @@ import 'package:admin_app/config/router.dart';
 import 'package:admin_app/presentation/dashboard/dashboard_screen.dart';
 import 'package:admin_app/presentation/login/login_screen.dart';
 import 'package:admin_app/services/auth_service.dart';
+import 'package:admin_app/services/hostel_service.dart';
 import 'package:admin_app/services/reservation_service.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
@@ -17,6 +18,7 @@ void main() {
     MultiProvider(
       providers: [
         ChangeNotifierProvider(create: (_) => AuthService(pb)),
+        ChangeNotifierProvider(create: (_) => HostelServices.instance),
         Provider<ApiService>(
           create: (context) => ApiService(pb),
         ),
