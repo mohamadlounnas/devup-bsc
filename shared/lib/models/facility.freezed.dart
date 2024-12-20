@@ -38,6 +38,10 @@ mixin _$Facility {
   FacilityType get type => throw _privateConstructorUsedError;
   @JsonKey(name: 'location')
   String? get location => throw _privateConstructorUsedError;
+  @JsonKey(name: 'events')
+  List<String>? get eventIds => throw _privateConstructorUsedError;
+  @JsonKey(name: 'events_expand')
+  List<FacilityEvent>? get events => throw _privateConstructorUsedError;
   @JsonKey(name: 'created')
   DateTime get created => throw _privateConstructorUsedError;
   @JsonKey(name: 'updated')
@@ -68,6 +72,8 @@ abstract class $FacilityCopyWith<$Res> {
       @JsonKey(name: 'cover') String? cover,
       @JsonKey(name: 'type') FacilityType type,
       @JsonKey(name: 'location') String? location,
+      @JsonKey(name: 'events') List<String>? eventIds,
+      @JsonKey(name: 'events_expand') List<FacilityEvent>? events,
       @JsonKey(name: 'created') DateTime created,
       @JsonKey(name: 'updated') DateTime updated});
 
@@ -98,6 +104,8 @@ class _$FacilityCopyWithImpl<$Res, $Val extends Facility>
     Object? cover = freezed,
     Object? type = null,
     Object? location = freezed,
+    Object? eventIds = freezed,
+    Object? events = freezed,
     Object? created = null,
     Object? updated = null,
   }) {
@@ -138,6 +146,14 @@ class _$FacilityCopyWithImpl<$Res, $Val extends Facility>
           ? _value.location
           : location // ignore: cast_nullable_to_non_nullable
               as String?,
+      eventIds: freezed == eventIds
+          ? _value.eventIds
+          : eventIds // ignore: cast_nullable_to_non_nullable
+              as List<String>?,
+      events: freezed == events
+          ? _value.events
+          : events // ignore: cast_nullable_to_non_nullable
+              as List<FacilityEvent>?,
       created: null == created
           ? _value.created
           : created // ignore: cast_nullable_to_non_nullable
@@ -182,6 +198,8 @@ abstract class _$$FacilityImplCopyWith<$Res>
       @JsonKey(name: 'cover') String? cover,
       @JsonKey(name: 'type') FacilityType type,
       @JsonKey(name: 'location') String? location,
+      @JsonKey(name: 'events') List<String>? eventIds,
+      @JsonKey(name: 'events_expand') List<FacilityEvent>? events,
       @JsonKey(name: 'created') DateTime created,
       @JsonKey(name: 'updated') DateTime updated});
 
@@ -211,6 +229,8 @@ class __$$FacilityImplCopyWithImpl<$Res>
     Object? cover = freezed,
     Object? type = null,
     Object? location = freezed,
+    Object? eventIds = freezed,
+    Object? events = freezed,
     Object? created = null,
     Object? updated = null,
   }) {
@@ -251,6 +271,14 @@ class __$$FacilityImplCopyWithImpl<$Res>
           ? _value.location
           : location // ignore: cast_nullable_to_non_nullable
               as String?,
+      eventIds: freezed == eventIds
+          ? _value._eventIds
+          : eventIds // ignore: cast_nullable_to_non_nullable
+              as List<String>?,
+      events: freezed == events
+          ? _value._events
+          : events // ignore: cast_nullable_to_non_nullable
+              as List<FacilityEvent>?,
       created: null == created
           ? _value.created
           : created // ignore: cast_nullable_to_non_nullable
@@ -266,7 +294,7 @@ class __$$FacilityImplCopyWithImpl<$Res>
 /// @nodoc
 @JsonSerializable()
 class _$FacilityImpl implements _Facility {
-  const _$FacilityImpl(
+  _$FacilityImpl(
       {@JsonKey(name: 'id') required this.id,
       @JsonKey(name: 'name') required this.name,
       @JsonKey(name: 'description') this.description,
@@ -276,8 +304,12 @@ class _$FacilityImpl implements _Facility {
       @JsonKey(name: 'cover') this.cover,
       @JsonKey(name: 'type') required this.type,
       @JsonKey(name: 'location') this.location,
+      @JsonKey(name: 'events') final List<String>? eventIds,
+      @JsonKey(name: 'events_expand') final List<FacilityEvent>? events,
       @JsonKey(name: 'created') required this.created,
-      @JsonKey(name: 'updated') required this.updated});
+      @JsonKey(name: 'updated') required this.updated})
+      : _eventIds = eventIds,
+        _events = events;
 
   factory _$FacilityImpl.fromJson(Map<String, dynamic> json) =>
       _$$FacilityImplFromJson(json);
@@ -309,6 +341,28 @@ class _$FacilityImpl implements _Facility {
   @override
   @JsonKey(name: 'location')
   final String? location;
+  final List<String>? _eventIds;
+  @override
+  @JsonKey(name: 'events')
+  List<String>? get eventIds {
+    final value = _eventIds;
+    if (value == null) return null;
+    if (_eventIds is EqualUnmodifiableListView) return _eventIds;
+    // ignore: implicit_dynamic_type
+    return EqualUnmodifiableListView(value);
+  }
+
+  final List<FacilityEvent>? _events;
+  @override
+  @JsonKey(name: 'events_expand')
+  List<FacilityEvent>? get events {
+    final value = _events;
+    if (value == null) return null;
+    if (_events is EqualUnmodifiableListView) return _events;
+    // ignore: implicit_dynamic_type
+    return EqualUnmodifiableListView(value);
+  }
+
   @override
   @JsonKey(name: 'created')
   final DateTime created;
@@ -318,7 +372,7 @@ class _$FacilityImpl implements _Facility {
 
   @override
   String toString() {
-    return 'Facility(id: $id, name: $name, description: $description, managerId: $managerId, manager: $manager, logo: $logo, cover: $cover, type: $type, location: $location, created: $created, updated: $updated)';
+    return 'Facility(id: $id, name: $name, description: $description, managerId: $managerId, manager: $manager, logo: $logo, cover: $cover, type: $type, location: $location, eventIds: $eventIds, events: $events, created: $created, updated: $updated)';
   }
 
   @override
@@ -338,14 +392,29 @@ class _$FacilityImpl implements _Facility {
             (identical(other.type, type) || other.type == type) &&
             (identical(other.location, location) ||
                 other.location == location) &&
+            const DeepCollectionEquality().equals(other._eventIds, _eventIds) &&
+            const DeepCollectionEquality().equals(other._events, _events) &&
             (identical(other.created, created) || other.created == created) &&
             (identical(other.updated, updated) || other.updated == updated));
   }
 
   @JsonKey(includeFromJson: false, includeToJson: false)
   @override
-  int get hashCode => Object.hash(runtimeType, id, name, description, managerId,
-      manager, logo, cover, type, location, created, updated);
+  int get hashCode => Object.hash(
+      runtimeType,
+      id,
+      name,
+      description,
+      managerId,
+      manager,
+      logo,
+      cover,
+      type,
+      location,
+      const DeepCollectionEquality().hash(_eventIds),
+      const DeepCollectionEquality().hash(_events),
+      created,
+      updated);
 
   /// Create a copy of Facility
   /// with the given fields replaced by the non-null parameter values.
@@ -364,7 +433,7 @@ class _$FacilityImpl implements _Facility {
 }
 
 abstract class _Facility implements Facility {
-  const factory _Facility(
+  factory _Facility(
           {@JsonKey(name: 'id') required final String id,
           @JsonKey(name: 'name') required final String name,
           @JsonKey(name: 'description') final String? description,
@@ -374,6 +443,8 @@ abstract class _Facility implements Facility {
           @JsonKey(name: 'cover') final String? cover,
           @JsonKey(name: 'type') required final FacilityType type,
           @JsonKey(name: 'location') final String? location,
+          @JsonKey(name: 'events') final List<String>? eventIds,
+          @JsonKey(name: 'events_expand') final List<FacilityEvent>? events,
           @JsonKey(name: 'created') required final DateTime created,
           @JsonKey(name: 'updated') required final DateTime updated}) =
       _$FacilityImpl;
@@ -408,6 +479,12 @@ abstract class _Facility implements Facility {
   @override
   @JsonKey(name: 'location')
   String? get location;
+  @override
+  @JsonKey(name: 'events')
+  List<String>? get eventIds;
+  @override
+  @JsonKey(name: 'events_expand')
+  List<FacilityEvent>? get events;
   @override
   @JsonKey(name: 'created')
   DateTime get created;
