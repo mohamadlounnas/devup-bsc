@@ -83,7 +83,23 @@ enum ReservationStatus {
 /// Enum representing service types
 @JsonEnum()
 enum ServiceType {
+  /// Hospitality service type
+  @JsonValue('hospitality')
   hospitality,
+
+  /// Activity service type
+  @JsonValue('activity')
   activity,
+
+  /// Restoration service type
+  @JsonValue('restoration')
   restoration,
+
+  /// Reservation service type
+  @JsonValue('reservation')
+  reservation,
+
+  /// Unknown service type
+  @JsonValue('unknown')
+  unknown;
 }
