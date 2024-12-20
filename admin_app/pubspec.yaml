@@ -17,8 +17,10 @@ dependencies:
   get_it: ^7.6.7
   shared:
     path: ../shared
-  provider: ^6.0.5
+  provider: ^6.1.2
   shared_preferences: ^2.2.0
+  date_format: ^2.0.9
+  typed_data: ^1.4.0
 
 dev_dependencies:
   flutter_test:

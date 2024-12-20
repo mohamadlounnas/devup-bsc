@@ -60,19 +60,20 @@ class _DashboardScreenState extends State<DashboardScreen> {
       final matchesSearch = reservation['customerName']
           .toLowerCase()
           .contains(searchQuery.toLowerCase());
-      final matchesFilter = selectedFilter == 'All' ||
-          reservation['status'] == selectedFilter;
-      
+      final matchesFilter =
+          selectedFilter == 'All' || reservation['status'] == selectedFilter;
+
       // Advanced filters
       final matchesDateRange = (startDate == null ||
               DateTime.parse(reservation['date']).isAfter(startDate!)) &&
           (endDate == null ||
-              DateTime.parse(reservation['date']).isBefore(endDate!.add(const Duration(days: 1))));
-      
+              DateTime.parse(reservation['date'])
+                  .isBefore(endDate!.add(const Duration(days: 1))));
+
       final matchesId = idFilter == null ||
           idFilter!.isEmpty ||
           reservation['id'].contains(idFilter!);
-      
+
       // Fixed amount comparison
       final amount = reservation['amount'] as double;
       final matchesAmount = (minAmount == null || amount >= minAmount!) &&
@@ -114,11 +115,11 @@ class _DashboardScreenState extends State<DashboardScreen> {
       context: context,
       builder: (BuildContext context) {
         // Create local controllers with current values
-        final minAmountController = TextEditingController(
-            text: minAmount?.toStringAsFixed(2) ?? '');
-        final maxAmountController = TextEditingController(
-            text: maxAmount?.toStringAsFixed(2) ?? '');
-        
+        final minAmountController =
+            TextEditingController(text: minAmount?.toStringAsFixed(2) ?? '');
+        final maxAmountController =
+            TextEditingController(text: maxAmount?.toStringAsFixed(2) ?? '');
+
         return StatefulBuilder(
           builder: (context, setState) {
             return AlertDialog(
@@ -129,13 +130,15 @@ class _DashboardScreenState extends State<DashboardScreen> {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     // Date Range
-                    const Text('Date Range', style: TextStyle(fontWeight: FontWeight.bold)),
+                    const Text('Date Range',
+                        style: TextStyle(fontWeight: FontWeight.bold)),
                     Row(
                       children: [
                         Expanded(
                           child: TextButton.icon(
                             icon: const Icon(Icons.calendar_today),
-                            label: Text(startDate?.toString().split(' ')[0] ?? 'Start Date'),
+                            label: Text(startDate?.toString().split(' ')[0] ??
+                                'Start Date'),
                             onPressed: () async {
                               final date = await showDatePicker(
                                 context: context,
@@ -153,7 +156,8 @@ class _DashboardScreenState extends State<DashboardScreen> {
                         Expanded(
                           child: TextButton.icon(
                             icon: const Icon(Icons.calendar_today),
-                            label: Text(endDate?.toString().split(' ')[0] ?? 'End Date'),
+                            label: Text(endDate?.toString().split(' ')[0] ??
+                                'End Date'),
                             onPressed: () async {
                               final date = await showDatePicker(
                                 context: context,
@@ -170,9 +174,10 @@ class _DashboardScreenState extends State<DashboardScreen> {
                       ],
                     ),
                     const SizedBox(height: 16),
-                    
+
                     // ID Filter
-                    const Text('ID Filter', style: TextStyle(fontWeight: FontWeight.bold)),
+                    const Text('ID Filter',
+                        style: TextStyle(fontWeight: FontWeight.bold)),
                     TextField(
                       decoration: const InputDecoration(
                         hintText: 'Enter ID',
@@ -182,9 +187,10 @@ class _DashboardScreenState extends State<DashboardScreen> {
                       controller: TextEditingController(text: idFilter),
                     ),
                     const SizedBox(height: 16),
-                    
+
                     // Amount Range
-                    const Text('Amount Range', style: TextStyle(fontWeight: FontWeight.bold)),
+                    const Text('Amount Range',
+                        style: TextStyle(fontWeight: FontWeight.bold)),
                     Row(
                       children: [
                         Expanded(
@@ -194,11 +200,14 @@ class _DashboardScreenState extends State<DashboardScreen> {
                               isDense: true,
                               prefixText: '\$',
                             ),
-                            keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                            keyboardType: const TextInputType.numberWithOptions(
+                                decimal: true),
                             controller: minAmountController,
                             onChanged: (value) {
                               setState(() {
-                                minAmount = value.isEmpty ? null : double.tryParse(value);
+                                minAmount = value.isEmpty
+                                    ? null
+                                    : double.tryParse(value);
                               });
                             },
                           ),
@@ -211,11 +220,14 @@ class _DashboardScreenState extends State<DashboardScreen> {
                               isDense: true,
                               prefixText: '\$',
                             ),
-                            keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                            keyboardType: const TextInputType.numberWithOptions(
+                                decimal: true),
                             controller: maxAmountController,
                             onChanged: (value) {
                               setState(() {
-                                maxAmount = value.isEmpty ? null : double.tryParse(value);
+                                maxAmount = value.isEmpty
+                                    ? null
+                                    : double.tryParse(value);
                               });
                             },
                           ),
@@ -311,7 +323,8 @@ class _DashboardScreenState extends State<DashboardScreen> {
                               );
                               if (date != null) {
                                 setState(() {
-                                  newReservation['date'] = date.toString().split(' ')[0];
+                                  newReservation['date'] =
+                                      date.toString().split(' ')[0];
                                 });
                               }
                             },
@@ -348,9 +361,11 @@ class _DashboardScreenState extends State<DashboardScreen> {
                         prefixText: '\$',
                         isDense: true,
                       ),
-                      keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                      keyboardType:
+                          const TextInputType.numberWithOptions(decimal: true),
                       onChanged: (value) {
-                        newReservation['amount'] = double.tryParse(value) ?? 0.0;
+                        newReservation['amount'] =
+                            double.tryParse(value) ?? 0.0;
                       },
                     ),
                   ],
@@ -408,7 +423,8 @@ class _DashboardScreenState extends State<DashboardScreen> {
                 children: [
                   CircleAvatar(
                     radius: 16,
-                    backgroundColor: _getStatusColor(editedReservation['status'] as String),
+                    backgroundColor:
+                        _getStatusColor(editedReservation['status'] as String),
                     child: Text(
                       (editedReservation['customerName'] as String)[0],
                       style: const TextStyle(color: Colors.white),
@@ -456,11 +472,15 @@ class _DashboardScreenState extends State<DashboardScreen> {
                     ),
                     _DetailItem(
                       title: 'Login Date',
-                      value: editedReservation['loginAt']?.toString() ?? 'Not set',
+                      value:
+                          editedReservation['loginAt']?.toString() ?? 'Not set',
                       customWidget: isEditing
                           ? TextButton.icon(
                               icon: const Icon(Icons.calendar_today),
-                              label: Text(editedReservation['loginAt']?.toString().split(' ')[0] ?? 'Select Date'),
+                              label: Text(editedReservation['loginAt']
+                                      ?.toString()
+                                      .split(' ')[0] ??
+                                  'Select Date'),
                               onPressed: () async {
                                 final date = await showDatePicker(
                                   context: context,
@@ -470,7 +490,8 @@ class _DashboardScreenState extends State<DashboardScreen> {
                                 );
                                 if (date != null) {
                                   setState(() {
-                                    editedReservation['loginAt'] = date.toIso8601String();
+                                    editedReservation['loginAt'] =
+                                        date.toIso8601String();
                                   });
                                 }
                               },
@@ -479,11 +500,15 @@ class _DashboardScreenState extends State<DashboardScreen> {
                     ),
                     _DetailItem(
                       title: 'Logout Date',
-                      value: editedReservation['logoutAt']?.toString() ?? 'Not set',
+                      value: editedReservation['logoutAt']?.toString() ??
+                          'Not set',
                       customWidget: isEditing
                           ? TextButton.icon(
                               icon: const Icon(Icons.calendar_today),
-                              label: Text(editedReservation['logoutAt']?.toString().split(' ')[0] ?? 'Select Date'),
+                              label: Text(editedReservation['logoutAt']
+                                      ?.toString()
+                                      .split(' ')[0] ??
+                                  'Select Date'),
                               onPressed: () async {
                                 final date = await showDatePicker(
                                   context: context,
@@ -493,7 +518,8 @@ class _DashboardScreenState extends State<DashboardScreen> {
                                 );
                                 if (date != null) {
                                   setState(() {
-                                    editedReservation['logoutAt'] = date.toIso8601String();
+                                    editedReservation['logoutAt'] =
+                                        date.toIso8601String();
                                   });
                                 }
                               },
@@ -502,7 +528,8 @@ class _DashboardScreenState extends State<DashboardScreen> {
                     ),
                     _DetailItem(
                       title: 'Payment Amount',
-                      value: '\$${(editedReservation['paymentAmount'] ?? 0.0).toStringAsFixed(2)}',
+                      value:
+                          '\$${(editedReservation['paymentAmount'] ?? 0.0).toStringAsFixed(2)}',
                       customWidget: isEditing
                           ? TextField(
                               controller: paymentAmountController,
@@ -510,9 +537,12 @@ class _DashboardScreenState extends State<DashboardScreen> {
                                 prefixText: '\$',
                                 isDense: true,
                               ),
-                              keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                              keyboardType:
+                                  const TextInputType.numberWithOptions(
+                                      decimal: true),
                               onChanged: (value) {
-                                editedReservation['paymentAmount'] = double.tryParse(value) ?? 0.0;
+                                editedReservation['paymentAmount'] =
+                                    double.tryParse(value) ?? 0.0;
                               },
                             )
                           : null,
@@ -528,7 +558,8 @@ class _DashboardScreenState extends State<DashboardScreen> {
                       ),
                     _DetailItem(
                       title: 'Food Amount',
-                      value: '\$${(editedReservation['foodAmount'] ?? 0.0).toStringAsFixed(2)}',
+                      value:
+                          '\$${(editedReservation['foodAmount'] ?? 0.0).toStringAsFixed(2)}',
                       customWidget: isEditing
                           ? TextField(
                               controller: foodAmountController,
@@ -536,9 +567,12 @@ class _DashboardScreenState extends State<DashboardScreen> {
                                 prefixText: '\$',
                                 isDense: true,
                               ),
-                              keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                              keyboardType:
+                                  const TextInputType.numberWithOptions(
+                                      decimal: true),
                               onChanged: (value) {
-                                editedReservation['foodAmount'] = double.tryParse(value) ?? 0.0;
+                                editedReservation['foodAmount'] =
+                                    double.tryParse(value) ?? 0.0;
                               },
                             )
                           : null,
@@ -870,7 +904,9 @@ class _DashboardScreenState extends State<DashboardScreen> {
                                         idFilter != null ||
                                         minAmount != null ||
                                         maxAmount != null)
-                                    ? Theme.of(context).colorScheme.primaryContainer
+                                    ? Theme.of(context)
+                                        .colorScheme
+                                        .primaryContainer
                                     : null,
                               ),
                             ),
@@ -896,7 +932,11 @@ class _DashboardScreenState extends State<DashboardScreen> {
                                       scrollDirection: Axis.horizontal,
                                       child: ConstrainedBox(
                                         constraints: BoxConstraints(
-                                          minWidth: MediaQuery.of(context).size.width - (isExpanded ? 250 : 70) - 33,
+                                          minWidth: MediaQuery.of(context)
+                                                  .size
+                                                  .width -
+                                              (isExpanded ? 250 : 70) -
+                                              33,
                                         ),
                                         child: DataTable(
                                           columnSpacing: 24,
@@ -913,7 +953,8 @@ class _DashboardScreenState extends State<DashboardScreen> {
                                                     Icon(
                                                       isAscending
                                                           ? Icons.arrow_upward
-                                                          : Icons.arrow_downward,
+                                                          : Icons
+                                                              .arrow_downward,
                                                       size: 16,
                                                     ),
                                                 ],
@@ -925,16 +966,19 @@ class _DashboardScreenState extends State<DashboardScreen> {
                                                 children: [
                                                   const Text('Customer Name'),
                                                   const SizedBox(width: 4),
-                                                  if (sortColumn == 'customerName')
+                                                  if (sortColumn ==
+                                                      'customerName')
                                                     Icon(
                                                       isAscending
                                                           ? Icons.arrow_upward
-                                                          : Icons.arrow_downward,
+                                                          : Icons
+                                                              .arrow_downward,
                                                       size: 16,
                                                     ),
                                                 ],
                                               ),
-                                              onSort: (_, __) => onSort('customerName'),
+                                              onSort: (_, __) =>
+                                                  onSort('customerName'),
                                             ),
                                             DataColumn(
                                               label: Row(
@@ -945,7 +989,8 @@ class _DashboardScreenState extends State<DashboardScreen> {
                                                     Icon(
                                                       isAscending
                                                           ? Icons.arrow_upward
-                                                          : Icons.arrow_downward,
+                                                          : Icons
+                                                              .arrow_downward,
                                                       size: 16,
                                                     ),
                                                 ],
@@ -961,12 +1006,14 @@ class _DashboardScreenState extends State<DashboardScreen> {
                                                     Icon(
                                                       isAscending
                                                           ? Icons.arrow_upward
-                                                          : Icons.arrow_downward,
+                                                          : Icons
+                                                              .arrow_downward,
                                                       size: 16,
                                                     ),
                                                 ],
                                               ),
-                                              onSort: (_, __) => onSort('status'),
+                                              onSort: (_, __) =>
+                                                  onSort('status'),
                                             ),
                                             DataColumn(
                                               label: Row(
@@ -977,54 +1024,73 @@ class _DashboardScreenState extends State<DashboardScreen> {
                                                     Icon(
                                                       isAscending
                                                           ? Icons.arrow_upward
-                                                          : Icons.arrow_downward,
+                                                          : Icons
+                                                              .arrow_downward,
                                                       size: 16,
                                                     ),
                                                 ],
                                               ),
                                               numeric: true,
-                                              onSort: (_, __) => onSort('amount'),
+                                              onSort: (_, __) =>
+                                                  onSort('amount'),
                                             ),
                                           ],
-                                          rows: filteredReservations.map((reservation) {
+                                          rows: filteredReservations
+                                              .map((reservation) {
                                             return DataRow(
-                                              onSelectChanged: (_) => _showReservationDetails(reservation),
+                                              onSelectChanged: (_) =>
+                                                  _showReservationDetails(
+                                                      reservation),
                                               cells: [
-                                                DataCell(Text(reservation['id'])),
+                                                DataCell(
+                                                    Text(reservation['id'])),
                                                 DataCell(
                                                   Row(
-                                                    mainAxisSize: MainAxisSize.min,
+                                                    mainAxisSize:
+                                                        MainAxisSize.min,
                                                     children: [
                                                       CircleAvatar(
                                                         radius: 14,
-                                                        backgroundColor: _getStatusColor(
-                                                            reservation['status']),
+                                                        backgroundColor:
+                                                            _getStatusColor(
+                                                                reservation[
+                                                                    'status']),
                                                         child: Text(
-                                                          reservation['customerName'][0],
-                                                          style: const TextStyle(
-                                                              color: Colors.white,
-                                                              fontSize: 12),
+                                                          reservation[
+                                                              'customerName'][0],
+                                                          style:
+                                                              const TextStyle(
+                                                                  color: Colors
+                                                                      .white,
+                                                                  fontSize: 12),
                                                         ),
                                                       ),
                                                       const SizedBox(width: 8),
-                                                      Text(reservation['customerName']),
+                                                      Text(reservation[
+                                                          'customerName']),
                                                     ],
                                                   ),
                                                 ),
-                                                DataCell(Text(reservation['date'])),
+                                                DataCell(
+                                                    Text(reservation['date'])),
                                                 DataCell(
                                                   Container(
-                                                    padding: const EdgeInsets.symmetric(
-                                                        horizontal: 8, vertical: 4),
+                                                    padding: const EdgeInsets
+                                                        .symmetric(
+                                                        horizontal: 8,
+                                                        vertical: 4),
                                                     decoration: BoxDecoration(
                                                       color: _getStatusColor(
-                                                              reservation['status'])
+                                                              reservation[
+                                                                  'status'])
                                                           .withOpacity(0.1),
                                                       borderRadius:
-                                                          BorderRadius.circular(12),
+                                                          BorderRadius.circular(
+                                                              12),
                                                       border: Border.all(
                                                         color: _getStatusColor(
-                                                            reservation['status']),
+                                                            reservation[
+                                                                'status']),
                                                         width: 1,
                                                       ),
                                                     ),
@@ -1032,9 +1098,11 @@ class _DashboardScreenState extends State<DashboardScreen> {
                                                       reservation['status'],
                                                       style: TextStyle(
                                                         color: _getStatusColor(
-                                                            reservation['status']),
+                                                            reservation[
+                                                                'status']),
                                                         fontSize: 12,
-                                                        fontWeight: FontWeight.w500,
+                                                        fontWeight:
+                                                            FontWeight.w500,
                                                       ),
                                                     ),
                                                   ),
@@ -1043,7 +1111,8 @@ class _DashboardScreenState extends State<DashboardScreen> {
                                                   Text(
                                                     '\$${reservation['amount'].toStringAsFixed(2)}',
                                                     style: const TextStyle(
-                                                      fontWeight: FontWeight.w500,
+                                                      fontWeight:
+                                                          FontWeight.w500,
                                                     ),
                                                   ),
                                                 ),

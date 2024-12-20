@@ -1,6 +1,8 @@
 import 'package:admin_app/presentation/dashboard/dashboard_screen.dart';
 import 'package:admin_app/presentation/login/login_screen.dart';
 import 'package:admin_app/services/auth_service.dart';
+import 'package:admin_app/services/facility_service.dart';
+import 'package:admin_app/services/reservation_service.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:pocketbase/pocketbase.dart';
@@ -11,8 +13,11 @@ void main() {
   final pb = PocketBase('https://bsc-pocketbase.mtdjari.com');
 
   runApp(
-    ChangeNotifierProvider(
-      create: (_) => AuthService(pb),
+    MultiProvider(
+      providers: [
+        ChangeNotifierProvider(create: (_) => AuthService(pb)),
+        ChangeNotifierProvider(create: (_) => ReservationService(pb)),
+      ],
       child: const MainApp(),
     ),
   );
