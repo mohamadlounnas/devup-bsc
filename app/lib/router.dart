@@ -6,6 +6,7 @@ import 'presentation/auth/login_screen.dart';
 import 'presentation/auth/register_screen.dart';
 import 'screens/dashboard/dashboard_shell.dart';
 import 'screens/events/events_screen.dart';
+import 'screens/home/home_screen.dart';
 import 'screens/hostels/hostels_screen.dart';
 import 'screens/intro/intro_screen.dart';
 import 'screens/map_screen.dart';
@@ -38,14 +39,14 @@ final router = GoRouter(
       return '/intro';
     }
 
-    // If logged in and on auth route, redirect to events
+    // If logged in and on auth route, redirect to home
     if (isLoggedIn && isAuthRoute) {
-      return '/events';
+      return '/home';
     }
 
-    // If logged in and has completed intro but still on intro route, redirect to events
+    // If logged in and has completed intro but still on intro route, redirect to home
     if (isLoggedIn && hasCompletedIntro && isIntroRoute) {
-      return '/events';
+      return '/home';
     }
 
     return null;
@@ -76,7 +77,12 @@ final router = GoRouter(
       routes: [
         GoRoute(
           path: '/',
-          redirect: (_, __) => '/events',
+          redirect: (_, __) => '/home',
+        ),
+        GoRoute(
+          path: '/home',
+          name: 'home',
+          builder: (context, state) => const HomeScreen(),
         ),
         GoRoute(
           path: '/events',

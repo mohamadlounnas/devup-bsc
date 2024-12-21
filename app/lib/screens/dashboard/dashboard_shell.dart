@@ -49,11 +49,12 @@ class _DashboardShellState extends State<DashboardShell> with SingleTickerProvid
 
   int _calculateSelectedIndex(BuildContext context) {
     final String location = GoRouterState.of(context).uri.path;
-    if (location.startsWith('/events')) return 0;
-    if (location.startsWith('/map')) return 1;
-    if (location.startsWith('/hostels')) return 2;
-    if (location.startsWith('/facilities')) return 3;
-    if (location.startsWith('/profile')) return 4;
+    if (location.startsWith('/home')) return 0;
+    if (location.startsWith('/events')) return 1;
+    if (location.startsWith('/map')) return 2;
+    if (location.startsWith('/hostels')) return 3;
+    if (location.startsWith('/facilities')) return 4;
+    if (location.startsWith('/profile')) return 5;
     return 0;
   }
 
@@ -61,18 +62,21 @@ class _DashboardShellState extends State<DashboardShell> with SingleTickerProvid
     HapticFeedback.selectionClick();
     switch (index) {
       case 0:
-        context.go('/events');
+        context.go('/home');
         break;
       case 1:
-        context.go('/map');
+        context.go('/events');
         break;
       case 2:
-        context.go('/hostels');
+        context.go('/map');
         break;
       case 3:
-        context.go('/facilities');
+        context.go('/hostels');
         break;
       case 4:
+        context.go('/facilities');
+        break;
+      case 5:
         context.go('/profile');
         break;
     }
@@ -108,6 +112,12 @@ class _DashboardShellState extends State<DashboardShell> with SingleTickerProvid
 
     // Navigation destinations with semantic labels
     final destinations = [
+      _buildDestination(
+        icon: Icons.home_outlined,
+        selectedIcon: Icons.home,
+        label: 'Home',
+        colorScheme: colorScheme,
+      ),
       _buildDestination(
         icon: Icons.event_outlined,
         selectedIcon: Icons.event,
@@ -330,20 +340,22 @@ class _DashboardShellState extends State<DashboardShell> with SingleTickerProvid
                   children: [
                     widget.child,
                     // Add a gradient overlay at the bottom to improve navigation bar visibility
-                    Positioned(
-                      bottom: 0,
-                      left: 0,
-                      right: 0,
-                      height: 200, // Adjust height as needed
-                      child: Container(
-                        decoration: BoxDecoration(
-                          gradient: LinearGradient(
-                            begin: Alignment.topCenter,
-                            end: Alignment.bottomCenter,
-                            colors: [
-                              Theme.of(context).colorScheme.surface.withOpacity(0.0),
-                              Theme.of(context).colorScheme.surface.withOpacity(1),
-                            ],
+                    IgnorePointer(
+                      child: Align(
+                        alignment: Alignment.bottomCenter,
+                        child: Container(
+                          height: 200,
+                          // width: 100,
+                          clipBehavior: Clip.antiAlias,
+                          decoration: BoxDecoration(
+                            gradient: LinearGradient(
+                              begin: Alignment.topCenter,
+                              end: Alignment.bottomCenter,
+                              colors: [
+                                Theme.of(context).colorScheme.surface.withOpacity(0.0),
+                                Theme.of(context).colorScheme.surface.withOpacity(1),
+                              ],
+                            ),
                           ),
                         ),
                       ),
