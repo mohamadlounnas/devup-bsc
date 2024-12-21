@@ -1,5 +1,7 @@
 import 'dart:ui';
 import 'package:app/widgets/theme_toggle.dart';
+import 'package:app/widgets/travel_assistant_chat.dart';
+import 'package:app/services/gemini_service.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_map/flutter_map.dart';
 import 'package:flutter_map_cached_tile_provider/flutter_map_cached_tile_provider.dart';
@@ -7,8 +9,30 @@ import 'package:latlong2/latlong.dart';
 import 'package:shared/shared.dart';
 
 /// Screen that shows facilities and hostels on a map
-class MapScreen extends StatelessWidget {
+class MapScreen extends StatefulWidget {
   const MapScreen({super.key});
+
+  @override
+  State<MapScreen> createState() => _MapScreenState();
+}
+
+class _MapScreenState extends State<MapScreen> {
+  bool _showChat = false;
+  late final GeminiService _geminiService;
+
+  @override
+  void initState() {
+    super.initState();
+    // TODO: Replace with your Gemini API key
+    _geminiService =
+        GeminiService(apiKey: 'AIzaSyBFaNgOZlD--RtxezGxoLDPSaXEo8PcEX8');
+  }
+
+  void _toggleChat() {
+    setState(() {
+      _showChat = !_showChat;
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -106,8 +130,31 @@ class MapScreen extends StatelessWidget {
             borderRadius: BorderRadius.circular(16),
             child: BackdropFilter(
               filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
-              child: CustomNavbar(),
+              child: const CustomNavbar(),
             ),
+          ),
+        ),
+
+        // Travel Assistant Chat
+        if (_showChat)
+          Positioned(
+            bottom: 80,
+            right: 16,
+            child: TravelAssistantChat(
+              geminiService: _geminiService,
+              onClose: _toggleChat,
+            ),
+          ),
+
+        // Floating Action Button
+        Positioned(
+          bottom: 16,
+          right: 16,
+          child: FloatingActionButton.extended(
+            onPressed: _toggleChat,
+            icon: Icon(_showChat ? Icons.close : Icons.chat),
+            label: Text(_showChat ? 'Close Assistant' : 'Travel Assistant'),
+            tooltip: 'Chat with Travel Assistant',
           ),
         ),
       ],
