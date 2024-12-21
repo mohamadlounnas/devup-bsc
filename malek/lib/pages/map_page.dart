@@ -383,6 +383,9 @@ class _MapPageState extends State<MapPage> with TickerProviderStateMixin {
     'trains': true,
   };
 
+  // Add this to _MapPageState class
+  bool _showBusSchedule = true;
+
   @override
   void initState() {
     super.initState();
@@ -853,16 +856,29 @@ class _MapPageState extends State<MapPage> with TickerProviderStateMixin {
         Container(
           padding: const EdgeInsets.all(16),
           color: Colors.grey.shade100,
-          child: const Row(
+          child: Row(
             children: [
-              Icon(Icons.schedule),
-              SizedBox(width: 16),
-              Text(
-                'Bus Schedule',
+              const Icon(Icons.schedule),
+              const SizedBox(width: 16),
+              const Text(
+                'Transport Schedule',
                 style: TextStyle(
                   fontSize: 20,
                   fontWeight: FontWeight.bold,
                 ),
+              ),
+              const Spacer(),
+              // Add toggle button
+              IconButton(
+                icon: Icon(
+                  _showBusSchedule ? Icons.directions_bus : Icons.train,
+                  color: _showBusSchedule ? Colors.blue : Colors.purple,
+                ),
+                onPressed: () {
+                  setState(() {
+                    _showBusSchedule = !_showBusSchedule;
+                  });
+                },
               ),
             ],
           ),
@@ -873,29 +889,211 @@ class _MapPageState extends State<MapPage> with TickerProviderStateMixin {
             child: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
-                for (var busLine in busLines) ...[
-                  Container(
-                    padding: const EdgeInsets.symmetric(vertical: 8),
-                    child: Row(
-                      children: [
-                        Icon(Icons.directions_bus, color: busLine.color),
-                        const SizedBox(width: 8),
-                        Text(
-                          busLine.name,
-                          style: TextStyle(
-                            fontWeight: FontWeight.bold,
-                            color: busLine.color,
-                            fontSize: 16,
+                // Show either bus or train schedules based on toggle
+                if (_showBusSchedule)
+                  for (var busLine in busLines) ...[
+                    Container(
+                      padding: const EdgeInsets.symmetric(vertical: 8),
+                      child: Row(
+                        children: [
+                          Icon(Icons.directions_bus, color: busLine.color),
+                          const SizedBox(width: 8),
+                          Text(
+                            busLine.name,
+                            style: TextStyle(
+                              fontWeight: FontWeight.bold,
+                              color: busLine.color,
+                              fontSize: 16,
+                            ),
                           ),
-                        ),
-                      ],
+                        ],
+                      ),
                     ),
-                  ),
-                  _buildStationTable(busLine),
-                  const SizedBox(height: 24),
-                ],
+                    _buildStationTable(busLine),
+                    const SizedBox(height: 24),
+                  ]
+                else
+                  for (var trainLine in trainLines) ...[
+                    Container(
+                      padding: const EdgeInsets.symmetric(vertical: 8),
+                      child: Row(
+                        children: [
+                          Icon(Icons.train, color: trainLine.color),
+                          const SizedBox(width: 8),
+                          Text(
+                            trainLine.name,
+                            style: TextStyle(
+                              fontWeight: FontWeight.bold,
+                              color: trainLine.color,
+                              fontSize: 16,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    _buildTrainStationTable(trainLine),
+                    const SizedBox(height: 24),
+                  ],
               ],
             ),
+          ),
+        ),
+      ],
+    );
+  }
+
+  // Add this new method for train station tables
+  Widget _buildTrainStationTable(TrainLine trainLine) {
+    return Table(
+      border: TableBorder.all(
+        color: Colors.grey.shade300,
+        width: 1,
+      ),
+      columnWidths: const {
+        0: FlexColumnWidth(3),
+        1: FlexColumnWidth(4),
+      },
+      children: [
+        TableRow(
+          decoration: BoxDecoration(
+            color: trainLine.color.withOpacity(0.1),
+          ),
+          children: [
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+              child: Text(
+                'Station',
+                style: TextStyle(
+                  fontWeight: FontWeight.bold,
+                  fontSize: 16,
+                  color: trainLine.color,
+                ),
+              ),
+            ),
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceAround,
+                children: [
+                  Row(
+                    children: [
+                      Icon(Icons.arrow_forward,
+                          size: 18, color: trainLine.color),
+                      const SizedBox(width: 8),
+                      Text(
+                        'Going',
+                        style: TextStyle(
+                          fontWeight: FontWeight.bold,
+                          fontSize: 16,
+                          color: trainLine.color,
+                        ),
+                      ),
+                    ],
+                  ),
+                  Row(
+                    children: [
+                      Text(
+                        'Return',
+                        style: TextStyle(
+                          fontWeight: FontWeight.bold,
+                          fontSize: 16,
+                          color: trainLine.color,
+                        ),
+                      ),
+                      const SizedBox(width: 8),
+                      Icon(Icons.arrow_back, size: 18, color: trainLine.color),
+                    ],
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
+        for (var station in trainLine.stations)
+          TableRow(
+            decoration: const BoxDecoration(
+              color: Colors.white,
+            ),
+            children: [
+              Padding(
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                child: Text(
+                  station.name,
+                  style: const TextStyle(
+                    fontSize: 14,
+                  ),
+                ),
+              ),
+              Padding(
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                child: _buildTrainTimingRow(trainLine, station),
+              ),
+            ],
+          ),
+      ],
+    );
+  }
+
+  Widget _buildTrainTimingRow(TrainLine trainLine, Station station) {
+    bool isFirstStation = station.order == 1;
+    bool isLastStation = station.order == trainLine.stations.length;
+
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+      children: [
+        Expanded(
+          child: Row(
+            children: [
+              Icon(Icons.arrow_forward, size: 14, color: trainLine.color),
+              const SizedBox(width: 4),
+              AnimatedBuilder(
+                animation: Listenable.merge(
+                  trainLine.trains
+                      .map((train) => _animationControllers[
+                          '${trainLine.name}_${train.id}'])
+                      .whereType<AnimationController>()
+                      .toList(),
+                ),
+                builder: (context, child) {
+                  return Text(
+                    '${station.minutesToNextStation} min',
+                    style: TextStyle(
+                      color: trainLine.color,
+                      fontWeight: FontWeight.w500,
+                    ),
+                  );
+                },
+              ),
+            ],
+          ),
+        ),
+        Expanded(
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.end,
+            children: [
+              AnimatedBuilder(
+                animation: Listenable.merge(
+                  trainLine.trains
+                      .map((train) => _animationControllers[
+                          '${trainLine.name}_${train.id}'])
+                      .whereType<AnimationController>()
+                      .toList(),
+                ),
+                builder: (context, _) {
+                  return Text(
+                    '${station.minutesToNextStation} min',
+                    style: TextStyle(
+                      color: trainLine.color,
+                      fontWeight: FontWeight.w500,
+                    ),
+                  );
+                },
+              ),
+              const SizedBox(width: 4),
+              Icon(Icons.arrow_back, size: 14, color: trainLine.color),
+            ],
           ),
         ),
       ],
