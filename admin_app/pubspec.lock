@@ -403,7 +403,7 @@ packages:
   malek:
     dependency: "direct main"
     description:
-      path: "/Users/mac/comp/devup-bsc/malek"
+      path: "/Users/mohamad/Desktop/projects/devup/malek"
       relative: false
     source: path
     version: "1.0.0+1"
@@ -586,7 +586,7 @@ packages:
   shared:
     dependency: "direct main"
     description:
-      path: "/Users/mac/comp/devup-bsc/shared"
+      path: "/Users/mohamad/Desktop/projects/devup/shared"
       relative: false
     source: path
     version: "1.0.0"

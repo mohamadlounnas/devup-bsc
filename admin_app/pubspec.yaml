@@ -16,10 +16,10 @@ dependencies:
   pocketbase: ^0.18.1
   get_it: ^7.6.7
   shared:
-    path: /Users/mac/comp/devup-bsc/shared
+    path: /Users/mohamad/Desktop/projects/devup/shared
 
   malek:
-    path: /Users/mac/comp/devup-bsc/malek
+    path: /Users/mohamad/Desktop/projects/devup/malek
   provider: ^6.1.2
   shared_preferences: ^2.2.0
   date_format: ^2.0.9
@@ -38,7 +38,8 @@ dev_dependencies:
     sdk: flutter
   flutter_lints: ^4.0.0
 
-
+dependency_overrides:
+  flutter_map: ^7.0.2
  
 
 flutter:
