@@ -1,7 +1,12 @@
 import 'dart:async';
 import 'package:app/helper.dart';
+import 'package:fluentui_system_icons/fluentui_system_icons.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
+import 'package:iconsax/iconsax.dart';
+import 'package:intl/intl.dart';
 import 'package:shared/shared.dart';
+import 'package:url_launcher/url_launcher.dart';
 import '../../providers/facilities_provider.dart';
 import '../../widgets/facility_card.dart';
 
@@ -560,6 +565,42 @@ class FacilityDetailsPanel extends StatelessWidget {
     required this.onClose,
   });
 
+  Future<void> _launchMaps(BuildContext context) async {
+    if (facility.location == null) return;
+    
+    final url = 'https://www.google.com/maps/search/?api=1&query=${Uri.encodeComponent(facility.location!)}';
+    
+    try {
+      if (await canLaunchUrl(Uri.parse(url))) {
+        await launchUrl(Uri.parse(url));
+      }
+    } catch (e) {
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Could not open maps: $e')),
+        );
+      }
+    }
+  }
+
+  Future<void> _shareFacility(BuildContext context) async {
+    try {
+      // TODO: Implement share functionality
+      HapticFeedback.mediumImpact();
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Facility shared')),
+        );
+      }
+    } catch (e) {
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Could not share facility: $e')),
+        );
+      }
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
@@ -572,17 +613,75 @@ class FacilityDetailsPanel extends StatelessWidget {
         borderRadius: isSideSheet
             ? null
             : const BorderRadius.vertical(top: Radius.circular(16)),
+        boxShadow: [
+          BoxShadow(
+            color: colorScheme.shadow.withOpacity(0.1),
+            blurRadius: 8,
+            offset: isSideSheet
+                ? const Offset(-2, 0)
+                : const Offset(0, -2),
+          ),
+        ],
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          _buildHeader(context),
+          if (!isSideSheet)
+            Center(
+              child: Container(
+                margin: const EdgeInsets.symmetric(vertical: 12),
+                width: 32,
+                height: 4,
+                decoration: BoxDecoration(
+                  color: colorScheme.onSurfaceVariant.withOpacity(0.4),
+                  borderRadius: BorderRadius.circular(2),
+                ),
+              ),
+            ),
+          Padding(
+            padding: const EdgeInsets.all(16),
+            child: Row(
+              children: [
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                  decoration: BoxDecoration(
+                    color: colorScheme.primaryContainer,
+                    borderRadius: BorderRadius.circular(20),
+                  ),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Icon(
+                        _getFacilityTypeIcon(facility.type),
+                        size: 16,
+                        color: colorScheme.onPrimaryContainer,
+                      ),
+                      const SizedBox(width: 4),
+                      Text(
+                        _getFacilityTypeLabel(facility.type),
+                        style: theme.textTheme.labelSmall?.copyWith(
+                          color: colorScheme.onPrimaryContainer,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                const Spacer(),
+                IconButton(
+                  icon: const Icon(Icons.close),
+                  onPressed: onClose,
+                  tooltip: 'Close',
+                ),
+              ],
+            ),
+          ),
           Expanded(
             child: SingleChildScrollView(
               padding: const EdgeInsets.all(16),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
+                  // Facility image
                   if (facility.coverUrl != null)
                     ClipRRect(
                       borderRadius: BorderRadius.circular(12),
@@ -591,13 +690,41 @@ class FacilityDetailsPanel extends StatelessWidget {
                         child: Image.network(
                           facility.coverUrl!,
                           fit: BoxFit.cover,
+                          errorBuilder: (context, error, stackTrace) {
+                            return Container(
+                              color: colorScheme.surfaceVariant,
+                              child: Center(
+                                child: Column(
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: [
+                                    Icon(
+                                      Icons.broken_image_outlined,
+                                      size: 48,
+                                      color: colorScheme.onSurfaceVariant,
+                                    ),
+                                    const SizedBox(height: 8),
+                                    Text(
+                                      'Image not available',
+                                      style: theme.textTheme.bodyMedium?.copyWith(
+                                        color: colorScheme.onSurfaceVariant,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            );
+                          },
                         ),
                       ),
                     ),
                   const SizedBox(height: 16),
+                  // Facility name
                   Text(
                     facility.name,
-                    style: theme.textTheme.headlineSmall,
+                    style: theme.textTheme.headlineSmall?.copyWith(
+                      color: colorScheme.onSurface,
+                      fontWeight: FontWeight.bold,
+                    ),
                   ),
                   if (facility.description != null) ...[
                     const SizedBox(height: 8),
@@ -609,21 +736,102 @@ class FacilityDetailsPanel extends StatelessWidget {
                     ),
                   ],
                   const SizedBox(height: 24),
-                  _buildInfoSection(
-                    context,
-                    title: 'Type',
-                    icon: _getFacilityTypeIcon(facility.type),
-                    content: _getFacilityTypeLabel(facility.type),
-                  ),
-                  if (facility.location != null)
-                    _buildInfoSection(
-                      context,
-                      title: 'Location',
-                      icon: Icons.location_on,
-                      content: facility.location!,
+                  // Location section
+                  if (facility.location != null) ...[
+                    Row(
+                      children: [
+                        Icon(
+                          Icons.location_on,
+                          size: 20,
+                          color: colorScheme.primary,
+                        ),
+                        const SizedBox(width: 8),
+                        Expanded(
+                          child: Text(
+                            facility.location!,
+                            style: theme.textTheme.bodyMedium?.copyWith(
+                              color: colorScheme.onSurfaceVariant,
+                            ),
+                          ),
+                        ),
+                        TextButton.icon(
+                          onPressed: () => _launchMaps(context),
+                          icon: const Icon(Icons.map),
+                          label: const Text('Open Maps'),
+                        ),
+                      ],
                     ),
-                  if (facility.events?.isNotEmpty ?? false)
-                    _buildEventsSection(context),
+                    const SizedBox(height: 24),
+                  ],
+                  // Action buttons
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                    children: [
+                      _ActionButton(
+                        icon: Icons.share,
+                        label: 'Share',
+                        onTap: () => _shareFacility(context),
+                        theme: theme,
+                      ),
+                      if (facility.location != null)
+                        _ActionButton(
+                          icon: Icons.directions,
+                          label: 'Directions',
+                          onTap: () => _launchMaps(context),
+                          theme: theme,
+                        ),
+                    ],
+                  ),
+                  const SizedBox(height: 24),
+                  // Events section
+                  if (facility.events?.isNotEmpty ?? false) ...[
+                    Text(
+                      'Upcoming Events',
+                      style: theme.textTheme.titleMedium?.copyWith(
+                        color: colorScheme.onSurface,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                    const SizedBox(height: 16),
+                    ...facility.events!.map((event) => Card(
+                      margin: const EdgeInsets.only(bottom: 8),
+                      child: ListTile(
+                        leading: Container(
+                          width: 40,
+                          height: 40,
+                          decoration: BoxDecoration(
+                            color: colorScheme.primaryContainer,
+                            borderRadius: BorderRadius.circular(8),
+                          ),
+                          child: Icon(
+                            Icons.event,
+                            color: colorScheme.onPrimaryContainer,
+                          ),
+                        ),
+                        title: Text(
+                          event.name,
+                          style: theme.textTheme.titleSmall?.copyWith(
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                        subtitle: Text(
+                          event.started != null
+                              ? DateFormat('MMM d, y • h:mm a').format(event.started!)
+                              : 'Date TBD',
+                          style: theme.textTheme.bodySmall?.copyWith(
+                            color: colorScheme.onSurfaceVariant,
+                          ),
+                        ),
+                        trailing: Icon(
+                          Icons.arrow_forward_ios,
+                          color: colorScheme.onSurfaceVariant,
+                        ),
+                        onTap: () {
+                          // TODO: Navigate to event details
+                        },
+                      ),
+                    )),
+                  ],
                 ],
               ),
             ),
@@ -633,166 +841,76 @@ class FacilityDetailsPanel extends StatelessWidget {
     );
   }
 
-  Widget _buildHeader(BuildContext context) {
-    return Container(
-      padding: EdgeInsets.fromLTRB(
-        16,
-        isSideSheet ? 16 : 8,
-        8,
-        16,
-      ),
-      decoration: BoxDecoration(
-        border: Border(
-          bottom: BorderSide(
-            color: Theme.of(context).colorScheme.outlineVariant,
-          ),
-        ),
-      ),
-      child: Row(
-        children: [
-          if (!isSideSheet) ...[
-            const SizedBox(width: 40), // Center the title
-            Expanded(
-              child: Text(
-                'Facility Details',
-                style: Theme.of(context).textTheme.titleLarge,
-                textAlign: TextAlign.center,
-              ),
-            ),
-          ],
-          if (isSideSheet)
-            Expanded(
-              child: Text(
-                'Facility Details',
-                style: Theme.of(context).textTheme.titleLarge,
-              ),
-            ),
-          IconButton(
-            onPressed: onClose,
-            icon: const Icon(Icons.close),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildInfoSection(
-    BuildContext context, {
-    required String title,
-    required IconData icon,
-    required String content,
-  }) {
-    final theme = Theme.of(context);
-    final colorScheme = theme.colorScheme;
-
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 16),
-      child: Row(
-        children: [
-          Container(
-            padding: const EdgeInsets.all(8),
-            decoration: BoxDecoration(
-              color: colorScheme.secondaryContainer.withOpacity(0.3),
-              borderRadius: BorderRadius.circular(8),
-            ),
-            child: Icon(
-              icon,
-              color: colorScheme.secondary,
-            ),
-          ),
-          const SizedBox(width: 16),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  title,
-                  style: theme.textTheme.labelMedium?.copyWith(
-                    color: colorScheme.onSurfaceVariant,
-                  ),
-                ),
-                const SizedBox(height: 4),
-                Text(
-                  content,
-                  style: theme.textTheme.bodyLarge,
-                ),
-              ],
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildEventsSection(BuildContext context) {
-    final theme = Theme.of(context);
-    
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        const SizedBox(height: 8),
-        Text(
-          'Upcoming Events',
-          style: theme.textTheme.titleMedium,
-        ),
-        const SizedBox(height: 16),
-        ...facility.events!.map((event) => Card(
-          child: ListTile(
-            title: Text(event.name),
-            subtitle: event.description != null
-                ? Text(event.description!)
-                : null,
-            trailing: event.started != null
-                ? Text(_formatDate(event.started!))
-                : null,
-          ),
-        )),
-      ],
-    );
-  }
-
-  String _formatDate(DateTime date) {
-    final now = DateTime.now();
-    final difference = date.difference(now);
-
-    if (difference.inDays == 0) {
-      return 'Today';
-    } else if (difference.inDays == 1) {
-      return 'Tomorrow';
-    } else if (difference.inDays < 7) {
-      return '${difference.inDays} days';
-    } else {
-      return '${date.day}/${date.month}/${date.year}';
-    }
-  }
-
   IconData _getFacilityTypeIcon(FacilityType type) {
     switch (type) {
-      case FacilityType.sportClub:
-        return Icons.sports;
-      case FacilityType.touristAgency:
-        return Icons.tour;
       case FacilityType.hotel:
-        return Icons.hotel;
-      case FacilityType.museum:
-        return Icons.museum;
+        return Iconsax.building;
+      case FacilityType.touristAgency:
+        return Iconsax.ticket_discount;
       case FacilityType.restaurant:
-        return Icons.restaurant;
+        return Iconsax.reserve;
+      case FacilityType.museum:
+        return Iconsax.menu_board;
+      case FacilityType.sportClub:
+        return Iconsax.creative_commons;
+      default:
+        return Iconsax.building;
     }
   }
 
   String _getFacilityTypeLabel(FacilityType type) {
     switch (type) {
-      case FacilityType.sportClub:
-        return 'Sports Club';
-      case FacilityType.touristAgency:
-        return 'Tourist Agency';
       case FacilityType.hotel:
         return 'Hotel';
-      case FacilityType.museum:
-        return 'Museum';
+      case FacilityType.touristAgency:
+        return 'Tourist Agency';
       case FacilityType.restaurant:
         return 'Restaurant';
+      case FacilityType.museum:
+        return 'Museum';
+      case FacilityType.sportClub:
+        return 'Sport Club';
     }
+  }
+}
+
+class _ActionButton extends StatelessWidget {
+  final IconData icon;
+  final String label;
+  final VoidCallback onTap;
+  final ThemeData theme;
+
+  const _ActionButton({
+    required this.icon,
+    required this.label,
+    required this.onTap,
+    required this.theme,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(12),
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(
+              icon,
+              color: theme.colorScheme.primary,
+            ),
+            const SizedBox(height: 4),
+            Text(
+              label,
+              style: theme.textTheme.labelSmall?.copyWith(
+                color: theme.colorScheme.onSurfaceVariant,
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
   }
 } 

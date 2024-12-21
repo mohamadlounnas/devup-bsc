@@ -1,10 +1,11 @@
 import 'dart:async';
 
+import 'package:app/providers/event_registration_provider.dart';
+import 'package:app/services/auth_service.dart';
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 import 'package:shared/shared.dart';
 import '../../providers/events_provider.dart';
-import '../../widgets/theme_toggle.dart';
-import '../../widgets/background_gradient.dart';
 import 'widgets/calendar_view.dart';
 import 'widgets/event_card.dart';
 import 'widgets/event_details_panel.dart';
@@ -39,6 +40,19 @@ class _EventsScreenState extends State<EventsScreen> with SingleTickerProviderSt
     _eventsProvider = EventsProvider();
     _eventsProvider.subscribeToEvents();
     _searchController.addListener(_handleSearch);
+
+    // Load registrations for current user
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      final authProvider = context.read<AuthService>();
+      final registrationProvider = context.read<EventRegistrationProvider>();
+      
+      if (authProvider.currentUser != null) {
+        registrationProvider.loadRegistrations(
+          authProvider.currentUser!.id,
+          _eventsProvider.events.map((e) => e.id).toList(),
+        );
+      }
+    });
 
     _viewModeController = AnimationController(
       duration: const Duration(milliseconds: 300),

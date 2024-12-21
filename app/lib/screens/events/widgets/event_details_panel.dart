@@ -1,7 +1,10 @@
 import 'package:app/helper.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:shared/shared.dart';
 import 'package:intl/intl.dart';
+import 'package:url_launcher/url_launcher.dart';
+import 'event_registration_dialog.dart';
 
 /// A panel that displays detailed information about a facility event
 class EventDetailsPanel extends StatelessWidget {
@@ -21,6 +24,78 @@ class EventDetailsPanel extends StatelessWidget {
     required this.isSideSheet,
     required this.onClose,
   });
+
+  Future<void> _launchMaps(BuildContext context) async {
+    if (event.location == null) return;
+    
+    final url = 'https://www.google.com/maps/search/?api=1&query=${Uri.encodeComponent(event.location!)}';
+    
+    try {
+      if (await canLaunchUrl(Uri.parse(url))) {
+        await launchUrl(Uri.parse(url));
+      }
+    } catch (e) {
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Could not open maps: $e')),
+        );
+      }
+    }
+  }
+
+  Future<void> _addToCalendar(BuildContext context) async {
+    if (event.started == null) return;
+    
+    try {
+      // TODO: Implement calendar integration
+      HapticFeedback.mediumImpact();
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Added to calendar')),
+        );
+      }
+    } catch (e) {
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Could not add to calendar: $e')),
+        );
+      }
+    }
+  }
+
+  Future<void> _shareEvent(BuildContext context) async {
+    try {
+      // TODO: Implement share functionality
+      HapticFeedback.mediumImpact();
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Event shared')),
+        );
+      }
+    } catch (e) {
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Could not share event: $e')),
+        );
+      }
+    }
+  }
+
+  Future<void> _showRegistrationDialog(BuildContext context) async {
+    final result = await showDialog<bool>(
+      context: context,
+      builder: (context) => EventRegistrationDialog(event: event),
+    );
+
+    if (result == true && context.mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Successfully registered for event!'),
+          behavior: SnackBarBehavior.floating,
+        ),
+      );
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -86,6 +161,7 @@ class EventDetailsPanel extends StatelessWidget {
   Widget _buildContent(BuildContext context, DateFormat dateFormat) {
     final theme = Theme.of(context);
     final colorScheme = theme.colorScheme;
+    final now = DateTime.now();
     
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -96,14 +172,51 @@ class EventDetailsPanel extends StatelessWidget {
           padding: const EdgeInsets.all(16),
           child: Row(
             children: [
-              Expanded(
-                child: Text(
-                  event.name,
-                  style: theme.textTheme.titleLarge?.copyWith(
-                    color: colorScheme.onSurface,
-                  ),
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                decoration: BoxDecoration(
+                  color: event.ended != null && event.ended!.isBefore(now)
+                      ? colorScheme.surfaceVariant
+                      : event.started != null && event.started!.isAfter(now)
+                          ? colorScheme.primaryContainer
+                          : colorScheme.tertiaryContainer,
+                  borderRadius: BorderRadius.circular(20),
+                ),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Icon(
+                      event.ended != null && event.ended!.isBefore(now)
+                          ? Icons.check_circle_outline
+                          : event.started != null && event.started!.isAfter(now)
+                              ? Icons.calendar_today
+                              : Icons.play_circle_outline,
+                      size: 16,
+                      color: event.ended != null && event.ended!.isBefore(now)
+                          ? colorScheme.onSurfaceVariant
+                          : event.started != null && event.started!.isAfter(now)
+                              ? colorScheme.onPrimaryContainer
+                              : colorScheme.onTertiaryContainer,
+                    ),
+                    const SizedBox(width: 4),
+                    Text(
+                      event.ended != null && event.ended!.isBefore(now)
+                          ? 'Past'
+                          : event.started != null && event.started!.isAfter(now)
+                              ? 'Upcoming'
+                              : 'Ongoing',
+                      style: theme.textTheme.labelSmall?.copyWith(
+                        color: event.ended != null && event.ended!.isBefore(now)
+                            ? colorScheme.onSurfaceVariant
+                            : event.started != null && event.started!.isAfter(now)
+                                ? colorScheme.onPrimaryContainer
+                                : colorScheme.onTertiaryContainer,
+                      ),
+                    ),
+                  ],
                 ),
               ),
+              const Spacer(),
               IconButton(
                 icon: const Icon(Icons.close),
                 onPressed: onClose,
@@ -112,7 +225,6 @@ class EventDetailsPanel extends StatelessWidget {
             ],
           ),
         ),
-        const Divider(height: 1),
         // Event details
         Padding(
           padding: const EdgeInsets.all(16),
@@ -131,44 +243,100 @@ class EventDetailsPanel extends StatelessWidget {
                       errorBuilder: (context, error, stackTrace) {
                         return Container(
                           color: colorScheme.surfaceVariant,
-                          child: Icon(
-                            Icons.image_not_supported,
-                            color: colorScheme.onSurfaceVariant,
-                            size: 48,
+                          child: Center(
+                            child: Column(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                Icon(
+                                  Icons.broken_image_outlined,
+                                  size: 48,
+                                  color: colorScheme.onSurfaceVariant,
+                                ),
+                                const SizedBox(height: 8),
+                                Text(
+                                  'Image not available',
+                                  style: theme.textTheme.bodyMedium?.copyWith(
+                                    color: colorScheme.onSurfaceVariant,
+                                  ),
+                                ),
+                              ],
+                            ),
                           ),
                         );
                       },
                     ),
                   ),
                 ),
-              const SizedBox(height: 24),
-              // Date and time
-              _buildInfoRow(
-                context,
-                Icons.calendar_today,
-                'Date & Time',
-                '${event.started != null?dateFormat.format(event.started!):"<>"} - ${event.ended != null ?dateFormat.format(event.started!):"<>"}'
-              ),
               const SizedBox(height: 16),
-              // Location
-              if (event.locationLatLng != null)
-              _buildInfoRow(
-                context,
-                Icons.location_on,
-                'Location',
-                event.locationLatLng?.toString() ?? '<>',
+              // Event title
+              Text(
+                event.name,
+                style: theme.textTheme.headlineSmall?.copyWith(
+                  color: colorScheme.onSurface,
+                  fontWeight: FontWeight.bold,
+                ),
               ),
+              const SizedBox(height: 8),
+              // Event date and time
+              Row(
+                children: [
+                  Icon(
+                    Icons.calendar_today,
+                    size: 20,
+                    color: colorScheme.primary,
+                  ),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: Text(
+                      event.started != null
+                          ? dateFormat.format(event.started!)
+                          : 'Date TBD',
+                      style: theme.textTheme.bodyMedium?.copyWith(
+                        color: colorScheme.onSurfaceVariant,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+              if (event.location != null) ...[
+                const SizedBox(height: 8),
+                // Location with map button
+                Row(
+                  children: [
+                    Icon(
+                      Icons.location_on,
+                      size: 20,
+                      color: colorScheme.primary,
+                    ),
+                    const SizedBox(width: 8),
+                    Expanded(
+                      child: Text(
+                        event.location!,
+                        style: theme.textTheme.bodyMedium?.copyWith(
+                          color: colorScheme.onSurfaceVariant,
+                        ),
+                      ),
+                    ),
+                    TextButton.icon(
+                      onPressed: () => _launchMaps(context),
+                      icon: const Icon(Icons.map),
+                      label: const Text('Open Maps'),
+                    ),
+                  ],
+                ),
+              ],
               const SizedBox(height: 16),
               // Description
               Text(
-                'Description',
+                'About',
                 style: theme.textTheme.titleMedium?.copyWith(
                   color: colorScheme.onSurface,
+                  fontWeight: FontWeight.bold,
                 ),
               ),
               const SizedBox(height: 8),
               Text(
-                event.description ?? '<>',
+                event.description ?? 'No description available',
                 style: theme.textTheme.bodyLarge?.copyWith(
                   color: colorScheme.onSurfaceVariant,
                 ),
@@ -178,92 +346,78 @@ class EventDetailsPanel extends StatelessWidget {
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                 children: [
-                  _buildActionButton(
-                    context,
-                    Icons.calendar_today,
-                    'Add to Calendar',
-                    () {
-                      // TODO: Implement add to calendar
-                    },
+                  _ActionButton(
+                    icon: Icons.calendar_month,
+                    label: 'Add to Calendar',
+                    onTap: () => _addToCalendar(context),
+                    theme: theme,
                   ),
-                  _buildActionButton(
-                    context,
-                    Icons.share,
-                    'Share',
-                    () {
-                      // TODO: Implement share
-                    },
+                  _ActionButton(
+                    icon: Icons.share,
+                    label: 'Share',
+                    onTap: () => _shareEvent(context),
+                    theme: theme,
                   ),
+                  if (event.location != null)
+                    _ActionButton(
+                      icon: Icons.directions,
+                      label: 'Directions',
+                      onTap: () => _launchMaps(context),
+                      theme: theme,
+                    ),
+                  if (event.started != null && event.started!.isAfter(DateTime.now())) ...[
+                    _ActionButton(
+                      icon: Icons.how_to_reg,
+                      label: 'Register',
+                      onTap: () => _showRegistrationDialog(context),
+                      theme: theme,
+                    ),
+                  ],
                 ],
               ),
-              const SizedBox(height: 200),
             ],
           ),
         ),
       ],
     );
   }
+}
 
-  Widget _buildInfoRow(
-    BuildContext context,
-    IconData icon,
-    String label,
-    String value,
-  ) {
-    final theme = Theme.of(context);
-    final colorScheme = theme.colorScheme;
-    
-    return Row(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Icon(
-          icon,
-          size: 20,
-          color: colorScheme.primary,
-        ),
-        const SizedBox(width: 12),
-        Expanded(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                label,
-                style: theme.textTheme.titleMedium?.copyWith(
-                  color: colorScheme.onSurface,
-                ),
-              ),
-              const SizedBox(height: 4),
-              Text(
-                value,
-                style: theme.textTheme.bodyLarge?.copyWith(
-                  color: colorScheme.onSurfaceVariant,
-                ),
-              ),
-            ],
-          ),
-        ),
-      ],
-    );
-  }
+class _ActionButton extends StatelessWidget {
+  final IconData icon;
+  final String label;
+  final VoidCallback onTap;
+  final ThemeData theme;
 
-  Widget _buildActionButton(
-    BuildContext context,
-    IconData icon,
-    String label,
-    VoidCallback onPressed,
-  ) {
-    final theme = Theme.of(context);
-    final colorScheme = theme.colorScheme;
-    
-    return TextButton.icon(
-      onPressed: onPressed,
-      icon: Icon(icon),
-      label: Text(label),
-      style: TextButton.styleFrom(
-        foregroundColor: colorScheme.primary,
-        padding: const EdgeInsets.symmetric(
-          horizontal: 16,
-          vertical: 12,
+  const _ActionButton({
+    required this.icon,
+    required this.label,
+    required this.onTap,
+    required this.theme,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(12),
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(
+              icon,
+              color: theme.colorScheme.primary,
+            ),
+            const SizedBox(height: 4),
+            Text(
+              label,
+              style: theme.textTheme.labelSmall?.copyWith(
+                color: theme.colorScheme.onSurfaceVariant,
+              ),
+            ),
+          ],
         ),
       ),
     );
