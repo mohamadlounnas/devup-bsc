@@ -1,4 +1,5 @@
 import 'dart:io';
+import 'package:admin_app/main.dart';
 import 'package:flutter/foundation.dart';
 import 'package:pocketbase/pocketbase.dart';
 import 'package:shared/models/models.dart';
@@ -185,5 +186,42 @@ class AuthService extends ChangeNotifier {
       };
     }
     return null;
+  }
+}
+
+class PermissionService extends ChangeNotifier {
+  PermissionService._();
+  static final PermissionService _instance = PermissionService._();
+  static PermissionService get instance => _instance;
+
+  bool _loading = false;
+  String? _error;
+
+  bool get loading => _loading;
+  String? get error => _error;
+
+  bool hasHostelPermission = false;
+  bool hasEventPermission = false;
+
+  Future<void> checkPermission(String permission) async {
+    var userHostels = await pb.collection('hostels').getFirstListItem(
+          'admin = "${pb.authStore.model.id}"',
+        );
+
+    if (userHostels.data['admin'] == pb.authStore.model.id) {
+      hasHostelPermission = true;
+      notifyListeners();
+      return;
+    }
+
+    var userEvents = await pb.collection('facilities').getFirstListItem(
+          'manager = "${pb.authStore.model.id}"',
+        );
+
+    if (userEvents.data['admin'] == pb.authStore.model.id) {
+      hasEventPermission = true;
+      notifyListeners();
+      return;
+    }
   }
 }

@@ -244,7 +244,7 @@ class EventDetailsPanel extends StatelessWidget {
                               style: Theme.of(context).textTheme.titleSmall,
                             ),
                             subtitle: Text(
-                              '${event.seats ?? 0 - (event.remainingSeats ?? 0)} registered',
+                              '${event.seats ?? 0 - (event.remainingSeats ?? 0)} Open Seats',
                               style: Theme.of(context)
                                   .textTheme
                                   .bodyMedium

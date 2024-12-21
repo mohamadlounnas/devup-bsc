@@ -1,6 +1,7 @@
 import 'dart:ui';
 
 import 'package:admin_app/main.dart';
+import 'package:admin_app/services/auth_service.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
@@ -37,114 +38,71 @@ class _DashboardShellState extends State<DashboardShell> {
               children: [
                 // Show navigation rail for extended layout
                 if (!isCompact)
-                  ClipRRect(
-                    child: BackdropFilter(
-                      filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
-                      child: Container(
-                        decoration: BoxDecoration(
-                          color: Theme.of(context)
-                              .colorScheme
-                              .surface
-                              .withOpacity(0.5),
-                          border: Border(
-                            right: BorderSide(
-                              color:
-                                  Theme.of(context).colorScheme.outlineVariant,
-                            ),
-                          ),
+                  Container(
+                    decoration: BoxDecoration(
+                      border: Border(
+                        right: BorderSide(
+                          color: Theme.of(context).colorScheme.outlineVariant,
                         ),
-                        child: _buildNavigationRail(context),
                       ),
                     ),
+                    child: _buildNavigationRail(context),
                   ),
                 // Main content area
                 Expanded(
                   child: Column(
                     children: [
                       // Custom app bar with blur
-                      ClipRRect(
-                        child: BackdropFilter(
-                          filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
-                          child: Container(
-                            height: 64,
-                            padding: const EdgeInsets.symmetric(horizontal: 16),
-                            decoration: BoxDecoration(
-                              color: Theme.of(context)
-                                  .colorScheme
-                                  .surface
-                                  .withOpacity(0.5),
-                              border: Border(
-                                bottom: BorderSide(
-                                  color: Theme.of(context)
-                                      .colorScheme
-                                      .outlineVariant,
-                                ),
+                      Container(
+                        height: 64,
+                        padding: const EdgeInsets.symmetric(horizontal: 16),
+                        decoration: const BoxDecoration(),
+                        child: Row(
+                          children: [
+                            if (isCompact)
+                              IconButton(
+                                icon: const Icon(Icons.menu),
+                                onPressed: () {
+                                  Scaffold.of(context).openDrawer();
+                                },
                               ),
+                            const Spacer(),
+                            IconButton(
+                              icon: Icon(
+                                Theme.of(context).brightness == Brightness.light
+                                    ? Icons.dark_mode_outlined
+                                    : Icons.light_mode_outlined,
+                              ),
+                              onPressed: () {
+                                final platform = Theme.of(context).platform;
+                                if (platform == TargetPlatform.iOS ||
+                                    platform == TargetPlatform.android) {
+                                  ScaffoldMessenger.of(context).showSnackBar(
+                                    const SnackBar(
+                                      content:
+                                          Text('Please use system settings'),
+                                      duration: Duration(seconds: 2),
+                                    ),
+                                  );
+                                  return;
+                                }
+                                setState(() {
+                                  final brightness =
+                                      Theme.of(context).brightness;
+                                  final themeMode =
+                                      brightness == Brightness.light
+                                          ? ThemeMode.dark
+                                          : ThemeMode.light;
+                                  MainApp.of(context)
+                                      ?.updateThemeMode(themeMode);
+                                });
+                              },
                             ),
-                            child: Row(
-                              children: [
-                                if (isCompact)
-                                  IconButton(
-                                    icon: const Icon(Icons.menu),
-                                    onPressed: () {
-                                      Scaffold.of(context).openDrawer();
-                                    },
-                                  ),
-                                Text(
-                                  'DevUp',
-                                  style: Theme.of(context)
-                                      .textTheme
-                                      .titleLarge
-                                      ?.copyWith(
-                                        color: Theme.of(context)
-                                            .colorScheme
-                                            .primary,
-                                      ),
-                                ),
-                                const Spacer(),
-                                IconButton(
-                                  icon: Icon(
-                                    Theme.of(context).brightness ==
-                                            Brightness.light
-                                        ? Icons.dark_mode_outlined
-                                        : Icons.light_mode_outlined,
-                                  ),
-                                  onPressed: () {
-                                    final platform = Theme.of(context).platform;
-                                    if (platform == TargetPlatform.iOS ||
-                                        platform == TargetPlatform.android) {
-                                      ScaffoldMessenger.of(context)
-                                          .showSnackBar(
-                                        const SnackBar(
-                                          content: Text(
-                                              'Please use system settings'),
-                                          duration: Duration(seconds: 2),
-                                        ),
-                                      );
-                                      return;
-                                    }
-                                    setState(() {
-                                      final brightness =
-                                          Theme.of(context).brightness;
-                                      final themeMode =
-                                          brightness == Brightness.light
-                                              ? ThemeMode.dark
-                                              : ThemeMode.light;
-                                      MainApp.of(context)
-                                          ?.updateThemeMode(themeMode);
-                                    });
-                                  },
-                                ),
-                                IconButton(
-                                  icon:
-                                      const Icon(Icons.notifications_outlined),
-                                  onPressed: () {
-                                    // TODO: Implement notifications
-                                  },
-                                ),
-                              ],
+                            IconButton(
+                              icon: const Icon(Icons.notifications_outlined),
+                              onPressed: () {},
                             ),
-                          ),
+                          ],
                         ),
                       ),
                       // Content area
@@ -152,13 +110,16 @@ class _DashboardShellState extends State<DashboardShell> {
                         child: Container(
                           padding: const EdgeInsets.all(16),
                           decoration: BoxDecoration(
+                            color: Theme.of(context)
+                                .colorScheme
+                                .surface
+                                .withOpacity(0.5),
                             borderRadius: BorderRadius.circular(16),
-                            // color: Theme.of(context).colorScheme.surface,
                             border: Border.all(
                               color: Theme.of(context)
                                   .colorScheme
                                   .outlineVariant
-                                  .withOpacity(0.5),
+                                  .withOpacity(1),
                             ),
                           ),
                           child: widget.child,
@@ -177,122 +138,190 @@ class _DashboardShellState extends State<DashboardShell> {
 
   /// Builds the navigation rail for extended layout
   Widget _buildNavigationRail(BuildContext context) {
-    return NavigationRail(
-      extended: true,
-      backgroundColor: Colors.transparent,
-      selectedIndex: _getSelectedIndex(context),
-      onDestinationSelected: (index) => _onDestinationSelected(context, index),
-      leading: const Padding(
-        padding: EdgeInsets.symmetric(vertical: 8),
-        child: Icon(
-          Icons.flutter_dash,
-          size: 32,
-        ),
-      ),
-      labelType: NavigationRailLabelType.none,
-      destinations: const [
-        NavigationRailDestination(
-          icon: Icon(Icons.hotel_outlined),
-          selectedIcon: Icon(Icons.hotel),
-          label: Text('Hostels'),
-        ),
-        NavigationRailDestination(
-          icon: Icon(Icons.sports_outlined),
-          selectedIcon: Icon(Icons.sports),
-          label: Text('Facilities'),
-        ),
-        NavigationRailDestination(
-          icon: Icon(Icons.sports_outlined),
-          selectedIcon: Icon(Icons.sports),
-          label: Text('Hostel_Settings'),
-        ),
-        NavigationRailDestination(
-          icon: Icon(Icons.sports_outlined),
-          selectedIcon: Icon(Icons.sports),
-          label: Text('Events'),
-        ),
-      ],
+    return ListenableBuilder(
+      listenable: PermissionService.instance,
+      builder: (context, child) {
+        final permissions = PermissionService.instance;
+
+        final destinations = <NavigationRailDestination>[];
+
+        // Add hostel-related destinations if user has hostel permissions
+        if (permissions.hasHostelPermission) {
+          destinations.addAll([
+            const NavigationRailDestination(
+              icon: Icon(Icons.hotel_outlined),
+              selectedIcon: Icon(Icons.hotel),
+              label: Text('Reservations'),
+            ),
+            const NavigationRailDestination(
+              icon: Icon(Icons.settings_outlined),
+              selectedIcon: Icon(Icons.settings),
+              label: Text('Hostel Settings'),
+            ),
+          ]);
+        }
+
+        // Add facility/event-related destinations if user has event permissions
+        if (permissions.hasEventPermission) {
+          destinations.addAll([
+            const NavigationRailDestination(
+              icon: Icon(Icons.holiday_village_outlined),
+              selectedIcon: Icon(Icons.holiday_village),
+              label: Text('Facilities'),
+            ),
+            const NavigationRailDestination(
+              icon: Icon(Icons.event_outlined),
+              selectedIcon: Icon(Icons.event),
+              label: Text('Events'),
+            ),
+          ]);
+        }
+
+        return NavigationRail(
+          extended: true,
+          backgroundColor:
+              Theme.of(context).colorScheme.surface.withOpacity(0.1),
+          selectedIndex: _getSelectedIndex(context),
+          onDestinationSelected: (index) =>
+              _onDestinationSelected(context, index),
+          leading: Padding(
+            padding: const EdgeInsets.symmetric(vertical: 8),
+            child: Image.asset(
+              'assets/full.png',
+              width: 150,
+              height: 200,
+            ),
+          ),
+          // elevation: 0.1,
+          labelType: NavigationRailLabelType.none,
+          destinations: destinations,
+        );
+      },
     );
   }
 
   /// Builds the navigation drawer for compact layout
   Widget _buildDrawer(BuildContext context) {
-    return NavigationDrawer(
-      selectedIndex: _getSelectedIndex(context),
-      onDestinationSelected: (index) {
-        _onDestinationSelected(context, index);
-        Navigator.pop(context); // Close drawer after selection
+    return ListenableBuilder(
+      listenable: PermissionService.instance,
+      builder: (context, child) {
+        final permissions = PermissionService.instance;
+
+        final destinations = <NavigationDrawerDestination>[];
+
+        // Add hostel-related destinations if user has hostel permissions
+        if (permissions.hasHostelPermission) {
+          destinations.addAll([
+            const NavigationDrawerDestination(
+              icon: Icon(Icons.hotel_outlined),
+              selectedIcon: Icon(Icons.hotel),
+              label: Text('Reservations'),
+            ),
+            const NavigationDrawerDestination(
+              icon: Icon(Icons.settings_outlined),
+              selectedIcon: Icon(Icons.settings),
+              label: Text('Hostel Settings'),
+            ),
+          ]);
+        }
+
+        // Add facility/event-related destinations if user has event permissions
+        if (permissions.hasEventPermission) {
+          destinations.addAll([
+            const NavigationDrawerDestination(
+              icon: Icon(Icons.holiday_village_outlined),
+              selectedIcon: Icon(Icons.holiday_village),
+              label: Text('Facilities'),
+            ),
+            const NavigationDrawerDestination(
+              icon: Icon(Icons.event_outlined),
+              selectedIcon: Icon(Icons.event),
+              label: Text('Events'),
+            ),
+          ]);
+        }
+
+        return NavigationDrawer(
+          selectedIndex: _getSelectedIndex(context),
+          onDestinationSelected: (index) {
+            _onDestinationSelected(context, index);
+            Navigator.pop(context); // Close drawer after selection
+          },
+          children: [
+            Padding(
+              padding: const EdgeInsets.fromLTRB(16, 28, 16, 16),
+              child: Row(
+                children: [
+                  const Icon(
+                    Icons.flutter_dash,
+                    size: 32,
+                  ),
+                  const SizedBox(width: 12),
+                  Text(
+                    'DevUp',
+                    style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                          color: Theme.of(context).colorScheme.primary,
+                        ),
+                  ),
+                ],
+              ),
+            ),
+            ...destinations,
+          ],
+        );
       },
-      children: [
-        Padding(
-          padding: const EdgeInsets.fromLTRB(16, 28, 16, 16),
-          child: Row(
-            children: [
-              const Icon(
-                Icons.flutter_dash,
-                size: 32,
-              ),
-              const SizedBox(width: 12),
-              Text(
-                'DevUp',
-                style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                      color: Theme.of(context).colorScheme.primary,
-                    ),
-              ),
-            ],
-          ),
-        ),
-        const NavigationDrawerDestination(
-          icon: Icon(Icons.hotel_outlined),
-          selectedIcon: Icon(Icons.hotel),
-          label: Text('Hostels'),
-        ),
-        const NavigationDrawerDestination(
-          icon: Icon(Icons.sports_outlined),
-          selectedIcon: Icon(Icons.sports),
-          label: Text('Facilities'),
-        ),
-      ],
     );
   }
 
   /// Gets the selected index based on the current route
   int _getSelectedIndex(BuildContext context) {
     final location = GoRouterState.of(context).uri.path;
-    switch (location) {
-      case '/events':
-        return 0;
-      case '/map':
-        return 1;
-      case '/reservations':
-        return 2;
-      case '/facilities':
-        return 3;
-      default:
-        return 0;
+    final permissions = PermissionService.instance;
+
+    if (permissions.hasHostelPermission) {
+      switch (location) {
+        case '/reservations':
+          return 0;
+        case '/hostelsettings':
+          return 1;
+        default:
+          return 0;
+      }
+    } else if (permissions.hasEventPermission) {
+      switch (location) {
+        case '/facilities':
+          return 0;
+        case '/events':
+          return 1;
+        default:
+          return 0;
+      }
     }
+    return 0;
   }
 
   /// Handles navigation when a destination is selected
   void _onDestinationSelected(BuildContext context, int index) {
-    switch (index) {
-      // case 0:
-      //   context.go('/events');
-      //   break;
-      // case 1:
-      //   context.go('/map');
-      //   break;
-      case 0:
-        context.go('/reservations');
-        break;
-      case 1:
-        context.go('/facilities');
-        break;
-      case 2:
-        context.go('/hostelsettings');
-      case 3:
-        context.go('/events');
-        break;
+    final permissions = PermissionService.instance;
+
+    if (permissions.hasHostelPermission) {
+      switch (index) {
+        case 0:
+          context.go('/reservations');
+          break;
+        case 1:
+          context.go('/hostelsettings');
+          break;
+      }
+    } else if (permissions.hasEventPermission) {
+      switch (index) {
+        case 0:
+          context.go('/facilities');
+          break;
+        case 1:
+          context.go('/events');
+          break;
+      }
     }
   }
 }

@@ -20,11 +20,14 @@ class ReservationService extends ChangeNotifier {
       var records = await pb.collection(hostelCollectionName).getFirstListItem(
           'admin = "${pb.authStore.model!.id}"',
           expand: 'reservations,reservations.user');
-
+      print(records);
       if (records.expand != null && records.expand['reservations'] != null) {
         hostelresvalid =
             (records.expand['reservations'] as List).map((reservation) {
           final data = reservation.toJson();
+          print(reservation.expand['user']);
+          final user = reservation.expand['user'].first;
+          data['user_expand'] = user.toJson();
           if (data['status'] == null || data['status'] == '') {
             data['status'] = 'pending';
           }
@@ -39,23 +42,18 @@ class ReservationService extends ChangeNotifier {
     }
   }
 
-  Future<void> createReservation(HostelReservation reservation) async {
+  Future<RecordModel> createReservation(
+    HostelReservation reservation,
+  ) async {
     try {
-      final hostel = await pb.collection(hostelCollectionName).getFirstListItem(
-            'admin = "${pb.authStore.model!.id}"',
-          );
-
       final record = await pb.collection(reservationCollectionName).create(
-        body: {
-          ...reservation.toJson(),
-          'hostel': hostel.id,
-          'status': 'pending',
-        },
-      );
+            body: reservation.toJson(),
+          );
 
       if (kDebugMode) {
         print('Created reservation: ${record.toJson()}');
       }
+      return record;
     } catch (e) {
       if (kDebugMode) {
         print('Error creating reservation: $e');
