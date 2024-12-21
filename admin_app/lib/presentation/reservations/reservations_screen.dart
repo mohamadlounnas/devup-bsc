@@ -80,7 +80,10 @@ class _ReservationsScreenState extends State<ReservationsScreen> {
                   children: [
                     Text(
                       "All Reservations",
-                      style: Theme.of(context).textTheme.titleLarge,
+                      style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                            color: Theme.of(context).colorScheme.primary,
+                            fontWeight: FontWeight.bold,
+                          ),
                     ),
                     FilledButton.icon(
                       icon: const Icon(FeatherIcons.plus),

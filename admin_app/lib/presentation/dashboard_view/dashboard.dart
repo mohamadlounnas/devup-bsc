@@ -66,16 +66,6 @@ class _DashboardShellState extends State<DashboardShell> {
                                   Scaffold.of(context).openDrawer();
                                 },
                               ),
-                            Text(
-                              'DevUp',
-                              style: Theme.of(context)
-                                  .textTheme
-                                  .titleLarge
-                                  ?.copyWith(
-                                    color:
-                                        Theme.of(context).colorScheme.primary,
-                                  ),
-                            ),
                             const Spacer(),
                             IconButton(
                               icon: Icon(
@@ -189,7 +179,8 @@ class _DashboardShellState extends State<DashboardShell> {
 
         return NavigationRail(
           extended: true,
-          backgroundColor: Colors.transparent,
+          backgroundColor:
+              Theme.of(context).colorScheme.surface.withOpacity(0.1),
           selectedIndex: _getSelectedIndex(context),
           onDestinationSelected: (index) =>
               _onDestinationSelected(context, index),
@@ -201,7 +192,7 @@ class _DashboardShellState extends State<DashboardShell> {
               height: 200,
             ),
           ),
-          elevation: 0.1,
+          // elevation: 0.1,
           labelType: NavigationRailLabelType.none,
           destinations: destinations,
         );

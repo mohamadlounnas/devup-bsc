@@ -8,6 +8,7 @@ import 'package:admin_app/services/hostel_service.dart';
 import 'package:admin_app/services/reservation_service.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:google_fonts/google_fonts.dart';
 import 'package:pocketbase/pocketbase.dart';
 import 'package:provider/provider.dart';
 import 'package:shared/services/api_service.dart';
@@ -62,6 +63,7 @@ class MainAppState extends State<MainApp> {
       title: 'Admin Dashboard',
       themeMode: _themeMode,
       theme: ThemeData(
+        textTheme: GoogleFonts.poppinsTextTheme(),
         cardColor: Colors.transparent,
         useMaterial3: true,
         colorSchemeSeed: Colors.blue,
