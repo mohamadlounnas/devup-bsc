@@ -10,3 +10,6 @@ admin@gmail.com
 realtime trans :
 https://transprts.cscclub.net/
 
+
+Slides Prep :
+https://www.canva.com/design/DAGZ6PhY77w/TFTl0wP0TjS3jyHNHgx0EQ/edit?utm_content=DAGZ6PhY77w&utm_campaign=designshare&utm_medium=link2&utm_source=sharebutton
