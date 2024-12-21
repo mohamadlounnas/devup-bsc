@@ -55,6 +55,55 @@ class BusLine {
   }
 }
 
+class PointOfInterest {
+  final String name;
+  final LatLng location;
+  final IconData icon;
+  final String type;
+
+  PointOfInterest({
+    required this.name,
+    required this.location,
+    required this.icon,
+    required this.type,
+  });
+}
+
+class Train {
+  final String id;
+  final int delayMinutes;
+
+  Train({
+    required this.id,
+    required this.delayMinutes,
+  });
+}
+
+class TrainLine {
+  final String name;
+  final Color color;
+  final List<Station> stations;
+  final List<Train> trains;
+
+  TrainLine({
+    required this.name,
+    required this.color,
+    required this.stations,
+    required this.trains,
+  });
+
+  List<LatLng> get stationPoints =>
+      stations.map((station) => station.location).toList();
+
+  int get totalDuration {
+    int total = 0;
+    for (int i = 0; i < stations.length - 1; i++) {
+      total += stations[i].minutesToNextStation;
+    }
+    return total;
+  }
+}
+
 class MapPage extends StatefulWidget {
   const MapPage({super.key});
 
@@ -71,6 +120,107 @@ class _MapPageState extends State<MapPage> with TickerProviderStateMixin {
   final Map<String, double> _routeDistanceCache = {};
   // Cache for markers
   late final List<Marker> _staticMarkers;
+
+  final Map<String, bool> _poiToggles = {
+    'mosques': false,
+    'toilets': false,
+    'parking': false,
+    'restaurants': false,
+  };
+
+  final List<PointOfInterest> _pois = [
+    // Mosques
+    PointOfInterest(
+      name: 'Mosquée El-Forqane',
+      location: LatLng(36.7672, 3.4762), // Near university area
+      icon: Icons.mosque,
+      type: 'mosques',
+    ),
+    PointOfInterest(
+      name: 'Mosquée El-Taqwa',
+      location: LatLng(36.7645, 3.4805), // Near city center
+      icon: Icons.mosque,
+      type: 'mosques',
+    ),
+    PointOfInterest(
+      name: 'Mosquée El-Rahma',
+      location: LatLng(36.7715, 3.5140), // In residential area
+      icon: Icons.mosque,
+      type: 'mosques',
+    ),
+
+    // Public Toilets
+    PointOfInterest(
+      name: 'WC Public Plage',
+      location: LatLng(36.7635, 3.4835), // Near beach area
+      icon: Icons.wc,
+      type: 'toilets',
+    ),
+    PointOfInterest(
+      name: 'WC Station',
+      location: LatLng(36.7668, 3.4745), // Near bus station
+      icon: Icons.wc,
+      type: 'toilets',
+    ),
+    PointOfInterest(
+      name: 'WC Centre Commercial',
+      location: LatLng(36.7655, 3.4775), // Shopping center
+      icon: Icons.wc,
+      type: 'toilets',
+    ),
+
+    // Parking Areas
+    PointOfInterest(
+      name: 'Parking UMBB',
+      location: LatLng(36.7675, 3.4725), // University parking
+      icon: Icons.local_parking,
+      type: 'parking',
+    ),
+    PointOfInterest(
+      name: 'Parking Centre Ville',
+      location: LatLng(36.7648, 3.4768), // Downtown parking
+      icon: Icons.local_parking,
+      type: 'parking',
+    ),
+    PointOfInterest(
+      name: 'Parking Plage',
+      location: LatLng(36.7628, 3.4828), // Beach parking
+      icon: Icons.local_parking,
+      type: 'parking',
+    ),
+
+    // Restaurants
+    PointOfInterest(
+      name: 'Restaurant Zitouna',
+      location: LatLng(36.7695, 3.5105), // Near Zitouna area
+      icon: Icons.restaurant,
+      type: 'restaurants',
+    ),
+    PointOfInterest(
+      name: 'Fast Food Le Spot',
+      location: LatLng(36.7642, 3.4758), // City center
+      icon: Icons.restaurant,
+      type: 'restaurants',
+    ),
+    PointOfInterest(
+      name: 'Restaurant La Marina',
+      location: LatLng(36.7632, 3.4815), // Near beach
+      icon: Icons.restaurant,
+      type: 'restaurants',
+    ),
+    PointOfInterest(
+      name: 'Pizza Sahel',
+      location: LatLng(36.7685, 3.5015), // Sahel area
+      icon: Icons.restaurant,
+      type: 'restaurants',
+    ),
+    PointOfInterest(
+      name: 'Café Central',
+      location: LatLng(36.7652, 3.4772), // City center
+      icon: Icons.restaurant,
+      type: 'restaurants',
+    ),
+  ];
 
   // Define bus lines with ordered stations
   final List<BusLine> busLines = [
@@ -157,14 +307,102 @@ class _MapPageState extends State<MapPage> with TickerProviderStateMixin {
     ),
   ];
 
+  // Add this map to define colors for each POI type
+  final Map<String, Color> _poiColors = {
+    'mosques': Color(0xFF1E88E5), // Blue
+    'toilets': Color(0xFF43A047), // Green
+    'parking': Color(0xFFE53935), // Red
+    'restaurants': Color(0xFFFF9800), // Orange
+    'buses': Colors.blue,
+    'trains': Colors.purple,
+  };
+
+  // Add this to the _MapPageState class properties
+  final List<TrainLine> trainLines = [
+    TrainLine(
+      name: 'Train Line 1',
+      color: Colors.purple,
+      trains: [
+        Train(id: 'Train 1→', delayMinutes: 0), // Starts from Boumerdes
+        Train(
+            id: 'Train 1←',
+            delayMinutes: 0), // Starts from Thénia (both start at same time)
+      ],
+      stations: [
+        Station(
+          name: 'Boumerdes Gare',
+          location: LatLng(36.7665, 3.4719),
+          order: 1,
+          minutesToNextStation:
+              25, // Increased time for more realistic train journey
+        ),
+        Station(
+          name: 'Corso Gare',
+          location: LatLng(36.7338, 3.4453),
+          order: 2,
+          minutesToNextStation: 30,
+        ),
+        Station(
+          name: 'Thénia Gare',
+          location: LatLng(36.7248, 3.5547),
+          order: 3,
+          minutesToNextStation: 0,
+        ),
+      ],
+    ),
+    TrainLine(
+      name: 'Train Line 2',
+      color: Colors.deepPurple,
+      trains: [
+        Train(id: 'Train 2→', delayMinutes: 0), // Starts from Boumerdes
+        Train(
+            id: 'Train 2←',
+            delayMinutes:
+                0), // Starts from Rocher Noir (both start at same time)
+      ],
+      stations: [
+        Station(
+          name: 'Boumerdes Gare',
+          location: LatLng(36.7665, 3.4719),
+          order: 1,
+          minutesToNextStation: 28,
+        ),
+        Station(
+          name: 'Tidjelabine Gare',
+          location: LatLng(36.7372, 3.4986),
+          order: 2,
+          minutesToNextStation: 26,
+        ),
+        Station(
+          name: 'Rocher Noir Gare',
+          location: LatLng(36.7475, 3.5214),
+          order: 3,
+          minutesToNextStation: 0,
+        ),
+      ],
+    ),
+  ];
+
+  // Add these properties to _MapPageState class
+  final Map<String, bool> _transportToggles = {
+    'buses': true,
+    'trains': true,
+  };
+
+  // Add this to _MapPageState class
+  bool _showBusSchedule = true;
+
   @override
   void initState() {
     super.initState();
-    // Initialize static markers
     _staticMarkers = [
       for (var busLine in busLines)
         for (var station in busLine.stations)
           _buildMarker(station.location, station.name, busLine.color),
+      for (var trainLine in trainLines)
+        for (var station in trainLine.stations)
+          _buildMarker(station.location, station.name, trainLine.color,
+              isTrainStation: true),
     ];
     _loadRoutes();
   }
@@ -178,48 +416,61 @@ class _MapPageState extends State<MapPage> with TickerProviderStateMixin {
   }
 
   void _setupAnimations() {
+    // Setup bus animations
     for (var busLine in busLines) {
-      if (busRoutes.containsKey(busLine.name)) {
-        final totalDuration = busLine.totalDuration;
+      _setupLineAnimations(busLine.name, busLine.totalDuration, busLine.buses);
+    }
 
-        // Create animation controller and animation for each bus
-        for (var bus in busLine.buses) {
-          final controllerId = '${busLine.name}_${bus.id}';
+    // Setup train animations
+    for (var trainLine in trainLines) {
+      _setupLineAnimations(
+          trainLine.name, trainLine.totalDuration, trainLine.trains);
+    }
+  }
 
-          _animationControllers[controllerId] = AnimationController(
-            vsync: this,
-            duration: Duration(seconds: totalDuration),
+  void _setupLineAnimations(
+      String lineName, int totalDuration, List<dynamic> vehicles) {
+    if (busRoutes.containsKey(lineName)) {
+      for (var vehicle in vehicles) {
+        final controllerId = '${lineName}_${vehicle.id}';
+        final isTrainVehicle = vehicle is Train;
+        final isReturnDirection = isTrainVehicle && vehicle.id.contains('←');
+
+        // Make trains move slower
+        final adjustedDuration = isTrainVehicle
+            ? Duration(seconds: totalDuration * 4) // Trains move 4x slower
+            : Duration(seconds: totalDuration);
+
+        _animationControllers[controllerId] = AnimationController(
+          vsync: this,
+          duration: adjustedDuration,
+        );
+
+        if (isTrainVehicle) {
+          // For trains, start from opposite ends
+          _animations[controllerId] = Tween(
+            begin: isReturnDirection ? 1.0 : 0.0,
+            end: isReturnDirection ? 0.0 : 1.0,
+          ).animate(
+            CurvedAnimation(
+              parent: _animationControllers[controllerId]!,
+              curve: Curves.linear,
+            ),
           );
 
-          final List<TweenSequenceItem<double>> sequences = [];
-          double totalProgress = 0.0;
+          // Start trains immediately (no delay)
+          _animationControllers[controllerId]!.repeat();
+        } else {
+          // Keep existing bus animation
+          _animations[controllerId] = Tween(begin: 0.0, end: 1.0).animate(
+            CurvedAnimation(
+              parent: _animationControllers[controllerId]!,
+              curve: Curves.linear,
+            ),
+          );
 
-          for (int i = 0; i < busLine.stations.length - 1; i++) {
-            final segmentWeight =
-                (busLine.stations[i].minutesToNextStation / totalDuration) *
-                    100;
-
-            sequences.add(
-              TweenSequenceItem(
-                tween: Tween(
-                  begin: totalProgress,
-                  end: totalProgress +
-                      (busLine.stations[i].minutesToNextStation /
-                          totalDuration),
-                ).chain(CurveTween(curve: Curves.linear)),
-                weight: segmentWeight,
-              ),
-            );
-
-            totalProgress +=
-                busLine.stations[i].minutesToNextStation / totalDuration;
-          }
-
-          _animations[controllerId] = TweenSequence(sequences)
-              .animate(_animationControllers[controllerId]!);
-
-          // Start animation with delay
-          Future.delayed(Duration(seconds: bus.delayMinutes), () {
+          // Only buses have delays
+          Future.delayed(Duration(seconds: vehicle.delayMinutes), () {
             _animationControllers[controllerId]!.repeat(reverse: true);
           });
         }
@@ -227,7 +478,24 @@ class _MapPageState extends State<MapPage> with TickerProviderStateMixin {
     }
   }
 
-  Future<List<LatLng>> getRouteBetweenStops(Station start, Station end) async {
+  Future<List<LatLng>> getRouteBetweenStops(Station start, Station end,
+      {bool isTrainRoute = false}) async {
+    if (isTrainRoute) {
+      // For trains, use straight lines or predefined railway paths
+      return [
+        start.location,
+        // Add intermediate points to better represent railway curves
+        if (start.name == 'Boumerdes Gare' && end.name == 'Corso Gare')
+          LatLng(36.7520, 3.4580), // Example curve point
+        if (start.name == 'Corso Gare' && end.name == 'Thénia Gare')
+          LatLng(36.7300, 3.5000), // Example curve point
+        if (start.name == 'Boumerdes Gare' && end.name == 'Tidjelabine Gare')
+          LatLng(36.7500, 3.4850), // Example curve point
+        end.location,
+      ];
+    }
+
+    // For buses, use road routes
     try {
       final response = await http.get(Uri.parse(
           'https://router.project-osrm.org/route/v1/driving/${start.location.longitude},${start.location.latitude};${end.location.longitude},${end.location.latitude}?steps=true&geometries=geojson&overview=full'));
@@ -302,23 +570,40 @@ class _MapPageState extends State<MapPage> with TickerProviderStateMixin {
   }
 
   Future<void> _loadRoutes() async {
+    // Load bus routes
     for (var busLine in busLines) {
       List<LatLng> fullRoute = [];
-
       for (int i = 0; i < busLine.stations.length - 1; i++) {
         final route = await getRouteBetweenStops(
           busLine.stations[i],
           busLine.stations[i + 1],
+          isTrainRoute: false,
         );
-
         if (fullRoute.isEmpty) {
           fullRoute.addAll(route);
         } else {
           fullRoute.addAll(route.skip(1));
         }
       }
-
       busRoutes[busLine.name] = fullRoute;
+    }
+
+    // Load train routes
+    for (var trainLine in trainLines) {
+      List<LatLng> fullRoute = [];
+      for (int i = 0; i < trainLine.stations.length - 1; i++) {
+        final route = await getRouteBetweenStops(
+          trainLine.stations[i],
+          trainLine.stations[i + 1],
+          isTrainRoute: true,
+        );
+        if (fullRoute.isEmpty) {
+          fullRoute.addAll(route);
+        } else {
+          fullRoute.addAll(route.skip(1));
+        }
+      }
+      busRoutes[trainLine.name] = fullRoute;
     }
 
     if (mounted) {
@@ -434,7 +719,7 @@ class _MapPageState extends State<MapPage> with TickerProviderStateMixin {
                       .whereType<AnimationController>()
                       .toList(),
                 ),
-                builder: (context, _) {
+                builder: (context, child) {
                   String time =
                       _getNextBusTime(busLine, station, isForward: true);
                   // For first or last station, show the same time in both directions
@@ -595,16 +880,29 @@ class _MapPageState extends State<MapPage> with TickerProviderStateMixin {
         Container(
           padding: const EdgeInsets.all(16),
           color: Colors.grey.shade100,
-          child: const Row(
+          child: Row(
             children: [
-              Icon(Icons.schedule),
-              SizedBox(width: 16),
-              Text(
-                'Bus Schedule',
+              const Icon(Icons.schedule),
+              const SizedBox(width: 16),
+              const Text(
+                'Transport Schedule',
                 style: TextStyle(
                   fontSize: 20,
                   fontWeight: FontWeight.bold,
                 ),
+              ),
+              const Spacer(),
+              // Add toggle button
+              IconButton(
+                icon: Icon(
+                  _showBusSchedule ? Icons.directions_bus : Icons.train,
+                  color: _showBusSchedule ? Colors.blue : Colors.purple,
+                ),
+                onPressed: () {
+                  setState(() {
+                    _showBusSchedule = !_showBusSchedule;
+                  });
+                },
               ),
             ],
           ),
@@ -615,32 +913,469 @@ class _MapPageState extends State<MapPage> with TickerProviderStateMixin {
             child: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
-                for (var busLine in busLines) ...[
-                  Container(
-                    padding: const EdgeInsets.symmetric(vertical: 8),
-                    child: Row(
-                      children: [
-                        Icon(Icons.directions_bus, color: busLine.color),
-                        const SizedBox(width: 8),
-                        Text(
-                          busLine.name,
-                          style: TextStyle(
-                            fontWeight: FontWeight.bold,
-                            color: busLine.color,
-                            fontSize: 16,
+                // Show either bus or train schedules based on toggle
+                if (_showBusSchedule)
+                  for (var busLine in busLines) ...[
+                    Container(
+                      padding: const EdgeInsets.symmetric(vertical: 8),
+                      child: Row(
+                        children: [
+                          Icon(Icons.directions_bus, color: busLine.color),
+                          const SizedBox(width: 8),
+                          Text(
+                            busLine.name,
+                            style: TextStyle(
+                              fontWeight: FontWeight.bold,
+                              color: busLine.color,
+                              fontSize: 16,
+                            ),
                           ),
-                        ),
-                      ],
+                        ],
+                      ),
                     ),
-                  ),
-                  _buildStationTable(busLine),
-                  const SizedBox(height: 24),
-                ],
+                    _buildStationTable(busLine),
+                    const SizedBox(height: 24),
+                  ]
+                else
+                  for (var trainLine in trainLines) ...[
+                    Container(
+                      padding: const EdgeInsets.symmetric(vertical: 8),
+                      child: Row(
+                        children: [
+                          Icon(Icons.train, color: trainLine.color),
+                          const SizedBox(width: 8),
+                          Text(
+                            trainLine.name,
+                            style: TextStyle(
+                              fontWeight: FontWeight.bold,
+                              color: trainLine.color,
+                              fontSize: 16,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    _buildTrainStationTable(trainLine),
+                    const SizedBox(height: 24),
+                  ],
               ],
             ),
           ),
         ),
       ],
+    );
+  }
+
+  // Add this new method for train station tables
+  Widget _buildTrainStationTable(TrainLine trainLine) {
+    return Table(
+      border: TableBorder.all(
+        color: Colors.grey.shade300,
+        width: 1,
+      ),
+      columnWidths: const {
+        0: FlexColumnWidth(3),
+        1: FlexColumnWidth(4),
+      },
+      children: [
+        TableRow(
+          decoration: BoxDecoration(
+            color: trainLine.color.withOpacity(0.1),
+          ),
+          children: [
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+              child: Text(
+                'Station',
+                style: TextStyle(
+                  fontWeight: FontWeight.bold,
+                  fontSize: 16,
+                  color: trainLine.color,
+                ),
+              ),
+            ),
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceAround,
+                children: [
+                  Row(
+                    children: [
+                      Icon(Icons.arrow_forward,
+                          size: 18, color: trainLine.color),
+                      const SizedBox(width: 8),
+                      Text(
+                        'Going',
+                        style: TextStyle(
+                          fontWeight: FontWeight.bold,
+                          fontSize: 16,
+                          color: trainLine.color,
+                        ),
+                      ),
+                    ],
+                  ),
+                  Row(
+                    children: [
+                      Text(
+                        'Return',
+                        style: TextStyle(
+                          fontWeight: FontWeight.bold,
+                          fontSize: 16,
+                          color: trainLine.color,
+                        ),
+                      ),
+                      const SizedBox(width: 8),
+                      Icon(Icons.arrow_back, size: 18, color: trainLine.color),
+                    ],
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
+        for (var station in trainLine.stations)
+          TableRow(
+            decoration: const BoxDecoration(
+              color: Colors.white,
+            ),
+            children: [
+              Padding(
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                child: Text(
+                  station.name,
+                  style: const TextStyle(
+                    fontSize: 14,
+                  ),
+                ),
+              ),
+              Padding(
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                child: _buildTrainTimingRow(trainLine, station),
+              ),
+            ],
+          ),
+      ],
+    );
+  }
+
+  // Simple train timing calculation
+  String _getTrainTime(TrainLine trainLine, Station station, bool isForward) {
+    bool isFirstStation = station.order == 1;
+    bool isLastStation = station.order == trainLine.stations.length;
+
+    if (isFirstStation || isLastStation) {
+      int forwardTime =
+          _calculateTrainTimeForDirection(trainLine, station, true);
+      int reverseTime =
+          _calculateTrainTimeForDirection(trainLine, station, false);
+
+      int maxTime = max(forwardTime, reverseTime);
+      return maxTime == 999999 ? '' : '$maxTime min';
+    }
+
+    return '${_calculateTrainTimeForDirection(trainLine, station, isForward)} min';
+  }
+
+  int _calculateTrainTimeForDirection(
+      TrainLine trainLine, Station station, bool isForward) {
+    int shortestTime = 999999;
+
+    // Check each train in the line
+    for (var train in trainLine.trains) {
+      final controllerId = '${trainLine.name}_${train.id}';
+      final controller = _animationControllers[controllerId];
+      final animation = _animations[controllerId];
+
+      if (controller == null || animation == null) continue;
+
+      final totalDuration = trainLine.totalDuration;
+      double timeToStation = 0;
+      int stationIndex = trainLine.stations.indexOf(station);
+
+      if (isForward) {
+        // Calculate time to reach this station from start
+        for (int i = 0; i < stationIndex; i++) {
+          timeToStation += trainLine.stations[i].minutesToNextStation;
+        }
+
+        // If we've passed this station, add full route time
+        if (animation.value * totalDuration > timeToStation) {
+          timeToStation += totalDuration;
+        }
+      } else {
+        // Calculate time from end to this station
+        for (int i = trainLine.stations.length - 2; i >= stationIndex; i--) {
+          timeToStation += trainLine.stations[i].minutesToNextStation;
+        }
+
+        // If we've passed this station in reverse, add full route time
+        if ((1 - animation.value) * totalDuration > timeToStation) {
+          timeToStation += totalDuration;
+        }
+      }
+
+      final minutes = (timeToStation -
+              (isForward ? animation.value : (1 - animation.value)) *
+                  totalDuration)
+          .round();
+      if (minutes < shortestTime) {
+        shortestTime = minutes;
+      }
+    }
+
+    return shortestTime;
+  }
+
+  // Update the _buildTrainTimingRow method
+  Widget _buildTrainTimingRow(TrainLine trainLine, Station station) {
+    bool isFirstStation = station.order == 1;
+    bool isLastStation = station.order == trainLine.stations.length;
+
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+      children: [
+        // Forward direction
+        Expanded(
+          child: Row(
+            children: [
+              Icon(Icons.arrow_forward, size: 14, color: trainLine.color),
+              const SizedBox(width: 4),
+              AnimatedBuilder(
+                animation: Listenable.merge(
+                  trainLine.trains
+                      .where((train) => !train.id.contains('←'))
+                      .map((train) => _animationControllers[
+                          '${trainLine.name}_${train.id}'])
+                      .whereType<AnimationController>()
+                      .toList(),
+                ),
+                builder: (context, _) {
+                  return Text(
+                    _getTrainTime(trainLine, station, true),
+                    style: TextStyle(
+                      color: trainLine.color,
+                      fontWeight: FontWeight.w500,
+                    ),
+                  );
+                },
+              ),
+            ],
+          ),
+        ),
+        // Return direction
+        Expanded(
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.end,
+            children: [
+              AnimatedBuilder(
+                animation: Listenable.merge(
+                  trainLine.trains
+                      .where((train) => train.id.contains('←'))
+                      .map((train) => _animationControllers[
+                          '${trainLine.name}_${train.id}'])
+                      .whereType<AnimationController>()
+                      .toList(),
+                ),
+                builder: (context, _) {
+                  return Text(
+                    _getTrainTime(trainLine, station, false),
+                    style: TextStyle(
+                      color: trainLine.color,
+                      fontWeight: FontWeight.w500,
+                    ),
+                  );
+                },
+              ),
+              const SizedBox(width: 4),
+              Icon(Icons.arrow_back, size: 14, color: trainLine.color),
+            ],
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildPoiToggleBar() {
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        // Transport toggles
+        Container(
+          margin: const EdgeInsets.only(bottom: 6),
+          padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 12),
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(16),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withOpacity(0.15),
+                blurRadius: 10,
+                offset: const Offset(0, 2),
+              ),
+            ],
+            border: Border.all(
+              color: Colors.grey.withOpacity(0.2),
+              width: 1,
+            ),
+          ),
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              _buildTransportToggle('Buses', Icons.directions_bus, 'buses'),
+              _buildDivider(),
+              _buildTransportToggle('Trains', Icons.train, 'trains'),
+            ],
+          ),
+        ),
+        // POI toggles
+        Container(
+          padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 12),
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(16),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withOpacity(0.15),
+                blurRadius: 10,
+                offset: const Offset(0, 2),
+              ),
+            ],
+            border: Border.all(
+              color: Colors.grey.withOpacity(0.2),
+              width: 1,
+            ),
+          ),
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              _buildPoiToggle('Mosques', Icons.mosque, 'mosques'),
+              _buildDivider(),
+              _buildPoiToggle('Toilets', Icons.wc, 'toilets'),
+              _buildDivider(),
+              _buildPoiToggle('Parking', Icons.local_parking, 'parking'),
+              _buildDivider(),
+              _buildPoiToggle('Food', Icons.restaurant, 'restaurants'),
+            ],
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildDivider() {
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 8),
+      child: Container(
+        width: 1,
+        height: 20,
+        decoration: BoxDecoration(
+          gradient: LinearGradient(
+            begin: Alignment.topCenter,
+            end: Alignment.bottomCenter,
+            colors: [
+              Colors.grey.withOpacity(0.1),
+              Colors.grey.withOpacity(0.3),
+              Colors.grey.withOpacity(0.1),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildPoiToggle(String label, IconData icon, String type) {
+    final isSelected = _poiToggles[type]!;
+    final color = _poiColors[type]!;
+
+    return Material(
+      color: Colors.transparent,
+      child: InkWell(
+        borderRadius: BorderRadius.circular(12),
+        onTap: () {
+          setState(() {
+            _poiToggles[type] = !_poiToggles[type]!;
+          });
+        },
+        child: Container(
+          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
+          decoration: BoxDecoration(
+            color: isSelected ? color.withOpacity(0.1) : Colors.transparent,
+            borderRadius: BorderRadius.circular(12),
+            border: Border.all(
+              color: isSelected ? color : Colors.grey.withOpacity(0.3),
+              width: 2,
+            ),
+          ),
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Icon(
+                icon,
+                color: isSelected ? color : Colors.grey.shade600,
+                size: 18,
+              ),
+              const SizedBox(width: 6),
+              Text(
+                label,
+                style: TextStyle(
+                  color: isSelected ? color : Colors.grey.shade600,
+                  fontSize: 12,
+                  fontWeight: isSelected ? FontWeight.bold : FontWeight.w500,
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildTransportToggle(String label, IconData icon, String type) {
+    final isSelected = _transportToggles[type]!;
+    final color = _poiColors[type]!;
+
+    return Material(
+      color: Colors.transparent,
+      child: InkWell(
+        borderRadius: BorderRadius.circular(12),
+        onTap: () {
+          setState(() {
+            _transportToggles[type] = !_transportToggles[type]!;
+          });
+        },
+        child: Container(
+          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+          decoration: BoxDecoration(
+            color: isSelected ? color.withOpacity(0.1) : Colors.transparent,
+            borderRadius: BorderRadius.circular(12),
+            border: Border.all(
+              color: isSelected ? color : Colors.grey.withOpacity(0.3),
+              width: 2,
+            ),
+          ),
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Icon(
+                icon,
+                color: isSelected ? color : Colors.grey.shade600,
+                size: 20,
+              ),
+              const SizedBox(width: 6),
+              Text(
+                label,
+                style: TextStyle(
+                  color: isSelected ? color : Colors.grey.shade600,
+                  fontSize: 14,
+                  fontWeight: isSelected ? FontWeight.bold : FontWeight.w500,
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
     );
   }
 
@@ -651,7 +1386,7 @@ class _MapPageState extends State<MapPage> with TickerProviderStateMixin {
         title: const Text('Boumerdes Transport Lines'),
       ),
       endDrawer: Drawer(
-        width: MediaQuery.of(context).size.width * 0.85, // 85% of screen width
+        width: MediaQuery.of(context).size.width * 0.85,
         child: SafeArea(
           child: _buildDrawerContent(),
         ),
@@ -670,62 +1405,136 @@ class _MapPageState extends State<MapPage> with TickerProviderStateMixin {
                 builder: (context, child) {
                   final List<Marker> allMarkers = [
                     ..._staticMarkers,
-                    // Only animate bus markers
-                    for (var busLine in busLines)
-                      if (busRoutes.containsKey(busLine.name))
-                        for (var bus in busLine.buses)
-                          if (_animations
-                              .containsKey('${busLine.name}_${bus.id}'))
-                            Marker(
-                              point: _calculatePosition(
-                                busRoutes[busLine.name]!,
-                                _animations['${busLine.name}_${bus.id}']!.value,
-                                busLine.name,
-                              ),
-                              width: 30,
-                              height: 30,
-                              child: RepaintBoundary(
-                                child: Stack(
-                                  children: [
-                                    Container(
-                                      decoration: BoxDecoration(
-                                        color: busLine.color,
-                                        shape: BoxShape.circle,
-                                        border: Border.all(
-                                          color: Colors.white,
-                                          width: 2,
-                                        ),
-                                      ),
-                                      child: const Icon(
-                                        Icons.directions_bus,
-                                        color: Colors.white,
-                                        size: 20,
-                                      ),
-                                    ),
-                                    Positioned(
-                                      right: 0,
-                                      bottom: 0,
-                                      child: Container(
-                                        padding: const EdgeInsets.all(2),
-                                        decoration: const BoxDecoration(
-                                          color: Colors.white,
+                    // Animate bus markers if buses are toggled on
+                    if (_transportToggles['buses']!)
+                      for (var busLine in busLines)
+                        if (busRoutes.containsKey(busLine.name))
+                          for (var bus in busLine.buses)
+                            if (_animations
+                                .containsKey('${busLine.name}_${bus.id}'))
+                              Marker(
+                                point: _calculatePosition(
+                                  busRoutes[busLine.name]!,
+                                  _animations['${busLine.name}_${bus.id}']!
+                                      .value,
+                                  busLine.name,
+                                ),
+                                width: 30,
+                                height: 30,
+                                child: RepaintBoundary(
+                                  child: Stack(
+                                    children: [
+                                      Container(
+                                        decoration: BoxDecoration(
+                                          color: busLine.color,
                                           shape: BoxShape.circle,
+                                          border: Border.all(
+                                            color: Colors.white,
+                                            width: 2,
+                                          ),
                                         ),
-                                        child: Text(
-                                          bus.id.split(' ')[
-                                              1], // Show bus number (1A, 1B, etc.)
-                                          style: TextStyle(
-                                            fontSize: 8,
-                                            fontWeight: FontWeight.bold,
-                                            color: busLine.color,
+                                        child: const Icon(
+                                          Icons.directions_bus,
+                                          color: Colors.white,
+                                          size: 20,
+                                        ),
+                                      ),
+                                      Positioned(
+                                        right: 0,
+                                        bottom: 0,
+                                        child: Container(
+                                          padding: const EdgeInsets.all(2),
+                                          decoration: const BoxDecoration(
+                                            color: Colors.white,
+                                            shape: BoxShape.circle,
+                                          ),
+                                          child: Text(
+                                            bus.id.split(' ')[
+                                                1], // Show bus number (1A, 1B, etc.)
+                                            style: TextStyle(
+                                              fontSize: 8,
+                                              fontWeight: FontWeight.bold,
+                                              color: busLine.color,
+                                            ),
                                           ),
                                         ),
                                       ),
-                                    ),
-                                  ],
+                                    ],
+                                  ),
                                 ),
                               ),
-                            ),
+                    // Add animated train markers if trains are toggled on
+                    if (_transportToggles['trains']!)
+                      for (var trainLine in trainLines)
+                        if (busRoutes.containsKey(trainLine.name))
+                          for (var train in trainLine.trains)
+                            if (_animations
+                                .containsKey('${trainLine.name}_${train.id}'))
+                              Marker(
+                                point: _calculatePosition(
+                                  busRoutes[trainLine.name]!,
+                                  _animations['${trainLine.name}_${train.id}']!
+                                      .value,
+                                  trainLine.name,
+                                ),
+                                width: 35, // Slightly larger than buses
+                                height: 35,
+                                child: RepaintBoundary(
+                                  child: Stack(
+                                    children: [
+                                      Container(
+                                        decoration: BoxDecoration(
+                                          color: trainLine.color,
+                                          shape: BoxShape.circle,
+                                          border: Border.all(
+                                            color: Colors.white,
+                                            width: 2,
+                                          ),
+                                          boxShadow: [
+                                            BoxShadow(
+                                              color:
+                                                  Colors.black.withOpacity(0.2),
+                                              blurRadius: 4,
+                                              offset: const Offset(0, 2),
+                                            ),
+                                          ],
+                                        ),
+                                        child: const Icon(
+                                          Icons.train,
+                                          color: Colors.white,
+                                          size: 22,
+                                        ),
+                                      ),
+                                      Positioned(
+                                        right: 0,
+                                        bottom: 0,
+                                        child: Container(
+                                          padding: const EdgeInsets.all(2),
+                                          decoration: BoxDecoration(
+                                            color: Colors.white,
+                                            shape: BoxShape.circle,
+                                            boxShadow: [
+                                              BoxShadow(
+                                                color: Colors.black
+                                                    .withOpacity(0.1),
+                                                blurRadius: 2,
+                                              ),
+                                            ],
+                                          ),
+                                          child: Text(
+                                            train.id.split(' ')[1],
+                                            style: TextStyle(
+                                              fontSize: 8,
+                                              fontWeight: FontWeight.bold,
+                                              color: trainLine.color,
+                                            ),
+                                          ),
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                              ),
                   ];
 
                   return FlutterMap(
@@ -746,18 +1555,101 @@ class _MapPageState extends State<MapPage> with TickerProviderStateMixin {
                       ),
                       PolylineLayer(
                         polylines: [
-                          for (var busLine in busLines)
-                            if (busRoutes.containsKey(busLine.name))
-                              Polyline(
-                                points: busRoutes[busLine.name]!,
-                                color: busLine.color,
-                                strokeWidth: 4.0,
-                                isDotted: true,
-                              ),
+                          // Bus routes if buses are toggled on
+                          if (_transportToggles['buses']!)
+                            for (var busLine in busLines)
+                              if (busRoutes.containsKey(busLine.name))
+                                Polyline(
+                                  points: busRoutes[busLine.name]!,
+                                  color: busLine.color,
+                                  strokeWidth: 4.0,
+                                  isDotted: true,
+                                ),
+                          // Train routes if trains are toggled on
+                          if (_transportToggles['trains']!)
+                            for (var trainLine in trainLines)
+                              if (busRoutes.containsKey(trainLine.name))
+                                Polyline(
+                                  points: busRoutes[trainLine.name]!,
+                                  color: trainLine.color,
+                                  strokeWidth:
+                                      5.0, // Slightly thicker for train routes
+                                  isDotted: false, // Solid line for trains
+                                ),
                         ],
                       ),
                       MarkerLayer(
-                        markers: allMarkers,
+                        markers: [
+                          ...allMarkers,
+                          // Add POI markers
+                          ..._pois.where((poi) => _poiToggles[poi.type]!).map(
+                                (poi) => Marker(
+                                  point: poi.location,
+                                  width: 40,
+                                  height:
+                                      60, // Increased height for better label visibility
+                                  child: Column(
+                                    children: [
+                                      Container(
+                                        padding: const EdgeInsets.all(8),
+                                        decoration: BoxDecoration(
+                                          color: _poiColors[poi.type]!,
+                                          shape: BoxShape.circle,
+                                          boxShadow: [
+                                            BoxShadow(
+                                              color:
+                                                  Colors.black.withOpacity(0.2),
+                                              blurRadius: 4,
+                                              offset: const Offset(0, 2),
+                                            ),
+                                          ],
+                                          border: Border.all(
+                                            color: Colors.white,
+                                            width: 2,
+                                          ),
+                                        ),
+                                        child: Icon(
+                                          poi.icon,
+                                          size: 20,
+                                          color: Colors.white,
+                                        ),
+                                      ),
+                                      const SizedBox(height: 4),
+                                      Container(
+                                        padding: const EdgeInsets.symmetric(
+                                          horizontal: 6,
+                                          vertical: 3,
+                                        ),
+                                        decoration: BoxDecoration(
+                                          color: Colors.white,
+                                          borderRadius:
+                                              BorderRadius.circular(12),
+                                          boxShadow: [
+                                            BoxShadow(
+                                              color:
+                                                  Colors.black.withOpacity(0.1),
+                                              blurRadius: 4,
+                                              offset: const Offset(0, 2),
+                                            ),
+                                          ],
+                                        ),
+                                        child: Text(
+                                          poi.name,
+                                          style: TextStyle(
+                                            fontSize: 11,
+                                            fontWeight: FontWeight.w500,
+                                            color: _poiColors[poi.type],
+                                          ),
+                                          textAlign: TextAlign.center,
+                                          maxLines: 2,
+                                          overflow: TextOverflow.ellipsis,
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                              ),
+                        ],
                       ),
                     ],
                   );
@@ -802,7 +1694,30 @@ class _MapPageState extends State<MapPage> with TickerProviderStateMixin {
                           ],
                         ),
                       )),
+                  const Divider(height: 16),
+                  ...trainLines.map((trainLine) => Padding(
+                        padding: const EdgeInsets.only(top: 4),
+                        child: Row(
+                          children: [
+                            Icon(Icons.train, color: trainLine.color, size: 24),
+                            const SizedBox(width: 8),
+                            Text(trainLine.name),
+                          ],
+                        ),
+                      )),
                 ],
+              ),
+            ),
+          ),
+          // Move POI toggle bar from top to bottom
+          Positioned(
+            bottom: 20,
+            left: 16,
+            right: 16,
+            child: Center(
+              child: Transform.scale(
+                scale: 0.85,
+                child: _buildPoiToggleBar(),
               ),
             ),
           ),
@@ -811,84 +1726,46 @@ class _MapPageState extends State<MapPage> with TickerProviderStateMixin {
     );
   }
 
-  Marker _buildMarker(LatLng point, String label, Color color) {
-    // Find which bus line and station this marker belongs to
-    BusLine? busLine;
-    Station? station;
-    for (var line in busLines) {
-      for (var s in line.stations) {
-        if (s.location == point) {
-          busLine = line;
-          station = s;
-          break;
-        }
-      }
-      if (station != null) break;
-    }
-
+  Marker _buildMarker(LatLng point, String label, Color color,
+      {bool isTrainStation = false}) {
     return Marker(
       point: point,
       width: 100,
       height: 100,
-      child: GestureDetector(
-        onTap: () {
-          // Removed coordinate logging
-        },
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Container(
-              padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 2),
-              constraints: const BoxConstraints(maxWidth: 90),
-              decoration: BoxDecoration(
-                color: Colors.white,
-                borderRadius: BorderRadius.circular(4),
-                border: Border.all(color: color, width: 1),
-              ),
-              child: Column(
-                children: [
-                  Text(
-                    label,
-                    style: TextStyle(
-                      fontWeight: FontWeight.bold,
-                      fontSize: 12,
-                      color: color,
-                    ),
-                    textAlign: TextAlign.center,
-                    overflow: TextOverflow.ellipsis,
-                    maxLines: 2,
-                  ),
-                  if (busLine != null &&
-                      station != null &&
-                      _animationControllers[busLine.name] != null &&
-                      _animations[busLine.name] != null)
-                    Text(
-                      _getNextBusTime(busLine, station),
-                      style: TextStyle(
-                        fontSize: 10,
-                        color: color,
-                        fontWeight: FontWeight.w500,
-                      ),
-                    ),
-                ],
-              ),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 2),
+            decoration: BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(4),
+              border: Border.all(color: color, width: 1),
             ),
-            const SizedBox(height: 2),
-            Container(
-              padding: const EdgeInsets.all(4),
-              decoration: BoxDecoration(
-                color: Colors.white,
-                shape: BoxShape.circle,
-                border: Border.all(color: color, width: 2),
-              ),
-              child: Icon(
-                Icons.directions_bus,
+            child: Text(
+              label,
+              style: TextStyle(
+                fontWeight: FontWeight.bold,
+                fontSize: 12,
                 color: color,
-                size: 24,
               ),
             ),
-          ],
-        ),
+          ),
+          const SizedBox(height: 2),
+          Container(
+            padding: const EdgeInsets.all(4),
+            decoration: BoxDecoration(
+              color: Colors.white,
+              shape: BoxShape.circle,
+              border: Border.all(color: color, width: 2),
+            ),
+            child: Icon(
+              isTrainStation ? Icons.train : Icons.directions_bus,
+              color: color,
+              size: 24,
+            ),
+          ),
+        ],
       ),
     );
   }
