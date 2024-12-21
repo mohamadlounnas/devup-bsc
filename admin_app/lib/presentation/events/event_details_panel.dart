@@ -4,6 +4,7 @@ import 'package:shared/models/models.dart';
 import 'package:intl/intl.dart';
 import 'package:iconsax/iconsax.dart';
 import 'package:admin_app/main.dart';
+import 'event_attendance_scanner.dart';
 
 class EventDetailsPanel extends StatelessWidget {
   final FacilityEvent event;
@@ -73,6 +74,73 @@ class EventDetailsPanel extends StatelessWidget {
             ),
           ),
           const Divider(height: 1),
+
+          // Quick Actions Section
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+            decoration: BoxDecoration(
+              color: Theme.of(context).colorScheme.surface.withOpacity(0.5),
+              border: Border(
+                bottom: BorderSide(
+                  color: Theme.of(context)
+                      .colorScheme
+                      .outlineVariant
+                      .withOpacity(0.2),
+                ),
+              ),
+            ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  'Quick Actions',
+                  style: Theme.of(context).textTheme.titleSmall?.copyWith(
+                        color: Theme.of(context).colorScheme.primary,
+                      ),
+                ),
+                const SizedBox(height: 8),
+                ListTile(
+                  onTap: () {
+                    showDialog(
+                      context: context,
+                      builder: (context) =>
+                          EventAttendanceScanner(event: event),
+                    );
+                  },
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12),
+                    side: BorderSide(
+                      color: Theme.of(context)
+                          .colorScheme
+                          .outlineVariant
+                          .withOpacity(0.2),
+                    ),
+                  ),
+                  leading: Container(
+                    padding: const EdgeInsets.all(8),
+                    decoration: BoxDecoration(
+                      color: Theme.of(context)
+                          .colorScheme
+                          .primary
+                          .withOpacity(0.1),
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                    child: Icon(
+                      Icons.qr_code_scanner,
+                      color: Theme.of(context).colorScheme.primary,
+                    ),
+                  ),
+                  title: const Text('Check-in Attendee'),
+                  subtitle: const Text('Scan QR code to record attendance'),
+                  trailing: Icon(
+                    Icons.arrow_forward_ios,
+                    size: 16,
+                    color: Theme.of(context).colorScheme.onSurfaceVariant,
+                  ),
+                ),
+              ],
+            ),
+          ),
 
           // Scrollable content
           Expanded(

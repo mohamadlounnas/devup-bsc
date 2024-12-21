@@ -27,17 +27,20 @@ class _DashboardShellState extends State<DashboardShell> {
     // Use LayoutBuilder to make the dashboard responsive
     return LayoutBuilder(
       builder: (context, constraints) {
-        // Check if we should use compact layout (like a drawer) or extended layout (like a rail)
+        // Check if we should use mobile layout (bottom nav), compact layout (collapsed rail), or extended layout (extended rail)
+        final isMobile = constraints.maxWidth < 600;
         final isCompact = constraints.maxWidth < 1200;
 
         return Scaffold(
-          // Show drawer for compact layout
-          drawer: isCompact ? _buildDrawer(context) : null,
+          // Show drawer for compact layout on tablet
+          drawer: !isMobile && isCompact ? _buildDrawer(context) : null,
+          // Show bottom nav bar for mobile
+          bottomNavigationBar: isMobile ? _buildBottomNavBar(context) : null,
           body: SafeArea(
             child: Row(
               children: [
-                // Show navigation rail for extended layout
-                if (!isCompact)
+                // Show navigation rail for tablet and desktop
+                if (!isMobile)
                   Container(
                     decoration: BoxDecoration(
                       border: Border(
@@ -46,7 +49,7 @@ class _DashboardShellState extends State<DashboardShell> {
                         ),
                       ),
                     ),
-                    child: _buildNavigationRail(context),
+                    child: _buildNavigationRail(context, extended: !isCompact),
                   ),
                 // Main content area
                 Expanded(
@@ -58,7 +61,7 @@ class _DashboardShellState extends State<DashboardShell> {
                         padding: const EdgeInsets.symmetric(horizontal: 16),
                         child: Row(
                           children: [
-                            if (isCompact)
+                            if (!isMobile && isCompact)
                               IconButton(
                                 icon: const Icon(Icons.menu),
                                 onPressed: () {
@@ -118,7 +121,6 @@ class _DashboardShellState extends State<DashboardShell> {
                       // Content area
                       Expanded(
                         child: Container(
-                          padding: const EdgeInsets.all(16),
                           decoration: BoxDecoration(
                             color: Theme.of(context)
                                 .colorScheme
@@ -147,13 +149,20 @@ class _DashboardShellState extends State<DashboardShell> {
   }
 
   /// Builds the navigation rail for extended layout
-  Widget _buildNavigationRail(BuildContext context) {
+  Widget _buildNavigationRail(BuildContext context, {bool extended = true}) {
     return ListenableBuilder(
       listenable: PermissionService.instance,
       builder: (context, child) {
         final permissions = PermissionService.instance;
 
-        final destinations = <NavigationRailDestination>[];
+        final destinations = <NavigationRailDestination>[
+          // Profile destination is always available
+          const NavigationRailDestination(
+            icon: Icon(Icons.person_outline),
+            selectedIcon: Icon(Icons.person),
+            label: Text('Profile'),
+          ),
+        ];
 
         // Add hostel-related destinations if user has hostel permissions
         if (permissions.hasHostelPermission) {
@@ -193,7 +202,7 @@ class _DashboardShellState extends State<DashboardShell> {
         }
 
         return NavigationRail(
-          extended: true,
+          extended: extended,
           backgroundColor:
               Theme.of(context).colorScheme.surface.withOpacity(0.1),
           selectedIndex: _getSelectedIndex(context),
@@ -201,14 +210,20 @@ class _DashboardShellState extends State<DashboardShell> {
               _onDestinationSelected(context, index),
           leading: Padding(
             padding: const EdgeInsets.symmetric(vertical: 8),
-            child: Image.asset(
-              'assets/full.png',
-              width: 150,
-              height: 200,
-            ),
+            child: extended
+                ? Image.asset(
+                    'assets/full.png',
+                    width: 150,
+                    height: 48,
+                    fit: BoxFit.contain,
+                  )
+                : const Icon(Icons.flutter_dash, size: 32),
           ),
-          // elevation: 0.1,
-          labelType: NavigationRailLabelType.none,
+          labelType: extended
+              ? NavigationRailLabelType.none
+              : NavigationRailLabelType.all,
+          useIndicator: true,
+          minWidth: 72,
           destinations: destinations,
         );
       },
@@ -222,7 +237,14 @@ class _DashboardShellState extends State<DashboardShell> {
       builder: (context, child) {
         final permissions = PermissionService.instance;
 
-        final destinations = <NavigationDrawerDestination>[];
+        final destinations = <NavigationDrawerDestination>[
+          // Profile destination is always available
+          const NavigationDrawerDestination(
+            icon: Icon(Icons.person_outline),
+            selectedIcon: Icon(Icons.person),
+            label: Text('Profile'),
+          ),
+        ];
 
         // Add hostel-related destinations if user has hostel permissions
         if (permissions.hasHostelPermission) {
@@ -293,28 +315,96 @@ class _DashboardShellState extends State<DashboardShell> {
     );
   }
 
+  /// Builds bottom navigation bar for mobile layout
+  Widget _buildBottomNavBar(BuildContext context) {
+    return ListenableBuilder(
+      listenable: PermissionService.instance,
+      builder: (context, child) {
+        final permissions = PermissionService.instance;
+        final destinations = <NavigationDestination>[
+          // Profile destination is always available
+          const NavigationDestination(
+            icon: Icon(Icons.person_outline),
+            selectedIcon: Icon(Icons.person),
+            label: 'Profile',
+          ),
+        ];
+
+        // Add hostel-related destinations if user has hostel permissions
+        if (permissions.hasHostelPermission) {
+          destinations.addAll([
+            const NavigationDestination(
+              icon: Icon(Icons.hotel_outlined),
+              selectedIcon: Icon(Icons.hotel),
+              label: 'Reservations',
+            ),
+            const NavigationDestination(
+              icon: Icon(Icons.settings_outlined),
+              selectedIcon: Icon(Icons.settings),
+              label: 'Settings',
+            ),
+            const NavigationDestination(
+              icon: Icon(Icons.room_service_outlined),
+              selectedIcon: Icon(Icons.room_service),
+              label: 'Services',
+            ),
+          ]);
+        }
+
+        // Add facility/event-related destinations if user has event permissions
+        if (permissions.hasEventPermission) {
+          destinations.addAll([
+            const NavigationDestination(
+              icon: Icon(Icons.holiday_village_outlined),
+              selectedIcon: Icon(Icons.holiday_village),
+              label: 'Facilities',
+            ),
+            const NavigationDestination(
+              icon: Icon(Icons.event_outlined),
+              selectedIcon: Icon(Icons.event),
+              label: 'Events',
+            ),
+          ]);
+        }
+
+        return NavigationBar(
+          selectedIndex: _getSelectedIndex(context),
+          onDestinationSelected: (index) =>
+              _onDestinationSelected(context, index),
+          destinations: destinations,
+        );
+      },
+    );
+  }
+
   /// Gets the selected index based on the current route
   int _getSelectedIndex(BuildContext context) {
     final location = GoRouterState.of(context).uri.path;
     final permissions = PermissionService.instance;
 
+    // Profile is always the first destination
+    if (location == '/profile') {
+      return 0;
+    }
+
+    // Offset other indices by 1 to account for profile
     if (permissions.hasHostelPermission) {
       switch (location) {
         case '/reservations':
-          return 0;
-        case '/hostelsettings':
           return 1;
-        case '/services':
+        case '/hostelsettings':
           return 2;
+        case '/services':
+          return 3;
         default:
           return 0;
       }
     } else if (permissions.hasEventPermission) {
       switch (location) {
         case '/facilities':
-          return 0;
-        case '/events':
           return 1;
+        case '/events':
+          return 2;
         default:
           return 0;
       }
@@ -326,24 +416,31 @@ class _DashboardShellState extends State<DashboardShell> {
   void _onDestinationSelected(BuildContext context, int index) {
     final permissions = PermissionService.instance;
 
+    // Profile is always the first destination
+    if (index == 0) {
+      context.go('/profile');
+      return;
+    }
+
+    // Offset other indices by 1 to account for profile
     if (permissions.hasHostelPermission) {
       switch (index) {
-        case 0:
+        case 1:
           context.go('/reservations');
           break;
-        case 1:
+        case 2:
           context.go('/hostelsettings');
           break;
-        case 2:
+        case 3:
           context.go('/services');
           break;
       }
     } else if (permissions.hasEventPermission) {
       switch (index) {
-        case 0:
+        case 1:
           context.go('/facilities');
           break;
-        case 1:
+        case 2:
           context.go('/events');
           break;
       }

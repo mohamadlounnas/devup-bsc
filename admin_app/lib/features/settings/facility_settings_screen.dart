@@ -235,174 +235,174 @@ class _FacilitySettingsScreenState extends State<FacilitySettingsScreen> {
             child: Center(
               child: ConstrainedBox(
                 constraints: const BoxConstraints(maxWidth: 800),
-                child: Padding(
-                  padding: const EdgeInsets.all(24),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      // Basic Information Section
-                      _buildSection(
-                        context,
-                        title: 'Basic Information',
-                        icon: Icons.info_outline,
-                        child: Column(
-                          children: [
-                            TextFormField(
-                              controller: _nameController,
-                              decoration: InputDecoration(
-                                labelText: 'Facility Name',
-                                filled: true,
-                                fillColor: Theme.of(context)
-                                    .colorScheme
-                                    .surfaceVariant
-                                    .withOpacity(0.3),
-                                border: OutlineInputBorder(
-                                  borderRadius: BorderRadius.circular(12),
-                                  borderSide: BorderSide.none,
-                                ),
-                                prefixIcon: Icon(
-                                  Icons.business,
-                                  color: Theme.of(context)
-                                      .colorScheme
-                                      .onSurfaceVariant,
-                                ),
-                              ),
-                            ),
-                            const SizedBox(height: 16),
-                            TextFormField(
-                              controller: _descriptionController,
-                              maxLines: 3,
-                              decoration: InputDecoration(
-                                labelText: 'Description',
-                                filled: true,
-                                fillColor: Theme.of(context)
-                                    .colorScheme
-                                    .surfaceVariant
-                                    .withOpacity(0.3),
-                                border: OutlineInputBorder(
-                                  borderRadius: BorderRadius.circular(12),
-                                  borderSide: BorderSide.none,
-                                ),
-                                prefixIcon: Icon(
-                                  Icons.description,
-                                  color: Theme.of(context)
-                                      .colorScheme
-                                      .onSurfaceVariant,
-                                ),
-                                alignLabelWithHint: true,
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-
-                      const SizedBox(height: 10),
-
-                      // Location Section
-                      _buildSection(
-                        context,
-                        title: 'Location',
-                        icon: Icons.location_on_outlined,
-                        child: Column(
-                          children: [
-                            TextFormField(
-                              controller: _locationController,
-                              decoration: InputDecoration(
-                                labelText: 'Location',
-                                filled: true,
-                                fillColor: Theme.of(context)
-                                    .colorScheme
-                                    .surfaceVariant
-                                    .withOpacity(0.3),
-                                border: OutlineInputBorder(
-                                  borderRadius: BorderRadius.circular(12),
-                                  borderSide: BorderSide.none,
-                                ),
-                                prefixIcon: Icon(
-                                  Icons.map,
-                                  color: Theme.of(context)
-                                      .colorScheme
-                                      .onSurfaceVariant,
-                                ),
-                              ),
-                            ),
-                            if (_facility?.location != null) ...[
-                              const SizedBox(height: 16),
-                              ClipRRect(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    // Basic Information Section
+                    _buildSection(
+                      context,
+                      title: 'Basic Information',
+                      icon: Icons.info_outline,
+                      child: Column(
+                        children: [
+                          TextFormField(
+                            controller: _nameController,
+                            decoration: InputDecoration(
+                              labelText: 'Facility Name',
+                              filled: true,
+                              fillColor: Theme.of(context)
+                                  .colorScheme
+                                  .surfaceVariant
+                                  .withOpacity(0.3),
+                              border: OutlineInputBorder(
                                 borderRadius: BorderRadius.circular(12),
-                                child: SizedBox(
-                                  height: 200,
-                                  child: FlutterMap(
-                                    options: MapOptions(
-                                      initialCenter: LatLng(
-                                        double.parse(
-                                            _facility!.location!.split(',')[0]),
-                                        double.parse(
-                                            _facility!.location!.split(',')[1]),
-                                      ),
-                                      initialZoom: 13,
-                                    ),
-                                    children: [
-                                      TileLayer(
-                                        urlTemplate:
-                                            'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
-                                      ),
-                                      MarkerLayer(
-                                        markers: [
-                                          Marker(
-                                            point: LatLng(
-                                              double.tryParse(_facility!
-                                                      .location!
-                                                      .split(',')[0]) ??
-                                                  0,
-                                              double.tryParse(_facility!
-                                                      .location!
-                                                      .split(',')[1]) ??
-                                                  0,
-                                            ),
-                                            child: const Icon(
-                                              Icons.location_on,
-                                              color: Colors.red,
-                                              size: 40,
-                                            ),
-                                          ),
-                                        ],
-                                      ),
-                                    ],
-                                  ),
-                                ),
+                                borderSide: BorderSide.none,
                               ),
-                            ],
-                          ],
-                        ),
-                      ),
-
-                      const SizedBox(height: 24),
-
-                      // Save Button
-                      SizedBox(
-                        width: double.infinity,
-                        child: FilledButton.icon(
-                          style: FilledButton.styleFrom(
-                            padding: const EdgeInsets.symmetric(vertical: 16),
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(12),
+                              prefixIcon: Icon(
+                                Icons.business,
+                                color: Theme.of(context)
+                                    .colorScheme
+                                    .onSurfaceVariant,
+                              ),
                             ),
                           ),
-                          onPressed: _isLoading ? null : _updateFacility,
-                          icon: _isLoading
-                              ? const SizedBox(
-                                  width: 20,
-                                  height: 20,
-                                  child:
-                                      CircularProgressIndicator(strokeWidth: 2),
-                                )
-                              : const Icon(Icons.save),
-                          label: const Text('Save Changes'),
-                        ),
+                          const SizedBox(height: 16),
+                          TextFormField(
+                            controller: _descriptionController,
+                            maxLines: 3,
+                            decoration: InputDecoration(
+                              labelText: 'Description',
+                              filled: true,
+                              fillColor: Theme.of(context)
+                                  .colorScheme
+                                  .surfaceVariant
+                                  .withOpacity(0.3),
+                              border: OutlineInputBorder(
+                                borderRadius: BorderRadius.circular(12),
+                                borderSide: BorderSide.none,
+                              ),
+                              prefixIcon: Icon(
+                                Icons.description,
+                                color: Theme.of(context)
+                                    .colorScheme
+                                    .onSurfaceVariant,
+                              ),
+                              alignLabelWithHint: true,
+                            ),
+                          ),
+                        ],
                       ),
-                    ],
-                  ),
+                    ),
+
+                    const SizedBox(height: 10),
+
+                    // Location Section
+                    _buildSection(
+                      context,
+                      title: 'Location',
+                      icon: Icons.location_on_outlined,
+                      child: Column(
+                        children: [
+                          TextFormField(
+                            controller: _locationController,
+                            decoration: InputDecoration(
+                              labelText: 'Location',
+                              filled: true,
+                              fillColor: Theme.of(context)
+                                  .colorScheme
+                                  .surfaceVariant
+                                  .withOpacity(0.3),
+                              border: OutlineInputBorder(
+                                borderRadius: BorderRadius.circular(12),
+                                borderSide: BorderSide.none,
+                              ),
+                              prefixIcon: Icon(
+                                Icons.map,
+                                color: Theme.of(context)
+                                    .colorScheme
+                                    .onSurfaceVariant,
+                              ),
+                            ),
+                          ),
+                          if (_facility?.location != null) ...[
+                            const SizedBox(height: 16),
+                            ClipRRect(
+                              borderRadius: BorderRadius.circular(12),
+                              child: SizedBox(
+                                height: 200,
+                                child: FlutterMap(
+                                  options: MapOptions(
+                                    initialCenter: LatLng(
+                                      double.parse(
+                                          _facility!.location!.split(',')[0]),
+                                      double.parse(
+                                          _facility!.location!.split(',')[1]),
+                                    ),
+                                    initialZoom: 13,
+                                  ),
+                                  children: [
+                                    TileLayer(
+                                      urlTemplate:
+                                          'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
+                                    ),
+                                    MarkerLayer(
+                                      markers: [
+                                        Marker(
+                                          point: LatLng(
+                                            double.tryParse(_facility!.location!
+                                                    .split(',')[0]) ??
+                                                0,
+                                            double.tryParse(_facility!.location!
+                                                    .split(',')[1]) ??
+                                                0,
+                                          ),
+                                          child: const Icon(
+                                            Icons.location_on,
+                                            color: Colors.red,
+                                            size: 40,
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            ),
+                          ],
+                        ],
+                      ),
+                    ),
+
+                    const SizedBox(height: 24),
+
+                    // Save Button
+                    Container(
+                      padding: const EdgeInsets.only(
+                        left: 16,
+                        right: 16,
+                        bottom: 24,
+                      ),
+                      width: double.infinity,
+                      child: FilledButton.icon(
+                        style: FilledButton.styleFrom(
+                          padding: const EdgeInsets.symmetric(vertical: 16),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                        ),
+                        onPressed: _isLoading ? null : _updateFacility,
+                        icon: _isLoading
+                            ? const SizedBox(
+                                width: 20,
+                                height: 20,
+                                child:
+                                    CircularProgressIndicator(strokeWidth: 2),
+                              )
+                            : const Icon(Icons.save),
+                        label: const Text('Save Changes'),
+                      ),
+                    ),
+                  ],
                 ),
               ),
             ),
@@ -419,7 +419,7 @@ class _FacilitySettingsScreenState extends State<FacilitySettingsScreen> {
     required Widget child,
   }) {
     return Card(
-      margin: const EdgeInsets.all(24),
+      margin: const EdgeInsets.only(top: 16, left: 16, right: 16),
       color: Theme.of(context).colorScheme.surface.withOpacity(0.5),
       elevation: 0,
       shape: RoundedRectangleBorder(
