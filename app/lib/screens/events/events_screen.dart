@@ -214,7 +214,7 @@ class _EventsScreenState extends State<EventsScreen> with TickerProviderStateMix
                 // Tab bar
                 TabBar(
                   controller: _tabController,
-                  tabs: [
+                  tabs: const [
                     Tab(
                       child: Row(
                         mainAxisSize: MainAxisSize.min,
@@ -433,7 +433,7 @@ class _EventsScreenState extends State<EventsScreen> with TickerProviderStateMix
       onExit: (_) => setState(() => _isSearchExpanded = false),
       child: Container(
         height: 32,
-        margin: const EdgeInsets.only(right: 12),
+        // margin: const EdgeInsets.only(right: 12),
         child: TextField(
           controller: _searchController,
           decoration: InputDecoration(
@@ -842,7 +842,7 @@ Join us at this amazing event!
   Widget _buildCalendarView(List<FacilityEvent> events) {
     // use CalendarView widget
     return Card(
-      margin: EdgeInsets.all(12),
+      margin: const EdgeInsets.all(12),
       child: CalendarView(
         selectedDay: DateTime.now(),
         onDaySelected: (day) {
@@ -876,18 +876,18 @@ Join us at this amazing event!
                   size: 64,
                   color: Theme.of(context).colorScheme.secondary,
                 ),
-                SizedBox(height: 16),
+                const SizedBox(height: 16),
                 Text(
                   'Please login to view your events',
                   style: Theme.of(context).textTheme.titleLarge,
                 ),
-                SizedBox(height: 24),
+                const SizedBox(height: 24),
                 FilledButton.icon(
                   onPressed: () {
                     // TODO: Navigate to login screen
                   },
-                  icon: Icon(Icons.login),
-                  label: Text('Login'),
+                  icon: const Icon(Icons.login),
+                  label: const Text('Login'),
                 ),
               ],
             ),
@@ -912,12 +912,12 @@ Join us at this amazing event!
                   size: 64,
                   color: Theme.of(context).colorScheme.secondary,
                 ),
-                SizedBox(height: 16),
+                const SizedBox(height: 16),
                 Text(
                   'No registered events',
                   style: Theme.of(context).textTheme.titleLarge,
                 ),
-                SizedBox(height: 8),
+                const SizedBox(height: 8),
                 Text(
                   'Register for events to see them here',
                   style: Theme.of(context).textTheme.bodyMedium?.copyWith(
@@ -930,7 +930,7 @@ Join us at this amazing event!
         }
 
         return ListView.builder(
-          padding: EdgeInsets.symmetric(
+          padding: const EdgeInsets.symmetric(
             horizontal: 16,
             vertical: 16,
           ),
@@ -941,7 +941,7 @@ Join us at this amazing event!
             final ticketNumber = event.id.substring(0, 8).toUpperCase();
             
             return Padding(
-              padding: EdgeInsets.only(bottom: 16),
+              padding: const EdgeInsets.only(bottom: 16),
               child: EventTicketCard(
                 event: event,
                 ticketNumber: ticketNumber,

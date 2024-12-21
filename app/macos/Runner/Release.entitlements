@@ -16,5 +16,24 @@
 	<true/>
 	<key>com.apple.security.files.user-selected.read-write</key>
 	<true/>
+	<!-- geolocator -->
+	<!-- Location permissions for geolocator plugin -->
+	<!-- Allows the app to access device location services -->
+	<!-- Required for features like GPS tracking, location-based services -->
+	<!-- and geofencing capabilities -->
+	<key>com.apple.security.personal-information.location</key>
+	<true/>
+	<key>NSLocationUsageDescription</key>
+	<string>This app needs access to location.</string>
+	<!-- Temporary location usage descriptions -->
+	<!-- Specifies purpose-based location access requests -->
+	<!-- Required for iOS 14+ when requesting temporary precise location -->
+	<!-- Each key represents a unique purpose for location access -->
+	<key>NSLocationTemporaryUsageDescriptionDictionary</key>
+	<dict>
+		<key>PreciseLocationPurpose</key>
+		<string>Temporary precise location is needed to provide accurate location-based services</string>
+	</dict>
+	
 </dict>
 </plist>

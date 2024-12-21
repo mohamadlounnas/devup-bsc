@@ -1,7 +1,5 @@
 import 'dart:async';
 import 'package:app/helper.dart';
-import 'package:app/screens/map_screen.dart';
-import 'package:fluentui_system_icons/fluentui_system_icons.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:iconsax/iconsax.dart';
@@ -10,6 +8,7 @@ import 'package:shared/shared.dart';
 import 'package:url_launcher/url_launcher.dart';
 import '../../providers/facilities_provider.dart';
 import '../../widgets/facility_card.dart';
+import '../profile/profile_screen.dart';
 
 /// A screen that displays a list of facilities with filtering and search capabilities
 class FacilitiesScreen extends StatefulWidget {
@@ -129,9 +128,9 @@ class _FacilitiesScreenState extends State<FacilitiesScreen> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            Padding(
-              padding: const EdgeInsets.only(left: 16, top: 8),
-              child: CustomNavbar(),
+            const Padding(
+              padding: EdgeInsets.only(left: 16, top: 8),
+              child: const CustomNavbar(),
             ),
             Padding(
               padding: const EdgeInsets.only(right: 16, top: 8),
