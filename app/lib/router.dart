@@ -51,6 +51,7 @@ final router = GoRouter(
 
     return null;
   },
+  
   routes: [
     // Auth routes
     GoRoute(

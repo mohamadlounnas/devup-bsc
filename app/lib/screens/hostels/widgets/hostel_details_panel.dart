@@ -374,6 +374,10 @@ class HostelDetailsPanel extends StatelessWidget {
             color: theme.colorScheme.primary,
             borderRadius: BorderRadius.circular(16),
           ),
+          constraints: const BoxConstraints(
+            maxWidth: 120,
+            minWidth: 50,
+          ),
           child: Text(
             hostel.name,
             style: theme.textTheme.labelSmall?.copyWith(

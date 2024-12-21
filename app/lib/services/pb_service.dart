@@ -1,12 +1,16 @@
-import 'package:flutter/foundation.dart';
 import 'package:pocketbase/pocketbase.dart';
-import 'package:shared/shared.dart';
 
-/// Service class for managing PocketBase state and operations
-class PbService extends ChangeNotifier {
-  final PocketBase _pb;
-  
-  PbService(this._pb);
+/// Global PocketBase instance
+final pb = PocketBase('YOUR_POCKETBASE_URL');
 
-  // TODO: Add methods for real-time subscriptions and data fetching
+/// Service for interacting with the PocketBase API
+class PbService {
+  /// The PocketBase instance
+  final PocketBase pb;
+
+  /// Creates a new PocketBase service
+  PbService(this.pb);
+
+  /// Gets the collection with the given name
+  RecordService collection(String name) => pb.collection(name);
 } 
