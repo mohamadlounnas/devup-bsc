@@ -30,7 +30,10 @@ mixin _$FacilityEventRegistration {
   @JsonKey(name: 'event')
   String get eventId => throw _privateConstructorUsedError;
   @JsonKey(name: 'event_expand')
-  FacilityEvent? get event => throw _privateConstructorUsedError;
+  FacilityEvent? get event =>
+      throw _privateConstructorUsedError; // attended (datetime?)
+  @JsonKey(name: 'attended')
+  DateTime? get attended => throw _privateConstructorUsedError;
   @JsonKey(name: 'created')
   DateTime get created => throw _privateConstructorUsedError;
   @JsonKey(name: 'updated')
@@ -58,6 +61,7 @@ abstract class $FacilityEventRegistrationCopyWith<$Res> {
       @JsonKey(name: 'user_expand') User? user,
       @JsonKey(name: 'event') String eventId,
       @JsonKey(name: 'event_expand') FacilityEvent? event,
+      @JsonKey(name: 'attended') DateTime? attended,
       @JsonKey(name: 'created') DateTime created,
       @JsonKey(name: 'updated') DateTime updated});
 
@@ -86,6 +90,7 @@ class _$FacilityEventRegistrationCopyWithImpl<$Res,
     Object? user = freezed,
     Object? eventId = null,
     Object? event = freezed,
+    Object? attended = freezed,
     Object? created = null,
     Object? updated = null,
   }) {
@@ -110,6 +115,10 @@ class _$FacilityEventRegistrationCopyWithImpl<$Res,
           ? _value.event
           : event // ignore: cast_nullable_to_non_nullable
               as FacilityEvent?,
+      attended: freezed == attended
+          ? _value.attended
+          : attended // ignore: cast_nullable_to_non_nullable
+              as DateTime?,
       created: null == created
           ? _value.created
           : created // ignore: cast_nullable_to_non_nullable
@@ -165,6 +174,7 @@ abstract class _$$FacilityEventRegistrationImplCopyWith<$Res>
       @JsonKey(name: 'user_expand') User? user,
       @JsonKey(name: 'event') String eventId,
       @JsonKey(name: 'event_expand') FacilityEvent? event,
+      @JsonKey(name: 'attended') DateTime? attended,
       @JsonKey(name: 'created') DateTime created,
       @JsonKey(name: 'updated') DateTime updated});
 
@@ -194,6 +204,7 @@ class __$$FacilityEventRegistrationImplCopyWithImpl<$Res>
     Object? user = freezed,
     Object? eventId = null,
     Object? event = freezed,
+    Object? attended = freezed,
     Object? created = null,
     Object? updated = null,
   }) {
@@ -218,6 +229,10 @@ class __$$FacilityEventRegistrationImplCopyWithImpl<$Res>
           ? _value.event
           : event // ignore: cast_nullable_to_non_nullable
               as FacilityEvent?,
+      attended: freezed == attended
+          ? _value.attended
+          : attended // ignore: cast_nullable_to_non_nullable
+              as DateTime?,
       created: null == created
           ? _value.created
           : created // ignore: cast_nullable_to_non_nullable
@@ -239,6 +254,7 @@ class _$FacilityEventRegistrationImpl implements _FacilityEventRegistration {
       @JsonKey(name: 'user_expand') this.user,
       @JsonKey(name: 'event') required this.eventId,
       @JsonKey(name: 'event_expand') this.event,
+      @JsonKey(name: 'attended') this.attended,
       @JsonKey(name: 'created') required this.created,
       @JsonKey(name: 'updated') required this.updated});
 
@@ -260,6 +276,10 @@ class _$FacilityEventRegistrationImpl implements _FacilityEventRegistration {
   @override
   @JsonKey(name: 'event_expand')
   final FacilityEvent? event;
+// attended (datetime?)
+  @override
+  @JsonKey(name: 'attended')
+  final DateTime? attended;
   @override
   @JsonKey(name: 'created')
   final DateTime created;
@@ -269,7 +289,7 @@ class _$FacilityEventRegistrationImpl implements _FacilityEventRegistration {
 
   @override
   String toString() {
-    return 'FacilityEventRegistration(id: $id, userId: $userId, user: $user, eventId: $eventId, event: $event, created: $created, updated: $updated)';
+    return 'FacilityEventRegistration(id: $id, userId: $userId, user: $user, eventId: $eventId, event: $event, attended: $attended, created: $created, updated: $updated)';
   }
 
   @override
@@ -282,14 +302,16 @@ class _$FacilityEventRegistrationImpl implements _FacilityEventRegistration {
             (identical(other.user, user) || other.user == user) &&
             (identical(other.eventId, eventId) || other.eventId == eventId) &&
             (identical(other.event, event) || other.event == event) &&
+            (identical(other.attended, attended) ||
+                other.attended == attended) &&
             (identical(other.created, created) || other.created == created) &&
             (identical(other.updated, updated) || other.updated == updated));
   }
 
   @JsonKey(includeFromJson: false, includeToJson: false)
   @override
-  int get hashCode => Object.hash(
-      runtimeType, id, userId, user, eventId, event, created, updated);
+  int get hashCode => Object.hash(runtimeType, id, userId, user, eventId, event,
+      attended, created, updated);
 
   /// Create a copy of FacilityEventRegistration
   /// with the given fields replaced by the non-null parameter values.
@@ -315,6 +337,7 @@ abstract class _FacilityEventRegistration implements FacilityEventRegistration {
           @JsonKey(name: 'user_expand') final User? user,
           @JsonKey(name: 'event') required final String eventId,
           @JsonKey(name: 'event_expand') final FacilityEvent? event,
+          @JsonKey(name: 'attended') final DateTime? attended,
           @JsonKey(name: 'created') required final DateTime created,
           @JsonKey(name: 'updated') required final DateTime updated}) =
       _$FacilityEventRegistrationImpl;
@@ -336,7 +359,10 @@ abstract class _FacilityEventRegistration implements FacilityEventRegistration {
   String get eventId;
   @override
   @JsonKey(name: 'event_expand')
-  FacilityEvent? get event;
+  FacilityEvent? get event; // attended (datetime?)
+  @override
+  @JsonKey(name: 'attended')
+  DateTime? get attended;
   @override
   @JsonKey(name: 'created')
   DateTime get created;

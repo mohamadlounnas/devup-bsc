@@ -42,6 +42,8 @@ mixin _$FacilityEvent {
   String? get address => throw _privateConstructorUsedError;
   @JsonKey(name: 'remaining_seats')
   double? get remainingSeats => throw _privateConstructorUsedError;
+  @JsonKey(name: 'attended')
+  DateTime? get attended => throw _privateConstructorUsedError;
   @JsonKey(name: 'created')
   DateTime get created => throw _privateConstructorUsedError;
   @JsonKey(name: 'updated')
@@ -75,6 +77,7 @@ abstract class $FacilityEventCopyWith<$Res> {
       @JsonKey(name: 'location') String? location,
       @JsonKey(name: 'address') String? address,
       @JsonKey(name: 'remaining_seats') double? remainingSeats,
+      @JsonKey(name: 'attended') DateTime? attended,
       @JsonKey(name: 'created') DateTime created,
       @JsonKey(name: 'updated') DateTime updated});
 }
@@ -105,6 +108,7 @@ class _$FacilityEventCopyWithImpl<$Res, $Val extends FacilityEvent>
     Object? location = freezed,
     Object? address = freezed,
     Object? remainingSeats = freezed,
+    Object? attended = freezed,
     Object? created = null,
     Object? updated = null,
   }) {
@@ -153,6 +157,10 @@ class _$FacilityEventCopyWithImpl<$Res, $Val extends FacilityEvent>
           ? _value.remainingSeats
           : remainingSeats // ignore: cast_nullable_to_non_nullable
               as double?,
+      attended: freezed == attended
+          ? _value.attended
+          : attended // ignore: cast_nullable_to_non_nullable
+              as DateTime?,
       created: null == created
           ? _value.created
           : created // ignore: cast_nullable_to_non_nullable
@@ -185,6 +193,7 @@ abstract class _$$FacilityEventImplCopyWith<$Res>
       @JsonKey(name: 'location') String? location,
       @JsonKey(name: 'address') String? address,
       @JsonKey(name: 'remaining_seats') double? remainingSeats,
+      @JsonKey(name: 'attended') DateTime? attended,
       @JsonKey(name: 'created') DateTime created,
       @JsonKey(name: 'updated') DateTime updated});
 }
@@ -213,6 +222,7 @@ class __$$FacilityEventImplCopyWithImpl<$Res>
     Object? location = freezed,
     Object? address = freezed,
     Object? remainingSeats = freezed,
+    Object? attended = freezed,
     Object? created = null,
     Object? updated = null,
   }) {
@@ -261,6 +271,10 @@ class __$$FacilityEventImplCopyWithImpl<$Res>
           ? _value.remainingSeats
           : remainingSeats // ignore: cast_nullable_to_non_nullable
               as double?,
+      attended: freezed == attended
+          ? _value.attended
+          : attended // ignore: cast_nullable_to_non_nullable
+              as DateTime?,
       created: null == created
           ? _value.created
           : created // ignore: cast_nullable_to_non_nullable
@@ -288,6 +302,7 @@ class _$FacilityEventImpl implements _FacilityEvent {
       @JsonKey(name: 'location') this.location,
       @JsonKey(name: 'address') this.address,
       @JsonKey(name: 'remaining_seats') this.remainingSeats,
+      @JsonKey(name: 'attended') this.attended,
       @JsonKey(name: 'created') required this.created,
       @JsonKey(name: 'updated') required this.updated});
 
@@ -328,6 +343,9 @@ class _$FacilityEventImpl implements _FacilityEvent {
   @JsonKey(name: 'remaining_seats')
   final double? remainingSeats;
   @override
+  @JsonKey(name: 'attended')
+  final DateTime? attended;
+  @override
   @JsonKey(name: 'created')
   final DateTime created;
   @override
@@ -336,7 +354,7 @@ class _$FacilityEventImpl implements _FacilityEvent {
 
   @override
   String toString() {
-    return 'FacilityEvent(id: $id, name: $name, description: $description, body: $body, image: $image, started: $started, ended: $ended, seats: $seats, location: $location, address: $address, remainingSeats: $remainingSeats, created: $created, updated: $updated)';
+    return 'FacilityEvent(id: $id, name: $name, description: $description, body: $body, image: $image, started: $started, ended: $ended, seats: $seats, location: $location, address: $address, remainingSeats: $remainingSeats, attended: $attended, created: $created, updated: $updated)';
   }
 
   @override
@@ -358,6 +376,8 @@ class _$FacilityEventImpl implements _FacilityEvent {
             (identical(other.address, address) || other.address == address) &&
             (identical(other.remainingSeats, remainingSeats) ||
                 other.remainingSeats == remainingSeats) &&
+            (identical(other.attended, attended) ||
+                other.attended == attended) &&
             (identical(other.created, created) || other.created == created) &&
             (identical(other.updated, updated) || other.updated == updated));
   }
@@ -377,6 +397,7 @@ class _$FacilityEventImpl implements _FacilityEvent {
       location,
       address,
       remainingSeats,
+      attended,
       created,
       updated);
 
@@ -409,6 +430,7 @@ abstract class _FacilityEvent implements FacilityEvent {
           @JsonKey(name: 'location') final String? location,
           @JsonKey(name: 'address') final String? address,
           @JsonKey(name: 'remaining_seats') final double? remainingSeats,
+          @JsonKey(name: 'attended') final DateTime? attended,
           @JsonKey(name: 'created') required final DateTime created,
           @JsonKey(name: 'updated') required final DateTime updated}) =
       _$FacilityEventImpl;
@@ -449,6 +471,9 @@ abstract class _FacilityEvent implements FacilityEvent {
   @override
   @JsonKey(name: 'remaining_seats')
   double? get remainingSeats;
+  @override
+  @JsonKey(name: 'attended')
+  DateTime? get attended;
   @override
   @JsonKey(name: 'created')
   DateTime get created;

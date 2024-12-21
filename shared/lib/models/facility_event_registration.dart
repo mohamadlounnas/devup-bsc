@@ -29,6 +29,8 @@ class FacilityEventRegistration with _$FacilityEventRegistration {
     @JsonKey(name: 'user_expand') User? user,
     @JsonKey(name: 'event') required String eventId,
     @JsonKey(name: 'event_expand') FacilityEvent? event,
+    // attended (datetime?)
+    @JsonKey(name: 'attended') DateTime? attended,
     @JsonKey(name: 'created') required DateTime created,
     @JsonKey(name: 'updated') required DateTime updated,
   }) = _FacilityEventRegistration;

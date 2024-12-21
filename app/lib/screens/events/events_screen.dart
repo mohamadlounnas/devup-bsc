@@ -1,6 +1,7 @@
 import 'dart:async';
 
 import 'package:app/providers/event_registration_provider.dart';
+import 'package:app/screens/map_screen.dart';
 import 'package:app/services/auth_service.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
@@ -10,6 +11,11 @@ import 'widgets/calendar_view.dart';
 import 'widgets/event_card.dart';
 import 'widgets/event_details_panel.dart';
 import 'widgets/timeline_view.dart';
+import 'widgets/event_ticket_card.dart';
+import 'package:share_plus/share_plus.dart';
+import 'package:add_2_calendar/add_2_calendar.dart';
+import 'package:flutter/services.dart';
+import 'package:intl/intl.dart';
 
 /// Screen that displays a list of facility events with real-time updates
 class EventsScreen extends StatefulWidget {
@@ -19,7 +25,12 @@ class EventsScreen extends StatefulWidget {
   State<EventsScreen> createState() => _EventsScreenState();
 }
 
-class _EventsScreenState extends State<EventsScreen> with SingleTickerProviderStateMixin {
+enum EventsTab {
+  all,
+  myEvents,
+}
+
+class _EventsScreenState extends State<EventsScreen> with TickerProviderStateMixin {
   late final EventsProvider _eventsProvider;
   late final AnimationController _viewModeController;
   late final Animation<double> _viewModeAnimation;
@@ -33,6 +44,8 @@ class _EventsScreenState extends State<EventsScreen> with SingleTickerProviderSt
   DateTimeRange? _selectedDateRange;
   bool _isSearchExpanded = false;
   FacilityEvent? _selectedEvent;
+  late final TabController _tabController = TabController(length: 2, vsync: this);
+  EventsTab _currentTab = EventsTab.all;
 
   @override
   void initState() {
@@ -41,7 +54,20 @@ class _EventsScreenState extends State<EventsScreen> with SingleTickerProviderSt
     _eventsProvider.subscribeToEvents();
     _searchController.addListener(_handleSearch);
 
-    // Load registrations for current user
+    // Load registrations whenever events change
+    _eventsProvider.addListener(() {
+      final authProvider = context.read<AuthService>();
+      final registrationProvider = context.read<EventRegistrationProvider>();
+      
+      if (authProvider.currentUser != null) {
+        registrationProvider.loadRegistrations(
+          authProvider.currentUser!.id,
+          _eventsProvider.events.map((e) => e.id).toList(),
+        );
+      }
+    });
+
+    // Initial load
     WidgetsBinding.instance.addPostFrameCallback((_) {
       final authProvider = context.read<AuthService>();
       final registrationProvider = context.read<EventRegistrationProvider>();
@@ -62,6 +88,12 @@ class _EventsScreenState extends State<EventsScreen> with SingleTickerProviderSt
       parent: _viewModeController,
       curve: Curves.easeInOutCubic,
     );
+
+    _tabController.addListener(() {
+      setState(() {
+        _currentTab = EventsTab.values[_tabController.index];
+      });
+    });
   }
 
   @override
@@ -70,6 +102,7 @@ class _EventsScreenState extends State<EventsScreen> with SingleTickerProviderSt
     _searchController.dispose();
     _scrollController.dispose();
     _viewModeController.dispose();
+    _tabController.dispose();
     super.dispose();
   }
 
@@ -178,9 +211,41 @@ class _EventsScreenState extends State<EventsScreen> with SingleTickerProviderSt
               children: [
                 // Modern header with search and filters
                 _buildHeader(colorScheme),
-                // Events List with optimized rendering
+                // Tab bar
+                TabBar(
+                  controller: _tabController,
+                  tabs: [
+                    Tab(
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Icon(Icons.event),
+                          SizedBox(width: 8),
+                          Text('All Events'),
+                        ],
+                      ),
+                    ),
+                    Tab(
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Icon(Icons.bookmark),
+                          SizedBox(width: 8),
+                          Text('My Events'),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
+                // Events List with tabs
                 Expanded(
-                  child: _buildEventsList(),
+                  child: TabBarView(
+                    controller: _tabController,
+                    children: [
+                      _buildEventsList(),
+                      _buildMyEventsList(),
+                    ],
+                  ),
                 ),
               ],
             ),
@@ -198,14 +263,152 @@ class _EventsScreenState extends State<EventsScreen> with SingleTickerProviderSt
 
   Widget _buildHeader(ColorScheme colorScheme) {
     return Container(
+      decoration: BoxDecoration(
+        color: Theme.of(context).scaffoldBackgroundColor,
+        boxShadow: [
+          BoxShadow(
+            color: colorScheme.shadow.withOpacity(0.05),
+            blurRadius: 10,
+            offset: const Offset(0, 4),
+          ),
+        ],
+      ),
       child: SafeArea(
         bottom: false,
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
             Padding(
-              padding: const EdgeInsets.only(right: 16, top: 8),
-              child: _buildSearchAndFilters(colorScheme),
+              padding: const EdgeInsets.fromLTRB(20, 16, 20, 0),
+              child: Row(
+                children: [
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          'Events',
+                          style: Theme.of(context).textTheme.headlineMedium?.copyWith(
+                            fontWeight: FontWeight.bold,
+                            color: colorScheme.onBackground,
+                          ),
+                        ),
+                        const SizedBox(height: 4),
+                        Text(
+                          'Discover and join amazing events',
+                          style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                            color: colorScheme.onSurfaceVariant,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(width: 16),
+                  // View mode toggle with animation
+                  Container(
+                    decoration: BoxDecoration(
+                      color: colorScheme.surfaceVariant.withOpacity(0.5),
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    child: IconButton(
+                      onPressed: _toggleViewMode,
+                      icon: AnimatedIcon(
+                        icon: AnimatedIcons.list_view,
+                        progress: _viewModeAnimation,
+                        semanticLabel: 'Toggle view mode',
+                        color: colorScheme.primary,
+                      ),
+                      tooltip: _getViewModeTooltip(),
+                    ),
+                  ),
+                  const SizedBox(width: 8),
+                  // Map view button
+                  Container(
+                    decoration: BoxDecoration(
+                      color: colorScheme.surfaceVariant.withOpacity(0.5),
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    child: IconButton(
+                      onPressed: () {
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (context) => const MapScreen(),
+                          ),
+                        );
+                      },
+                      icon: const Icon(Icons.map_outlined),
+                      tooltip: 'Map View',
+                      color: colorScheme.primary,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(height: 16),
+            // Search and filters section
+            SingleChildScrollView(
+              scrollDirection: Axis.horizontal,
+              padding: const EdgeInsets.symmetric(horizontal: 20),
+              child: Row(
+                children: [
+                  // Animated search bar
+                  AnimatedContainer(
+                    duration: const Duration(milliseconds: 200),
+                    width: _isSearchExpanded ? 300 : 200,
+                    margin: const EdgeInsets.only(right: 16),
+                    child: _buildSearchBar(colorScheme),
+                  ),
+                  // Filter chips with hover effect
+                  _buildAnimatedFilterChip(
+                    label: 'All',
+                    icon: Icons.event_rounded,
+                    isSelected: _currentFilter == EventFilter.all,
+                    onSelected: (_) => setState(() => _currentFilter = EventFilter.all),
+                  ),
+                  const SizedBox(width: 8),
+                  _buildAnimatedFilterChip(
+                    label: 'Upcoming',
+                    icon: Icons.upcoming_rounded,
+                    isSelected: _currentFilter == EventFilter.upcoming,
+                    onSelected: (_) => setState(() => _currentFilter = EventFilter.upcoming),
+                  ),
+                  const SizedBox(width: 8),
+                  _buildAnimatedFilterChip(
+                    label: 'Ongoing',
+                    icon: Icons.play_circle_outline_rounded,
+                    isSelected: _currentFilter == EventFilter.ongoing,
+                    onSelected: (_) => setState(() => _currentFilter = EventFilter.ongoing),
+                  ),
+                  const SizedBox(width: 8),
+                  _buildAnimatedFilterChip(
+                    label: 'Past',
+                    icon: Icons.history_rounded,
+                    isSelected: _currentFilter == EventFilter.past,
+                    onSelected: (_) => setState(() => _currentFilter = EventFilter.past),
+                  ),
+                  const SizedBox(width: 12),
+                  // Vertical divider with gradient
+                  Container(
+                    height: 32,
+                    width: 1,
+                    decoration: BoxDecoration(
+                      gradient: LinearGradient(
+                        begin: Alignment.topCenter,
+                        end: Alignment.bottomCenter,
+                        colors: [
+                          colorScheme.outlineVariant.withOpacity(0),
+                          colorScheme.outlineVariant.withOpacity(0.2),
+                          colorScheme.outlineVariant.withOpacity(0),
+                        ],
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+                  // Animated date range chip
+                  _buildAnimatedDateRangeChip(),
+                ],
+              ),
             ),
           ],
         ),
@@ -213,66 +416,15 @@ class _EventsScreenState extends State<EventsScreen> with SingleTickerProviderSt
     );
   }
 
-  Widget _buildSearchAndFilters(ColorScheme colorScheme) {
-    return SingleChildScrollView(
-      scrollDirection: Axis.horizontal,
-      padding: const EdgeInsets.only(left: 20),
-      child: Row(
-        children: [
-
-                  IconButton(
-                    onPressed: _toggleViewMode,
-                    icon: AnimatedIcon(
-                      icon: AnimatedIcons.list_view,
-                      progress: _viewModeAnimation,
-                      semanticLabel: 'Toggle view mode',
-                    ),
-                    tooltip: 'Change view mode',
-                  ),
-          // Optimized search bar with animation
-          AnimatedContainer(
-            duration: const Duration(milliseconds: 200),
-            width: _isSearchExpanded ? 300 : 200,
-            child: _buildSearchBar(colorScheme),
-          ),
-          _buildFilterChip(
-            label: 'All',
-            icon: Icons.event_rounded,
-            isSelected: _currentFilter == EventFilter.all,
-            onSelected: (_) => setState(() => _currentFilter = EventFilter.all),
-          ),
-          const SizedBox(width: 12),
-          _buildFilterChip(
-            label: 'Upcoming',
-            icon: Icons.upcoming_rounded,
-            isSelected: _currentFilter == EventFilter.upcoming,
-            onSelected: (_) => setState(() => _currentFilter = EventFilter.upcoming),
-          ),
-          const SizedBox(width: 12),
-          _buildFilterChip(
-            label: 'Ongoing',
-            icon: Icons.play_circle_outline_rounded,
-            isSelected: _currentFilter == EventFilter.ongoing,
-            onSelected: (_) => setState(() => _currentFilter = EventFilter.ongoing),
-          ),
-          const SizedBox(width: 12),
-          _buildFilterChip(
-            label: 'Past',
-            icon: Icons.history_rounded,
-            isSelected: _currentFilter == EventFilter.past,
-            onSelected: (_) => setState(() => _currentFilter = EventFilter.past),
-          ),
-          const SizedBox(width: 12),
-          Container(
-            height: 32,
-            width: 1,
-            color: colorScheme.outlineVariant.withOpacity(0.2),
-          ),
-          const SizedBox(width: 12),
-          _buildDateRangeChip(),
-        ],
-      ),
-    );
+  String _getViewModeTooltip() {
+    switch (_viewMode) {
+      case ViewMode.list:
+        return 'Switch to Calendar View';
+      case ViewMode.calinder:
+        return 'Switch to Timeline View';
+      case ViewMode.timeline:
+        return 'Switch to List View';
+    }
   }
 
   Widget _buildSearchBar(ColorScheme colorScheme) {
@@ -339,19 +491,19 @@ class _EventsScreenState extends State<EventsScreen> with SingleTickerProviderSt
         icon,
         size: 18,
         color: isSelected
-            ? colorScheme.onSecondaryContainer
+            ? colorScheme.onPrimary
             : colorScheme.onSurfaceVariant,
       ),
       label: Text(label),
       labelStyle: theme.textTheme.labelLarge?.copyWith(
         color: isSelected
-            ? colorScheme.onSecondaryContainer
+            ? colorScheme.onPrimary
             : colorScheme.onSurfaceVariant,
         letterSpacing: 0.5,
       ),
       onSelected: onSelected,
       backgroundColor: Colors.transparent,
-      selectedColor: colorScheme.secondaryContainer.withOpacity(0.3),
+      selectedColor: colorScheme.primary,
       side: BorderSide(
         color: isSelected
             ? Colors.transparent
@@ -608,6 +760,7 @@ class _EventsScreenState extends State<EventsScreen> with SingleTickerProviderSt
         ),
         itemCount: events.length,
         itemBuilder: (context, index) {
+          final event = events[index];
           return Padding(
             padding: EdgeInsets.only(
               bottom: isCompact ? 12 : 16,
@@ -618,15 +771,11 @@ class _EventsScreenState extends State<EventsScreen> with SingleTickerProviderSt
               opacity: 1.0,
               duration: Duration(milliseconds: 200 + (index * 50)),
               child: EventCard(
-                event: events[index],
+                event: event,
                 isCompact: isCompact,
-                onTap: () => _showEventDetails(events[index]),
-                onShare: () {
-                  // TODO: Implement share
-                },
-                onAddToCalendar: () {
-                  // TODO: Implement add to calendar
-                },
+                onTap: () => _showEventDetails(event),
+                onShare: () => _handleShare(event),
+                onAddToCalendar: () => _handleAddToCalendar(event),
               ),
             ),
           );
@@ -634,6 +783,62 @@ class _EventsScreenState extends State<EventsScreen> with SingleTickerProviderSt
       ),
     );
   }
+
+  void _handleShare(FacilityEvent event) async {
+    try {
+      final String shareText = '''
+${event.name}
+
+${event.description ?? ''}
+
+${event.location != null ? 'Location: ${event.location}\n' : ''}${event.started != null ? 'Date: ${DateFormat('MMM d, y • h:mm a').format(event.started!)}\n' : ''}
+
+Join us at this amazing event!
+''';
+
+      await Share.share(
+        shareText.trim(),
+        subject: event.name,
+      );
+      
+      HapticFeedback.mediumImpact();
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Could not share event: $e')),
+        );
+      }
+    }
+  }
+
+  void _handleAddToCalendar(FacilityEvent event) async {
+    if (event.started == null) return;
+    
+    try {
+      final calendarEvent = Event(
+        title: event.name,
+        description: event.description ?? '',
+        location: event.location ?? '',
+        startDate: event.started!,
+        endDate: event.ended ?? event.started!.add(const Duration(hours: 2)),
+      );
+      
+      await Add2Calendar.addEvent2Cal(calendarEvent);
+      
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Added to calendar')),
+        );
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Could not add to calendar: $e')),
+        );
+      }
+    }
+  }
+
   Widget _buildCalendarView(List<FacilityEvent> events) {
     // use CalendarView widget
     return Card(
@@ -651,6 +856,170 @@ class _EventsScreenState extends State<EventsScreen> with SingleTickerProviderSt
         },
         events: events,
       ),
+    );
+  }
+
+  Widget _buildMyEventsList() {
+    return Consumer2<AuthService, EventRegistrationProvider>(
+      builder: (context, authService, registrationProvider, _) {
+        print('Current User: ${authService.currentUser?.id}');
+        registrationProvider.debugPrintRegistrations();
+        print('All Events: ${_eventsProvider.events.length}');
+
+        if (authService.currentUser == null) {
+          return Center(
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Icon(
+                  Icons.login_rounded,
+                  size: 64,
+                  color: Theme.of(context).colorScheme.secondary,
+                ),
+                SizedBox(height: 16),
+                Text(
+                  'Please login to view your events',
+                  style: Theme.of(context).textTheme.titleLarge,
+                ),
+                SizedBox(height: 24),
+                FilledButton.icon(
+                  onPressed: () {
+                    // TODO: Navigate to login screen
+                  },
+                  icon: Icon(Icons.login),
+                  label: Text('Login'),
+                ),
+              ],
+            ),
+          );
+        }
+
+        final myEvents = _eventsProvider.events.where((event) {
+          final isRegistered = registrationProvider.isRegistered(event.id);
+          print('Event ${event.id}: isRegistered = $isRegistered');
+          return isRegistered;
+        }).toList();
+
+        print('My Events Count: ${myEvents.length}');
+
+        if (myEvents.isEmpty) {
+          return Center(
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Icon(
+                  Icons.event_busy,
+                  size: 64,
+                  color: Theme.of(context).colorScheme.secondary,
+                ),
+                SizedBox(height: 16),
+                Text(
+                  'No registered events',
+                  style: Theme.of(context).textTheme.titleLarge,
+                ),
+                SizedBox(height: 8),
+                Text(
+                  'Register for events to see them here',
+                  style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                    color: Theme.of(context).colorScheme.onSurfaceVariant,
+                  ),
+                ),
+              ],
+            ),
+          );
+        }
+
+        return ListView.builder(
+          padding: EdgeInsets.symmetric(
+            horizontal: 16,
+            vertical: 16,
+          ),
+          itemCount: myEvents.length,
+          itemBuilder: (context, index) {
+            final event = myEvents[index];
+            // Generate a unique ticket number based on user ID and event ID
+            final ticketNumber = event.id.substring(0, 8).toUpperCase();
+            
+            return Padding(
+              padding: EdgeInsets.only(bottom: 16),
+              child: EventTicketCard(
+                event: event,
+                ticketNumber: ticketNumber,
+                onTap: () => _showEventDetails(event),
+                onShare: () {
+                  // TODO: Implement share
+                },
+                onAddToCalendar: () {
+                  // TODO: Implement add to calendar
+                },
+              ),
+            );
+          },
+        );
+      },
+    );
+  }
+
+  Widget _buildAnimatedFilterChip({
+    required String label,
+    required IconData icon,
+    required bool isSelected,
+    required ValueChanged<bool>? onSelected,
+  }) {
+    return TweenAnimationBuilder<double>(
+      tween: Tween(begin: 0.0, end: isSelected ? 1.0 : 0.0),
+      duration: const Duration(milliseconds: 200),
+      curve: Curves.easeOutCubic,
+      builder: (context, value, child) {
+        return Transform.scale(
+          scale: 1.0 + (value * 0.05),
+          child: Container(
+            decoration: BoxDecoration(
+              boxShadow: [
+                if (isSelected)
+                  BoxShadow(
+                    color: Theme.of(context).colorScheme.primary.withOpacity(0.1 * value),
+                    blurRadius: 8 * value,
+                    spreadRadius: 2 * value,
+                  ),
+              ],
+            ),
+            child: _buildFilterChip(
+              label: label,
+              icon: icon,
+              isSelected: isSelected,
+              onSelected: onSelected,
+            ),
+          ),
+        );
+      },
+    );
+  }
+
+  Widget _buildAnimatedDateRangeChip() {
+    return TweenAnimationBuilder<double>(
+      tween: Tween(begin: 0.0, end: _selectedDateRange != null ? 1.0 : 0.0),
+      duration: const Duration(milliseconds: 200),
+      curve: Curves.easeOutCubic,
+      builder: (context, value, child) {
+        final colorScheme = Theme.of(context).colorScheme;
+        return Transform.scale(
+          scale: 1.0 + (value * 0.05),
+          child: Container(
+            decoration: BoxDecoration(
+              boxShadow: [
+                if (_selectedDateRange != null)
+                  BoxShadow(
+                    color: colorScheme.primary.withOpacity(0.1 * value),
+                    blurRadius: 8 * value,
+                    spreadRadius: 2 * value,
+                  ),
+              ],
+            ),
+            child: _buildDateRangeChip(),
+          ),
+        );
+      },
     );
   }
 }

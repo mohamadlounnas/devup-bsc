@@ -1,10 +1,13 @@
 import 'package:app/helper.dart';
 import 'package:app/services/auth_service.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:iconsax/iconsax.dart';
 import 'package:shared/shared.dart';
 import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
+import 'package:share_plus/share_plus.dart';
+import 'package:add_2_calendar/add_2_calendar.dart';
 import '../../../providers/event_registration_provider.dart';
 import 'event_registration_dialog.dart';
 
@@ -40,6 +43,61 @@ class EventCard extends StatelessWidget {
     required this.onShare,
     required this.onAddToCalendar,
   });
+
+  void _handleShare(BuildContext context) async {
+    try {
+      final String shareText = '''
+${event.name}
+
+${event.description ?? ''}
+
+${event.location != null ? 'Location: ${event.location}\n' : ''}${event.started != null ? 'Date: ${DateFormat('MMM d, y • h:mm a').format(event.started!)}\n' : ''}
+
+Join us at this amazing event!
+''';
+
+      await Share.share(
+        shareText.trim(),
+        subject: event.name,
+      );
+      
+      HapticFeedback.mediumImpact();
+    } catch (e) {
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Could not share event: $e')),
+        );
+      }
+    }
+  }
+
+  void _handleAddToCalendar(BuildContext context) async {
+    if (event.started == null) return;
+    
+    try {
+      final calendarEvent = Event(
+        title: event.name,
+        description: event.description ?? '',
+        location: event.location ?? '',
+        startDate: event.started!,
+        endDate: event.ended ?? event.started!.add(const Duration(hours: 2)),
+      );
+      
+      await Add2Calendar.addEvent2Cal(calendarEvent);
+      
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Added to calendar')),
+        );
+      }
+    } catch (e) {
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Could not add to calendar: $e')),
+        );
+      }
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -122,32 +180,6 @@ class EventCard extends StatelessWidget {
               ),
               SizedBox(height: isCompact ? 12 : 16),
               _buildActionButtons(context, theme),
-              if (isRegistered)
-                Container(
-                  margin: const EdgeInsets.only(top: 8),
-                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-                  decoration: BoxDecoration(
-                    color: theme.colorScheme.primaryContainer,
-                    borderRadius: BorderRadius.circular(16),
-                  ),
-                  child: Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Icon(
-                        Icons.check_circle_rounded,
-                        size: 16,
-                        color: theme.colorScheme.onPrimaryContainer,
-                      ),
-                      const SizedBox(width: 4),
-                      Text(
-                        'Registered',
-                        style: theme.textTheme.labelSmall?.copyWith(
-                          color: theme.colorScheme.onPrimaryContainer,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
             ],
           ),
         );
@@ -271,42 +303,90 @@ class EventCard extends StatelessWidget {
   }
 
   Widget _buildActionButtons(BuildContext context, ThemeData theme) {
-    return Row(
-      mainAxisAlignment: MainAxisAlignment.end,
-      children: [
-        // open register dialog
-        TextButton.icon(
-          onPressed: () {
-            showDialog(
-              context: context,
-              builder: (context) => EventRegistrationDialog(
-                event: event,
-                authService: context.read<AuthService>(),
+    return Consumer2<AuthService, EventRegistrationProvider>(
+      builder: (context, authService, registrationProvider, _) {
+        final isRegistered = authService.currentUser != null && 
+                            registrationProvider.isRegistered(event.id);
+
+        return Row(
+          mainAxisAlignment: MainAxisAlignment.end,
+          children: [
+            if (!isRegistered) ...[
+              TextButton.icon(
+                onPressed: () {
+                  showDialog(
+                    context: context,
+                    builder: (context) => EventRegistrationDialog(
+                      event: event,
+                      authService: authService,
+                    ),
+                  );
+                },
+                label: Text('Register'),
+                icon: Icon(
+                  Iconsax.signpost,
+                  size: isCompact ? 20 : 24,
+                  color: theme.colorScheme.onSurfaceVariant,
+                ),
               ),
-            );
-          },
-          label: Text('Register'),
-          icon: Icon(
-            Iconsax.signpost,
-            size: isCompact ? 20 : 24,
-            color: theme.colorScheme.onSurfaceVariant,
-          ),
-        ),
-        IconButton(
-          onPressed: onAddToCalendar,
-          icon: Icon(
-            Icons.calendar_month_rounded,
-            size: isCompact ? 20 : 24,
-            color: theme.colorScheme.onSurfaceVariant,
-          ),
-          tooltip: 'Add to calendar',
-          padding: EdgeInsets.zero,
-          constraints: BoxConstraints.tightFor(
-            width: isCompact ? 32 : 40,
-            height: isCompact ? 32 : 40,
-          ),
-        ),
-      ],
+            ],
+            if (isRegistered) ...[
+              Container(
+                padding: EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                decoration: BoxDecoration(
+                  color: theme.colorScheme.primaryContainer,
+                  borderRadius: BorderRadius.circular(16),
+                ),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Icon(
+                      Icons.check_circle_rounded,
+                      size: 16,
+                      color: theme.colorScheme.onPrimaryContainer,
+                    ),
+                    SizedBox(width: 4),
+                    Text(
+                      'Registered',
+                      style: theme.textTheme.labelSmall?.copyWith(
+                        color: theme.colorScheme.onPrimaryContainer,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+            IconButton(
+              onPressed: () => _handleAddToCalendar(context),
+              icon: Icon(
+                Icons.calendar_month_rounded,
+                size: isCompact ? 20 : 24,
+                color: theme.colorScheme.onSurfaceVariant,
+              ),
+              tooltip: 'Add to calendar',
+              padding: EdgeInsets.zero,
+              constraints: BoxConstraints.tightFor(
+                width: isCompact ? 32 : 40,
+                height: isCompact ? 32 : 40,
+              ),
+            ),
+            IconButton(
+              onPressed: () => _handleShare(context),
+              icon: Icon(
+                Icons.share_rounded,
+                size: isCompact ? 20 : 24,
+                color: theme.colorScheme.onSurfaceVariant,
+              ),
+              tooltip: 'Share event',
+              padding: EdgeInsets.zero,
+              constraints: BoxConstraints.tightFor(
+                width: isCompact ? 32 : 40,
+                height: isCompact ? 32 : 40,
+              ),
+            ),
+          ],
+        );
+      },
     );
   }
 } 
