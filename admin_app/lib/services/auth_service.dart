@@ -204,24 +204,27 @@ class PermissionService extends ChangeNotifier {
   bool hasEventPermission = false;
 
   Future<void> checkPermission(String permission) async {
-    var userHostels = await pb.collection('hostels').getFirstListItem(
-          'admin = "${pb.authStore.model.id}"',
-        );
+    try {
+      var userHostels = await pb.collection('hostels').getFirstListItem(
+            'admin = "${pb.authStore.model.id}"',
+          );
+      if (userHostels.data['admin'] == pb.authStore.model.id) {
+        hasHostelPermission = true;
+        notifyListeners();
+        return;
+      }
+    } catch (e) {}
 
-    if (userHostels.data['admin'] == pb.authStore.model.id) {
-      hasHostelPermission = true;
-      notifyListeners();
-      return;
-    }
+    try {
+      var userEvents = await pb.collection('facilities').getFirstListItem(
+            'manager = "${pb.authStore.model.id}"',
+          );
 
-    var userEvents = await pb.collection('facilities').getFirstListItem(
-          'manager = "${pb.authStore.model.id}"',
-        );
-
-    if (userEvents.data['admin'] == pb.authStore.model.id) {
-      hasEventPermission = true;
-      notifyListeners();
-      return;
-    }
+      if (userEvents.data['manager'] == pb.authStore.model.id) {
+        hasEventPermission = true;
+        notifyListeners();
+        return;
+      }
+    } catch (e) {}
   }
 }

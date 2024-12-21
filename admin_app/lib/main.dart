@@ -62,6 +62,7 @@ class MainAppState extends State<MainApp> {
     return MaterialApp.router(
       title: 'Admin Dashboard',
       themeMode: _themeMode,
+      debugShowCheckedModeBanner: false,
       theme: ThemeData(
         textTheme: GoogleFonts.poppinsTextTheme(),
         cardColor: Colors.transparent,

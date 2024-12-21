@@ -6,7 +6,9 @@ import 'package:admin_app/presentation/events/events_screen.dart';
 import 'package:admin_app/presentation/hostels/hostel_screen.dart';
 import 'package:admin_app/presentation/hostels/hostel_settings_screen.dart';
 import 'package:admin_app/presentation/login/login_screen.dart';
+import 'package:admin_app/presentation/profile_view/profile_view.dart';
 import 'package:admin_app/presentation/reservations/reservations_screen.dart';
+import 'package:admin_app/presentation/service/service_screen.dart';
 import 'package:admin_app/services/auth_service.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
@@ -25,6 +27,11 @@ final router = GoRouter(
       return '/dashboard';
     }
 
+    // If not logged in and trying to access protected pages, redirect to login
+    if (!isLoggedIn && state.uri.path != '/login') {
+      return '/login';
+    }
+
     return null;
   },
   routes: [
@@ -37,15 +44,15 @@ final router = GoRouter(
       builder: (context, state, child) => DashboardShell(child: child),
       routes: [
         GoRoute(
-            path: '/dashboard',
-            name: 'dashboard',
-            builder: (context, state) => const DashboardScreen()),
-
-        // Map route
-
-        // Hostels route (placeholder)
-
-        // Facilities route (placeholder)
+          path: '/dashboard',
+          name: 'dashboard',
+          builder: (context, state) => const DashboardScreen(),
+        ),
+        GoRoute(
+          path: '/profile',
+          name: 'profile',
+          builder: (context, state) => const ProfileView(),
+        ),
         GoRoute(
           path: '/facilities',
           name: 'facilities',
@@ -66,7 +73,12 @@ final router = GoRouter(
           name: 'events',
           builder: (context, state) => const EventsScreen(),
         ),
+        GoRoute(
+          path: '/services',
+          builder: (context, state) => const ServiceDashboardPage(),
+        ),
       ],
     ),
   ],
+  errorBuilder: (context, state) => const NotFoundScreen(),
 );
