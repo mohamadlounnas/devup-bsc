@@ -72,6 +72,13 @@ class MainAppState extends State<MainApp> {
         scaffoldBackgroundColor: Colors.transparent,
       ),
       darkTheme: ThemeData(
+        textTheme: GoogleFonts.poppinsTextTheme(
+          TextTheme(
+            bodyMedium: TextStyle(
+              color: Colors.white,
+            ),
+          ),
+        ),
         cardColor: Colors.transparent,
         useMaterial3: true,
         colorSchemeSeed: Colors.blue,

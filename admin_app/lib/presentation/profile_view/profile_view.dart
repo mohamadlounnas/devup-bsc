@@ -4,8 +4,51 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
 /// A view that displays user profile information and settings using Material Design 3
-class ProfileView extends StatelessWidget {
+class ProfileView extends StatefulWidget {
   const ProfileView({super.key});
+
+  @override
+  State<ProfileView> createState() => _ProfileViewState();
+}
+
+class _ProfileViewState extends State<ProfileView> {
+  final _tourKey1 = GlobalKey();
+  final _tourKey2 = GlobalKey();
+  final _tourKey3 = GlobalKey();
+
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _showTutorial();
+    });
+  }
+
+  void _showTutorial() {
+    showDialog(
+      context: context,
+      builder: (context) => TutorialDialog(
+        steps: [
+          TutorialStep(
+            title: 'Profile Information',
+            content: 'View and manage your personal information here.',
+            targetKey: _tourKey1,
+          ),
+          TutorialStep(
+            title: 'Personal Details',
+            content:
+                'Your contact and identification details are displayed here.',
+            targetKey: _tourKey2,
+          ),
+          TutorialStep(
+            title: 'Settings & Actions',
+            content: 'Customize app settings and manage your account.',
+            targetKey: _tourKey3,
+          ),
+        ],
+      ),
+    );
+  }
 
   String _getUserTypeLabel(String type) {
     switch (type) {
@@ -33,16 +76,24 @@ class ProfileView extends StatelessWidget {
         await context.read<AuthService>().checkAuthState();
       },
       child: SingleChildScrollView(
-        padding: const EdgeInsets.all(24),
+        padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 32),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
             // Profile Header Card
             Card(
+              color: Theme.of(context).colorScheme.surface.withOpacity(0.5),
               elevation: 0,
-              color: colorScheme.secondaryContainer,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(24),
+                side: BorderSide(
+                  color: Colors.grey.withOpacity(0.5),
+                  width: 1,
+                ),
+              ),
+              clipBehavior: Clip.antiAlias,
               child: Padding(
-                padding: const EdgeInsets.all(24),
+                padding: const EdgeInsets.all(32),
                 child: Column(
                   children: [
                     // Avatar with verified badge
@@ -51,14 +102,14 @@ class ProfileView extends StatelessWidget {
                         Hero(
                           tag: 'profile_avatar',
                           child: CircleAvatar(
-                            radius: 60,
+                            radius: 64,
                             backgroundColor: colorScheme.primary,
                             child: CircleAvatar(
-                              radius: 58,
+                              radius: 62,
                               backgroundColor: colorScheme.surface,
                               child: Icon(
                                 Icons.person,
-                                size: 64,
+                                size: 72,
                                 color: colorScheme.primary,
                               ),
                             ),
@@ -80,14 +131,14 @@ class ProfileView extends StatelessWidget {
                               ),
                               child: Icon(
                                 Icons.verified,
-                                size: 24,
+                                size: 28,
                                 color: colorScheme.primary,
                               ),
                             ),
                           ),
                       ],
                     ),
-                    const SizedBox(height: 16),
+                    const SizedBox(height: 24),
                     // Name
                     Text(
                       '${user.firstname} ${user.lastname}',
@@ -96,7 +147,7 @@ class ProfileView extends StatelessWidget {
                         color: colorScheme.onSecondaryContainer,
                       ),
                     ),
-                    const SizedBox(height: 4),
+                    const SizedBox(height: 8),
                     // Email
                     Text(
                       user.email,
@@ -105,16 +156,16 @@ class ProfileView extends StatelessWidget {
                             colorScheme.onSecondaryContainer.withOpacity(0.8),
                       ),
                     ),
-                    const SizedBox(height: 16),
+                    const SizedBox(height: 24),
                     // User type chip
                     Container(
                       padding: const EdgeInsets.symmetric(
-                        horizontal: 16,
-                        vertical: 8,
+                        horizontal: 20,
+                        vertical: 10,
                       ),
                       decoration: BoxDecoration(
                         color: colorScheme.tertiaryContainer,
-                        borderRadius: BorderRadius.circular(20),
+                        borderRadius: BorderRadius.circular(24),
                       ),
                       child: Text(
                         _getUserTypeLabel(user.type.name),
@@ -128,7 +179,7 @@ class ProfileView extends StatelessWidget {
                 ),
               ),
             ),
-            const SizedBox(height: 24),
+            const SizedBox(height: 32),
 
             // Personal Information Section
             Text(
@@ -139,8 +190,16 @@ class ProfileView extends StatelessWidget {
             ),
             const SizedBox(height: 16),
             Card(
+              color: Theme.of(context).colorScheme.surface.withOpacity(0.5),
               elevation: 0,
-              color: colorScheme.surfaceVariant,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(24),
+                side: BorderSide(
+                  color: Colors.grey.withOpacity(0.5),
+                  width: 1,
+                ),
+              ),
+              clipBehavior: Clip.antiAlias,
               child: Column(
                 children: [
                   _buildInfoTile(
@@ -179,7 +238,7 @@ class ProfileView extends StatelessWidget {
                 ],
               ),
             ),
-            const SizedBox(height: 24),
+            const SizedBox(height: 32),
 
             // Settings Section
             Text(
@@ -190,48 +249,57 @@ class ProfileView extends StatelessWidget {
             ),
             const SizedBox(height: 16),
             Card(
+              color: Theme.of(context).colorScheme.surface.withOpacity(0.5),
               elevation: 0,
-              color: colorScheme.surfaceVariant,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(24),
+                side: BorderSide(
+                  color: Colors.grey.withOpacity(0.5),
+                  width: 1,
+                ),
+              ),
+              clipBehavior: Clip.antiAlias,
               child: Column(
                 children: [
-                  ListTile(
-                    leading: Icon(
-                      Theme.of(context).brightness == Brightness.light
-                          ? Icons.dark_mode_outlined
-                          : Icons.light_mode_outlined,
-                      color: colorScheme.primary,
-                    ),
-                    title: Text(
-                      'Theme Mode',
-                      style: theme.textTheme.titleMedium,
-                    ),
-                    subtitle: SegmentedButton<ThemeMode>(
-                      segments: const [
-                        ButtonSegment(
-                          value: ThemeMode.light,
-                          icon: Icon(Icons.light_mode_outlined),
-                          label: Text('Light'),
+                  Padding(
+                    padding: const EdgeInsets.all(16),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.stretch,
+                      children: [
+                        Text(
+                          'Theme Mode',
+                          style: theme.textTheme.titleMedium,
                         ),
-                        ButtonSegment(
-                          value: ThemeMode.dark,
-                          icon: Icon(Icons.dark_mode_outlined),
-                          label: Text('Dark'),
-                        ),
-                        ButtonSegment(
-                          value: ThemeMode.system,
-                          icon: Icon(Icons.brightness_auto),
-                          label: Text('System'),
+                        const SizedBox(height: 16),
+                        SegmentedButton<ThemeMode>(
+                          segments: const [
+                            ButtonSegment(
+                              value: ThemeMode.light,
+                              icon: Icon(Icons.light_mode_outlined),
+                              label: Text('Light'),
+                            ),
+                            ButtonSegment(
+                              value: ThemeMode.dark,
+                              icon: Icon(Icons.dark_mode_outlined),
+                              label: Text('Dark'),
+                            ),
+                            ButtonSegment(
+                              value: ThemeMode.system,
+                              icon: Icon(Icons.brightness_auto),
+                              label: Text('System'),
+                            ),
+                          ],
+                          selected: {
+                            Theme.of(context).brightness == Brightness.light
+                                ? ThemeMode.light
+                                : ThemeMode.dark
+                          },
+                          onSelectionChanged: (Set<ThemeMode> modes) {
+                            final mode = modes.first;
+                            MainApp.of(context)?.updateThemeMode(mode);
+                          },
                         ),
                       ],
-                      selected: {
-                        Theme.of(context).brightness == Brightness.light
-                            ? ThemeMode.light
-                            : ThemeMode.dark
-                      },
-                      onSelectionChanged: (Set<ThemeMode> modes) {
-                        final mode = modes.first;
-                        MainApp.of(context)?.updateThemeMode(mode);
-                      },
                     ),
                   ),
                   _buildInfoTile(
@@ -240,16 +308,28 @@ class ProfileView extends StatelessWidget {
                     title: 'App Version',
                     value: '1.0.0',
                   ),
-                  const Divider(),
+                  const Divider(height: 1),
                   ListTile(
+                    contentPadding: const EdgeInsets.symmetric(
+                      horizontal: 24,
+                      vertical: 16,
+                    ),
                     leading: Icon(
                       Icons.logout,
                       color: colorScheme.error,
+                      size: 28,
                     ),
                     title: Text(
                       'Logout',
                       style: theme.textTheme.titleMedium?.copyWith(
                         color: colorScheme.error,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                    subtitle: Text(
+                      'Sign out of your account',
+                      style: theme.textTheme.bodyMedium?.copyWith(
+                        color: colorScheme.error.withOpacity(0.8),
                       ),
                     ),
                     onTap: () async {
@@ -283,6 +363,7 @@ class ProfileView extends StatelessWidget {
                 ],
               ),
             ),
+            const SizedBox(height: 32),
           ],
         ),
       ),
@@ -300,16 +381,17 @@ class ProfileView extends StatelessWidget {
 
     return Padding(
       padding: const EdgeInsets.symmetric(
-        horizontal: 16,
-        vertical: 12,
+        horizontal: 24,
+        vertical: 16,
       ),
       child: Row(
         children: [
           Icon(
             icon,
             color: colorScheme.primary,
+            size: 28,
           ),
-          const SizedBox(width: 16),
+          const SizedBox(width: 20),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -333,6 +415,76 @@ class ProfileView extends StatelessWidget {
           ),
         ],
       ),
+    );
+  }
+}
+
+class TutorialStep {
+  final String title;
+  final String content;
+  final GlobalKey targetKey;
+
+  TutorialStep({
+    required this.title,
+    required this.content,
+    required this.targetKey,
+  });
+}
+
+class TutorialDialog extends StatefulWidget {
+  final List<TutorialStep> steps;
+
+  const TutorialDialog({
+    required this.steps,
+    super.key,
+  });
+
+  @override
+  State<TutorialDialog> createState() => _TutorialDialogState();
+}
+
+class _TutorialDialogState extends State<TutorialDialog> {
+  int currentStep = 0;
+
+  @override
+  Widget build(BuildContext context) {
+    final colorScheme = Theme.of(context).colorScheme;
+    final step = widget.steps[currentStep];
+
+    return AlertDialog(
+      title: Text(step.title),
+      content: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Text(step.content),
+          const SizedBox(height: 16),
+          LinearProgressIndicator(
+            value: (currentStep + 1) / widget.steps.length,
+            backgroundColor: colorScheme.surfaceVariant,
+            color: colorScheme.primary,
+          ),
+        ],
+      ),
+      actions: [
+        TextButton(
+          onPressed: () => Navigator.pop(context),
+          child: const Text('Skip'),
+        ),
+        FilledButton(
+          onPressed: () {
+            if (currentStep < widget.steps.length - 1) {
+              setState(() {
+                currentStep++;
+              });
+            } else {
+              Navigator.pop(context);
+            }
+          },
+          child: Text(
+            currentStep < widget.steps.length - 1 ? 'Next' : 'Done',
+          ),
+        ),
+      ],
     );
   }
 }

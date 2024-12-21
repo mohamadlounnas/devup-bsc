@@ -70,7 +70,7 @@ class _DashboardShellState extends State<DashboardShell> {
                               ),
                             Expanded(
                               child: Text(
-                                'DevUp',
+                                '',
                                 style: Theme.of(context)
                                     .textTheme
                                     .titleLarge
@@ -121,11 +121,12 @@ class _DashboardShellState extends State<DashboardShell> {
                       // Content area
                       Expanded(
                         child: Container(
+                          padding: const EdgeInsets.all(16),
                           decoration: BoxDecoration(
                             color: Theme.of(context)
                                 .colorScheme
                                 .surface
-                                .withOpacity(0.5),
+                                .withOpacity(0.35),
                             borderRadius: BorderRadius.circular(16),
                             border: Border.all(
                               color: Theme.of(context)

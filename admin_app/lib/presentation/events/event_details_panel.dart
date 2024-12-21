@@ -234,12 +234,6 @@ class EventDetailsPanel extends StatelessWidget {
                         context,
                         title: 'Location',
                         children: [
-                          _buildInfoTile(
-                            context,
-                            icon: Iconsax.building,
-                            title: 'Facility',
-                            subtitle: 'Unknown Facility',
-                          ),
                           if (event.address != null)
                             _buildInfoTile(
                               context,

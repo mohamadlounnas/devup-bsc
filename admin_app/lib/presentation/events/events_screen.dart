@@ -432,7 +432,6 @@ class _EventsScreenState extends State<EventsScreen>
                         const FlexTableItemConfig.square(48), // Image
                         const FlexTableItemConfig.flex(2), // Name
                         if (!isMobile) ...[
-                          const FlexTableItemConfig.flex(2), // Facility
                           const FlexTableItemConfig.flex(1), // Start Date
                           const FlexTableItemConfig.flex(1), // End Date
                         ],
@@ -450,10 +449,6 @@ class _EventsScreenState extends State<EventsScreen>
                                 style: Theme.of(context).textTheme.titleSmall,
                               ),
                               if (!isMobile) ...[
-                                Text(
-                                  'Facility',
-                                  style: Theme.of(context).textTheme.titleSmall,
-                                ),
                                 Text(
                                   'Start Date',
                                   style: Theme.of(context).textTheme.titleSmall,
@@ -512,11 +507,6 @@ class _EventsScreenState extends State<EventsScreen>
                                     ),
                                     if (!isMobile) ...[
                                       Text(
-                                        'Unknown Facility',
-                                        maxLines: 1,
-                                        overflow: TextOverflow.ellipsis,
-                                      ),
-                                      Text(
                                         event.started != null
                                             ? DateFormat('MMM d, y HH:mm')
                                                 .format(event.started!)
@@ -546,14 +536,6 @@ class _EventsScreenState extends State<EventsScreen>
                                                 crossAxisAlignment:
                                                     CrossAxisAlignment.start,
                                                 children: [
-                                                  ListTile(
-                                                    leading: const Icon(
-                                                        Icons.business),
-                                                    title:
-                                                        const Text('Facility'),
-                                                    subtitle: const Text(
-                                                        'Unknown Facility'),
-                                                  ),
                                                   ListTile(
                                                     leading: const Icon(
                                                         Icons.calendar_today),

@@ -82,7 +82,6 @@ class _ReservationsScreenState extends State<ReservationsScreen> {
                       "All Reservations",
                       style: Theme.of(context).textTheme.titleLarge?.copyWith(
                             color: Theme.of(context).colorScheme.primary,
-                            fontWeight: FontWeight.bold,
                           ),
                     ),
                     FilledButton.icon(
