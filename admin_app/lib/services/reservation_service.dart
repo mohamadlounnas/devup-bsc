@@ -17,17 +17,29 @@ class ReservationService extends ChangeNotifier {
   Future<List<HostelReservation>> getReservations() async {
     try {
       List<HostelReservation> hostelresvalid = [];
-      var records = await pb.collection(hostelCollectionName).getFirstListItem(
-          'admin = "${pb.authStore.model!.id}"',
-          expand: 'reservations,reservations.user');
-      print(records);
-      if (records.expand != null && records.expand['reservations'] != null) {
+
+      // First check if the hostel exists
+      final hostels = await pb.collection(hostelCollectionName).getList(
+            filter: 'admin = "${pb.authStore.model!.id}"',
+            expand: 'reservations,reservations.user',
+          );
+
+      if (hostels.items.isEmpty) {
+        // No hostel found for this admin
+        return [];
+      }
+
+      final hostel = hostels.items.first;
+
+      if (hostel.expand != null && hostel.expand['reservations'] != null) {
         hostelresvalid =
-            (records.expand['reservations'] as List).map((reservation) {
+            (hostel.expand['reservations'] as List).map((reservation) {
           final data = reservation.toJson();
-          print(reservation.expand['user']);
-          final user = reservation.expand['user'].first;
-          data['user_expand'] = user.toJson();
+          if (reservation.expand != null &&
+              reservation.expand['user'] != null) {
+            final user = reservation.expand['user'].first;
+            data['user_expand'] = user.toJson();
+          }
           if (data['status'] == null || data['status'] == '') {
             data['status'] = 'pending';
           }
@@ -38,7 +50,8 @@ class ReservationService extends ChangeNotifier {
       return hostelresvalid;
     } catch (e) {
       print('Error loading reservations: $e');
-      throw e;
+      // Return empty list instead of throwing error
+      return [];
     }
   }
 

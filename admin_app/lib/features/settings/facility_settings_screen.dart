@@ -351,10 +351,14 @@ class _FacilitySettingsScreenState extends State<FacilitySettingsScreen> {
                                         markers: [
                                           Marker(
                                             point: LatLng(
-                                              double.parse(_facility!.location!
-                                                  .split(',')[0]),
-                                              double.parse(_facility!.location!
-                                                  .split(',')[1]),
+                                              double.tryParse(_facility!
+                                                      .location!
+                                                      .split(',')[0]) ??
+                                                  0,
+                                              double.tryParse(_facility!
+                                                      .location!
+                                                      .split(',')[1]) ??
+                                                  0,
                                             ),
                                             child: const Icon(
                                               Icons.location_on,

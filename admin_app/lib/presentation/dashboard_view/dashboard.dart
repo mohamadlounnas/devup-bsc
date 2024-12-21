@@ -56,7 +56,6 @@ class _DashboardShellState extends State<DashboardShell> {
                       Container(
                         height: 64,
                         padding: const EdgeInsets.symmetric(horizontal: 16),
-                        decoration: const BoxDecoration(),
                         child: Row(
                           children: [
                             if (isCompact)
@@ -66,7 +65,18 @@ class _DashboardShellState extends State<DashboardShell> {
                                   Scaffold.of(context).openDrawer();
                                 },
                               ),
-                            const Spacer(),
+                            Expanded(
+                              child: Text(
+                                'DevUp',
+                                style: Theme.of(context)
+                                    .textTheme
+                                    .titleLarge
+                                    ?.copyWith(
+                                      color:
+                                          Theme.of(context).colorScheme.primary,
+                                    ),
+                              ),
+                            ),
                             IconButton(
                               icon: Icon(
                                 Theme.of(context).brightness == Brightness.light
@@ -158,6 +168,11 @@ class _DashboardShellState extends State<DashboardShell> {
               selectedIcon: Icon(Icons.settings),
               label: Text('Hostel Settings'),
             ),
+            const NavigationRailDestination(
+              icon: Icon(Icons.room_service_outlined),
+              selectedIcon: Icon(Icons.room_service),
+              label: Text('Services'),
+            ),
           ]);
         }
 
@@ -222,6 +237,11 @@ class _DashboardShellState extends State<DashboardShell> {
               selectedIcon: Icon(Icons.settings),
               label: Text('Hostel Settings'),
             ),
+            const NavigationDrawerDestination(
+              icon: Icon(Icons.room_service_outlined),
+              selectedIcon: Icon(Icons.room_service),
+              label: Text('Services'),
+            ),
           ]);
         }
 
@@ -284,6 +304,8 @@ class _DashboardShellState extends State<DashboardShell> {
           return 0;
         case '/hostelsettings':
           return 1;
+        case '/services':
+          return 2;
         default:
           return 0;
       }
@@ -311,6 +333,9 @@ class _DashboardShellState extends State<DashboardShell> {
           break;
         case 1:
           context.go('/hostelsettings');
+          break;
+        case 2:
+          context.go('/services');
           break;
       }
     } else if (permissions.hasEventPermission) {

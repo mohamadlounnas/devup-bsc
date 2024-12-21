@@ -7,6 +7,7 @@ import 'package:admin_app/presentation/hostels/hostel_screen.dart';
 import 'package:admin_app/presentation/hostels/hostel_settings_screen.dart';
 import 'package:admin_app/presentation/login/login_screen.dart';
 import 'package:admin_app/presentation/reservations/reservations_screen.dart';
+import 'package:admin_app/presentation/service/service_screen.dart';
 import 'package:admin_app/services/auth_service.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
@@ -65,6 +66,10 @@ final router = GoRouter(
           path: '/events',
           name: 'events',
           builder: (context, state) => const EventsScreen(),
+        ),
+        GoRoute(
+          path: '/services',
+          builder: (context, state) => const ServiceDashboardPage(),
         ),
       ],
     ),
