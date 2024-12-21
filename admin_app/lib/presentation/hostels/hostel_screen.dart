@@ -85,199 +85,196 @@ class _ReservationScreenState extends State<ReservationScreen> {
         ),
         const SizedBox(height: 16),
         // Reservations Table
-        Expanded(
-          child: FutureBuilder<RecordModel>(
-            future: pb.collection('hostels').getFirstListItem(
-                'admin = "${pb.authStore.model!.id}"',
-                expand: 'reservations,reservations.user'),
-            builder: (context, snapshot) {
-              if (snapshot.connectionState == ConnectionState.waiting) {
-                return const LinearProgressIndicator();
-              }
+        FutureBuilder<RecordModel>(
+          future: pb.collection('hostels').getFirstListItem(
+              'admin = "${pb.authStore.model!.id}"',
+              expand: 'reservations,reservations.user'),
+          builder: (context, snapshot) {
+            if (snapshot.connectionState == ConnectionState.waiting) {
+              return const LinearProgressIndicator();
+            }
 
-              if (snapshot.hasError) {
-                return Center(
-                  child: Text('Error: ${snapshot.error}'),
-                );
-              }
+            if (snapshot.hasError) {
+              return Center(
+                child: Text('Error: ${snapshot.error}'),
+              );
+            }
 
-              final reservationsList =
-                  snapshot.data?.expand['reservations'] as List?;
-              final reservations =
-                  reservationsList?.map((item) => item as RecordModel).toList();
+            final reservationsList =
+                snapshot.data?.expand['reservations'] as List?;
+            final reservations =
+                reservationsList?.map((item) => item as RecordModel).toList();
 
-              if (reservations == null || reservations.isEmpty) {
-                return Center(
-                  child: Column(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      Icon(
-                        Icons.hotel_outlined,
-                        size: 64,
-                        color: Theme.of(context).colorScheme.secondary,
-                      ),
-                      const SizedBox(height: 16),
-                      Text(
-                        'No reservations found',
-                        style: Theme.of(context).textTheme.titleLarge,
-                      ),
-                    ],
-                  ),
-                );
-              }
-
-              return FlexTable(
-                selectable: false,
-                scrollable: true,
-                configs: const [
-                  FlexTableItemConfig.square(48),
-                  FlexTableItemConfig.flex(2), // User
-                  FlexTableItemConfig.flex(1), // Status
-                  FlexTableItemConfig.flex(1), // Check-in
-                  FlexTableItemConfig.flex(1), // Check-out
-                  FlexTableItemConfig.flex(1), // Payment
-                  FlexTableItemConfig.square(40),
-                ],
+            if (reservations == null || reservations.isEmpty) {
+              return Center(
                 child: Column(
-                  mainAxisSize: MainAxisSize.min,
+                  mainAxisAlignment: MainAxisAlignment.center,
                   children: [
-                    // Header
-                    FlexTableItem(
-                      children: [
-                        const SizedBox(),
-                        Text(
-                          'User',
-                          style: Theme.of(context).textTheme.titleSmall,
-                        ),
-                        Text(
-                          'Status',
-                          style: Theme.of(context).textTheme.titleSmall,
-                        ),
-                        Text(
-                          'Check-in',
-                          style: Theme.of(context).textTheme.titleSmall,
-                        ),
-                        Text(
-                          'Check-out',
-                          style: Theme.of(context).textTheme.titleSmall,
-                        ),
-                        Text(
-                          'Payment',
-                          style: Theme.of(context).textTheme.titleSmall,
-                        ),
-                        const Icon(Iconsax.arrow_bottom),
-                      ],
+                    Icon(
+                      Icons.hotel_outlined,
+                      size: 64,
+                      color: Theme.of(context).colorScheme.secondary,
                     ),
-                    // Reservations
-                    ...reservations.map((reservation) {
-                      final userRecord = (reservation.expand['user'] as List)
-                          .first as RecordModel;
-                      return InkWell(
-                        onTap: () {
-                          showDialog(
-                            context: context,
-                            builder: (context) => ReservationDetailsDialog(
-                              reservation: HostelReservation.fromJson(
-                                  reservation.toJson()),
-                            ),
-                          );
-                        },
-                        child: Padding(
-                          padding: const EdgeInsets.all(7.0),
-                          child: FlexTableItem(
-                            children: [
-                              // User Avatar
-                              Container(
-                                width: 45,
-                                height: 45,
-                                decoration: BoxDecoration(
-                                  shape: BoxShape.circle,
-                                  border: Border.all(
-                                    color:
-                                        Theme.of(context).colorScheme.primary,
-                                    width: 0.5,
-                                  ),
-                                ),
-                                child: Padding(
-                                  padding: const EdgeInsets.all(2),
-                                  child: CircleAvatar(
-                                    backgroundImage:
-                                        userRecord.data['avatar'] != null
-                                            ? NetworkImage(
-                                                'https://bsc-pocketbase.mtdjari.com/api/files/users/${userRecord.id}/${userRecord.data['avatar']}',
-                                              )
-                                            : null,
-                                    child: userRecord.data['avatar'] == null
-                                        ? Text(
-                                            userRecord.data['firstname'][0]
-                                                .toUpperCase(),
-                                          )
-                                        : null,
-                                  ),
-                                ),
-                              ),
-                              // User Name
-                              Text(
-                                '${userRecord.data['firstname']} ${userRecord.data['lastname']}',
-                                maxLines: 1,
-                                overflow: TextOverflow.ellipsis,
-                              ),
-                              // Status
-                              Container(
-                                padding: const EdgeInsets.symmetric(
-                                    horizontal: 8, vertical: 4),
-                                decoration: BoxDecoration(
-                                  color: _getStatusColor(
-                                      reservation.data['status']),
-                                  borderRadius: BorderRadius.circular(12),
-                                ),
-                                child: Text(
-                                  reservation.data['status'],
-                                  style: const TextStyle(
-                                    color: Colors.white,
-                                    fontSize: 12,
-                                  ),
-                                ),
-                              ),
-                              // Check-in
-                              Text(
-                                DateFormat('MMM d, y').format(
-                                  DateTime.parse(reservation.data['login_at']),
-                                ),
-                              ),
-                              // Check-out
-                              Text(
-                                DateFormat('MMM d, y').format(
-                                  DateTime.parse(reservation.data['logout_at']),
-                                ),
-                              ),
-                              // Payment Amount
-                              Text(
-                                '\$${reservation.data['payment_amount']}',
-                                style: Theme.of(context)
-                                    .textTheme
-                                    .bodyMedium!
-                                    .copyWith(
-                                      fontWeight: FontWeight.bold,
-                                    ),
-                              ),
-                              // Actions
-                              IconButton(
-                                icon: const Icon(Icons.more_vert),
-                                onPressed: () {
-                                  // TODO: Show actions menu
-                                },
-                              ),
-                            ],
-                          ),
-                        ),
-                      );
-                    }).toList(),
+                    const SizedBox(height: 16),
+                    Text(
+                      'No reservations found',
+                      style: Theme.of(context).textTheme.titleLarge,
+                    ),
                   ],
                 ),
               );
-            },
-          ),
+            }
+
+            return FlexTable(
+              selectable: false,
+              scrollable: true,
+              configs: const [
+                FlexTableItemConfig.square(48),
+                FlexTableItemConfig.flex(2), // User
+                FlexTableItemConfig.flex(1), // Status
+                FlexTableItemConfig.flex(1), // Check-in
+                FlexTableItemConfig.flex(1), // Check-out
+                FlexTableItemConfig.flex(1), // Payment
+                FlexTableItemConfig.square(40),
+              ],
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  // Header
+                  FlexTableItem(
+                    children: [
+                      const SizedBox(),
+                      Text(
+                        'User',
+                        style: Theme.of(context).textTheme.titleSmall,
+                      ),
+                      Text(
+                        'Status',
+                        style: Theme.of(context).textTheme.titleSmall,
+                      ),
+                      Text(
+                        'Check-in',
+                        style: Theme.of(context).textTheme.titleSmall,
+                      ),
+                      Text(
+                        'Check-out',
+                        style: Theme.of(context).textTheme.titleSmall,
+                      ),
+                      Text(
+                        'Payment',
+                        style: Theme.of(context).textTheme.titleSmall,
+                      ),
+                      const Icon(Iconsax.arrow_bottom),
+                    ],
+                  ),
+                  // Reservations
+                  ...reservations.map((reservation) {
+                    final userRecord = (reservation.expand['user'] as List)
+                        .first as RecordModel;
+                    return InkWell(
+                      onTap: () {
+                        showDialog(
+                          context: context,
+                          builder: (context) => ReservationDetailsDialog(
+                            reservation: HostelReservation.fromJson(
+                                reservation.toJson()),
+                          ),
+                        );
+                      },
+                      child: Padding(
+                        padding: const EdgeInsets.all(7.0),
+                        child: FlexTableItem(
+                          children: [
+                            // User Avatar
+                            Container(
+                              width: 45,
+                              height: 45,
+                              decoration: BoxDecoration(
+                                shape: BoxShape.circle,
+                                border: Border.all(
+                                  color: Theme.of(context).colorScheme.primary,
+                                  width: 0.5,
+                                ),
+                              ),
+                              child: Padding(
+                                padding: const EdgeInsets.all(2),
+                                child: CircleAvatar(
+                                  backgroundImage:
+                                      userRecord.data['avatar'] != null
+                                          ? NetworkImage(
+                                              'https://bsc-pocketbase.mtdjari.com/api/files/users/${userRecord.id}/${userRecord.data['avatar']}',
+                                            )
+                                          : null,
+                                  child: userRecord.data['avatar'] == null
+                                      ? Text(
+                                          userRecord.data['firstname'][0]
+                                              .toUpperCase(),
+                                        )
+                                      : null,
+                                ),
+                              ),
+                            ),
+                            // User Name
+                            Text(
+                              '${userRecord.data['firstname']} ${userRecord.data['lastname']}',
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                            // Status
+                            Container(
+                              padding: const EdgeInsets.symmetric(
+                                  horizontal: 8, vertical: 4),
+                              decoration: BoxDecoration(
+                                color:
+                                    _getStatusColor(reservation.data['status']),
+                                borderRadius: BorderRadius.circular(12),
+                              ),
+                              child: Text(
+                                reservation.data['status'],
+                                style: const TextStyle(
+                                  color: Colors.white,
+                                  fontSize: 12,
+                                ),
+                              ),
+                            ),
+                            // Check-in
+                            Text(
+                              DateFormat('MMM d, y').format(
+                                DateTime.parse(reservation.data['login_at']),
+                              ),
+                            ),
+                            // Check-out
+                            Text(
+                              DateFormat('MMM d, y').format(
+                                DateTime.parse(reservation.data['logout_at']),
+                              ),
+                            ),
+                            // Payment Amount
+                            Text(
+                              '\$${reservation.data['payment_amount']}',
+                              style: Theme.of(context)
+                                  .textTheme
+                                  .bodyMedium!
+                                  .copyWith(
+                                    fontWeight: FontWeight.bold,
+                                  ),
+                            ),
+                            // Actions
+                            IconButton(
+                              icon: const Icon(Icons.more_vert),
+                              onPressed: () {
+                                // TODO: Show actions menu
+                              },
+                            ),
+                          ],
+                        ),
+                      ),
+                    );
+                  }).toList(),
+                ],
+              ),
+            );
+          },
         ),
       ],
     );

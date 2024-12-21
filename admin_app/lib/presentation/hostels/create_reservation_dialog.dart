@@ -70,6 +70,10 @@ class _CreateReservationDialogState extends State<CreateReservationDialog> {
         _error = null;
       });
 
+      final hostel = await pb.collection('hostels').getFirstListItem(
+            'admin = "${pb.authStore.model!.id}"',
+          );
+
       final reservation = HostelReservation(
         id: '', // Will be set by PocketBase
         userId: _selectedUser!.id,
@@ -81,7 +85,11 @@ class _CreateReservationDialogState extends State<CreateReservationDialog> {
         updated: DateTime.now(),
       );
 
-      await ReservationService.instance.createReservation(reservation);
+      final reservationModel =
+          await ReservationService.instance.createReservation(reservation);
+      await pb.collection('hostels').update(hostel.id, body: {
+        '+reservations': reservationModel.id,
+      });
       if (mounted) Navigator.of(context).pop(true);
     } catch (e) {
       setState(() {
@@ -405,6 +413,7 @@ class UserSelectionField extends StatelessWidget {
                     : const Icon(Icons.arrow_drop_down),
                 items: users.map((user) {
                   return DropdownMenuItem(
+                    enabled: user.data['banned'] == true ? false : true,
                     value: user,
                     child: Row(
                       children: [
@@ -426,12 +435,24 @@ class UserSelectionField extends StatelessWidget {
                             mainAxisSize: MainAxisSize.min,
                             children: [
                               Text(
-                                '${user.data['firstname']} ${user.data['lastname']}',
-                                style: Theme.of(context).textTheme.bodyLarge,
+                                '${user.data['banned'] == true ? '(BANNED) ' : ''}${user.data['firstname']} ${user.data['lastname']}',
+                                style: Theme.of(context)
+                                    .textTheme
+                                    .bodyLarge!
+                                    .copyWith(
+                                        color: user.data['banned'] == true
+                                            ? Colors.red
+                                            : null),
                               ),
                               Text(
                                 user.data['email'],
-                                style: Theme.of(context).textTheme.bodySmall,
+                                style: Theme.of(context)
+                                    .textTheme
+                                    .bodySmall!
+                                    .copyWith(
+                                        color: user.data['banned'] == true
+                                            ? Colors.red
+                                            : null),
                                 overflow: TextOverflow.ellipsis,
                               ),
                             ],

@@ -27,8 +27,8 @@ class _FacilitySettingsScreenState extends State<FacilitySettingsScreen> {
   @override
   void initState() {
     super.initState();
-    _facility = FacilityService.instance.userFacility;
     _loadFacility();
+    _facility = FacilityService.instance.userFacility;
   }
 
   Future<void> _loadFacility() async {
@@ -296,7 +296,7 @@ class _FacilitySettingsScreenState extends State<FacilitySettingsScreen> {
                         ),
                       ),
 
-                      const SizedBox(height: 24),
+                      const SizedBox(height: 10),
 
                       // Location Section
                       _buildSection(

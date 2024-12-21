@@ -54,6 +54,7 @@ class LoginState extends State<Login> {
           _passwordController.text,
         );
       }
+      await PermissionService.instance.checkPermission('');
 
       if (mounted) {
         context.go('/dashboard');
@@ -104,6 +105,11 @@ class LoginState extends State<Login> {
                           child: Column(
                             mainAxisSize: MainAxisSize.min,
                             children: <Widget>[
+                              Image.asset(
+                                'assets/full.png',
+                                width: 200,
+                                height: 200,
+                              ),
                               Padding(
                                 padding:
                                     const EdgeInsets.symmetric(horizontal: 24),

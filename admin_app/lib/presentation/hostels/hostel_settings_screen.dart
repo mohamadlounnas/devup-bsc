@@ -97,6 +97,52 @@ class _HostelSettingsScreenState extends State<HostelSettingsScreen> {
     }
   }
 
+  Widget _buildSectionCard({
+    required String title,
+    required List<Widget> children,
+    IconData? icon,
+  }) {
+    return Card(
+      color: Theme.of(context).colorScheme.surface.withOpacity(0.3),
+      margin: const EdgeInsets.symmetric(vertical: 12),
+      elevation: 0,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(16),
+        side: BorderSide(
+          color: Theme.of(context).colorScheme.outlineVariant.withOpacity(0.5),
+        ),
+      ),
+      child: Padding(
+        padding: const EdgeInsets.all(24),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                if (icon != null) ...[
+                  Icon(
+                    icon,
+                    color: Theme.of(context).colorScheme.primary,
+                  ),
+                  const SizedBox(width: 12),
+                ],
+                Text(
+                  title,
+                  style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                        color: Theme.of(context).colorScheme.primary,
+                        fontWeight: FontWeight.bold,
+                      ),
+                ),
+              ],
+            ),
+            const Divider(height: 32),
+            ...children,
+          ],
+        ),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     if (_isLoading) {
@@ -104,7 +150,23 @@ class _HostelSettingsScreenState extends State<HostelSettingsScreen> {
     }
 
     if (_hostel == null) {
-      return const Center(child: Text('No hostel found'));
+      return Center(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(
+              Icons.hotel_outlined,
+              size: 64,
+              color: Theme.of(context).colorScheme.secondary,
+            ),
+            const SizedBox(height: 16),
+            Text(
+              'No hostel found',
+              style: Theme.of(context).textTheme.titleLarge,
+            ),
+          ],
+        ),
+      );
     }
 
     return Scaffold(
@@ -115,241 +177,261 @@ class _HostelSettingsScreenState extends State<HostelSettingsScreen> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text(
-                'Hostel Settings',
-                style: Theme.of(context).textTheme.headlineMedium,
-              ),
-              const SizedBox(height: 32),
-
-              // Basic Information Card
-              Card(
-                margin: const EdgeInsets.all(24),
-                color: Theme.of(context).colorScheme.surface.withOpacity(0.5),
-                elevation: 0,
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(24),
-                  side: BorderSide(
-                    color: Colors.grey.withOpacity(0.5),
-                    width: 1,
-                  ),
+              // Header
+              Container(
+                padding: const EdgeInsets.all(24),
+                decoration: BoxDecoration(
+                  color: Theme.of(context)
+                      .colorScheme
+                      .primaryContainer
+                      .withOpacity(0.1),
+                  borderRadius: BorderRadius.circular(16),
                 ),
-                clipBehavior: Clip.antiAlias,
-                child: Padding(
-                  padding: const EdgeInsets.all(24),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        'Basic Information',
-                        style: Theme.of(context).textTheme.titleLarge,
-                      ),
-                      const SizedBox(height: 24),
-                      TextFormField(
-                        controller: _nameController,
-                        decoration: const InputDecoration(
-                          labelText: 'Hostel Name',
-                          border: OutlineInputBorder(),
-                        ),
-                        validator: (value) {
-                          if (value == null || value.isEmpty) {
-                            return 'Please enter hostel name';
-                          }
-                          return null;
-                        },
-                      ),
-                      const SizedBox(height: 16),
-                      TextFormField(
-                        controller: _addressController,
-                        decoration: const InputDecoration(
-                          labelText: 'Address',
-                          border: OutlineInputBorder(),
-                        ),
-                        validator: (value) {
-                          if (value == null || value.isEmpty) {
-                            return 'Please enter address';
-                          }
-                          return null;
-                        },
-                      ),
-                      const SizedBox(height: 16),
-                      TextFormField(
-                        controller: _phoneController,
-                        decoration: const InputDecoration(
-                          labelText: 'Phone Number',
-                          border: OutlineInputBorder(),
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              ),
-              const SizedBox(height: 24),
-
-              // Capacity and Status Card
-              Card(
-                margin: const EdgeInsets.all(24),
-                color: Theme.of(context).colorScheme.surface.withOpacity(0.5),
-                elevation: 0,
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(24),
-                  side: BorderSide(
-                    color: Colors.grey.withOpacity(0.5),
-                    width: 1,
-                  ),
-                ),
-                clipBehavior: Clip.antiAlias,
-                child: Padding(
-                  padding: const EdgeInsets.all(24),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        'Capacity & Status',
-                        style: Theme.of(context).textTheme.titleLarge,
-                      ),
-                      const SizedBox(height: 24),
-                      Row(
-                        children: [
-                          Expanded(
-                            child: TextFormField(
-                              controller: _capacityController,
-                              decoration: const InputDecoration(
-                                labelText: 'Capacity',
-                                border: OutlineInputBorder(),
-                              ),
-                              keyboardType: TextInputType.number,
-                            ),
-                          ),
-                          const SizedBox(width: 16),
-                          Expanded(
-                            child: DropdownButtonFormField<HostelStatus>(
-                              value: _selectedStatus,
-                              decoration: const InputDecoration(
-                                labelText: 'Status',
-                                border: OutlineInputBorder(),
-                              ),
-                              items: HostelStatus.values.map((status) {
-                                return DropdownMenuItem(
-                                  value: status,
-                                  child: Text(status.name),
-                                );
-                              }).toList(),
-                              onChanged: (value) {
-                                if (value != null) {
-                                  setState(() => _selectedStatus = value);
-                                }
-                              },
-                            ),
-                          ),
-                        ],
-                      ),
-                    ],
-                  ),
-                ),
-              ),
-              const SizedBox(height: 24),
-
-              // Location Card
-              Card(
-                margin: const EdgeInsets.all(24),
-                color: Theme.of(context).colorScheme.surface.withOpacity(0.5),
-                elevation: 0,
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(24),
-                  side: BorderSide(
-                    color: Colors.grey.withOpacity(0.5),
-                    width: 1,
-                  ),
-                ),
-                clipBehavior: Clip.antiAlias,
-                child: Padding(
-                  padding: const EdgeInsets.all(24),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        'Location',
-                        style: Theme.of(context).textTheme.titleLarge,
-                      ),
-                      const SizedBox(height: 24),
-                      TextFormField(
-                        controller: _locationController,
-                        decoration: const InputDecoration(
-                          labelText: 'Location Coordinates',
-                          hintText: 'Format: latitude,longitude',
-                          border: OutlineInputBorder(),
-                        ),
-                      ),
-                      const SizedBox(height: 16),
-                      if (_hostel?.location != null)
-                        SizedBox(
-                          height: 300,
-                          child: FlutterMap(
-                            options: MapOptions(
-                                // initialZoom: , _hostel!.location,
-                                // zoom: 15,
-                                ),
-                            children: [
-                              TileLayer(
-                                urlTemplate:
-                                    'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
-                              ),
-                              MarkerLayer(
-                                markers: [
-                                  Marker(
-                                    child: const Icon(
-                                      Icons.location_on,
-                                      color: Colors.red,
-                                      size: 40,
-                                    ),
-                                    point: LatLng(
-                                        double.parse(
-                                            _hostel!.location!.split(',')[0]),
-                                        double.parse(
-                                            _hostel!.location!.split(',')[1])),
-                                  ),
-                                ],
-                              ),
-                            ],
-                          ),
-                        ),
-                    ],
-                  ),
-                ),
-              ),
-
-              const SizedBox(height: 24),
-              if (_error != null)
-                Card(
-                  color: Theme.of(context).colorScheme.errorContainer,
-                  child: Padding(
-                    padding: const EdgeInsets.all(16),
-                    child: Row(
+                child: Row(
+                  children: [
+                    Icon(
+                      Icons.hotel,
+                      size: 32,
+                      color: Theme.of(context).colorScheme.primary,
+                    ),
+                    const SizedBox(width: 16),
+                    Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Icon(
-                          Icons.error_outline,
-                          color: Theme.of(context).colorScheme.error,
+                        Text(
+                          'Hostel Settings',
+                          style: Theme.of(context)
+                              .textTheme
+                              .headlineMedium
+                              ?.copyWith(
+                                color: Theme.of(context).colorScheme.primary,
+                                fontWeight: FontWeight.bold,
+                              ),
                         ),
-                        const SizedBox(width: 8),
-                        Expanded(
-                          child: Text(
-                            _error!,
-                            style: TextStyle(
-                              color: Theme.of(context).colorScheme.error,
-                            ),
-                          ),
+                        Text(
+                          'Manage your hostel information and settings',
+                          style:
+                              Theme.of(context).textTheme.bodyLarge?.copyWith(
+                                    color: Theme.of(context)
+                                        .colorScheme
+                                        .onSurfaceVariant,
+                                  ),
                         ),
                       ],
                     ),
+                  ],
+                ),
+              ),
+              const SizedBox(height: 32),
+
+              // Basic Information Section
+              _buildSectionCard(
+                title: 'Basic Information',
+                icon: Icons.info_outline,
+                children: [
+                  TextFormField(
+                    controller: _nameController,
+                    decoration: InputDecoration(
+                      labelText: 'Hostel Name',
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      prefixIcon: const Icon(Icons.business),
+                    ),
+                    validator: (value) {
+                      if (value == null || value.isEmpty) {
+                        return 'Please enter hostel name';
+                      }
+                      return null;
+                    },
+                  ),
+                  const SizedBox(height: 16),
+                  TextFormField(
+                    controller: _addressController,
+                    decoration: InputDecoration(
+                      labelText: 'Address',
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      prefixIcon: const Icon(Icons.location_on_outlined),
+                    ),
+                    validator: (value) {
+                      if (value == null || value.isEmpty) {
+                        return 'Please enter address';
+                      }
+                      return null;
+                    },
+                  ),
+                  const SizedBox(height: 16),
+                  TextFormField(
+                    controller: _phoneController,
+                    decoration: InputDecoration(
+                      labelText: 'Phone Number',
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      prefixIcon: const Icon(Icons.phone_outlined),
+                    ),
+                  ),
+                ],
+              ),
+
+              // Capacity and Status Section
+              _buildSectionCard(
+                title: 'Capacity & Status',
+                icon: Icons.people_outline,
+                children: [
+                  Row(
+                    children: [
+                      Expanded(
+                        child: TextFormField(
+                          controller: _capacityController,
+                          decoration: InputDecoration(
+                            labelText: 'Capacity',
+                            border: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(12),
+                            ),
+                            prefixIcon: const Icon(Icons.person_outline),
+                          ),
+                          keyboardType: TextInputType.number,
+                        ),
+                      ),
+                      const SizedBox(width: 16),
+                      Expanded(
+                        child: DropdownButtonFormField<HostelStatus>(
+                          value: _selectedStatus,
+                          decoration: InputDecoration(
+                            labelText: 'Status',
+                            border: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(12),
+                            ),
+                            prefixIcon: const Icon(Icons.toggle_on_outlined),
+                          ),
+                          items: HostelStatus.values.map((status) {
+                            return DropdownMenuItem(
+                              value: status,
+                              child: Text(status.name),
+                            );
+                          }).toList(),
+                          onChanged: (value) {
+                            if (value != null) {
+                              setState(() => _selectedStatus = value);
+                            }
+                          },
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
+
+              // Location Section
+              _buildSectionCard(
+                title: 'Location',
+                icon: Icons.map_outlined,
+                children: [
+                  TextFormField(
+                    controller: _locationController,
+                    decoration: InputDecoration(
+                      labelText: 'Location Coordinates',
+                      hintText: 'Format: latitude,longitude',
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      prefixIcon: const Icon(Icons.pin_drop_outlined),
+                    ),
+                  ),
+                  if (_hostel?.location != null) ...[
+                    const SizedBox(height: 16),
+                    ClipRRect(
+                      borderRadius: BorderRadius.circular(12),
+                      child: SizedBox(
+                        height: 300,
+                        child: FlutterMap(
+                          options: MapOptions(
+                            initialCenter: LatLng(
+                              double.parse(_hostel!.location!.split(',')[0]),
+                              double.parse(_hostel!.location!.split(',')[1]),
+                            ),
+                            initialZoom: 15,
+                          ),
+                          children: [
+                            TileLayer(
+                              urlTemplate:
+                                  'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
+                            ),
+                            MarkerLayer(
+                              markers: [
+                                Marker(
+                                  point: LatLng(
+                                    double.parse(
+                                        _hostel!.location!.split(',')[0]),
+                                    double.parse(
+                                        _hostel!.location!.split(',')[1]),
+                                  ),
+                                  child: const Icon(
+                                    Icons.location_on,
+                                    color: Colors.red,
+                                    size: 40,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                  ],
+                ],
+              ),
+
+              // Error Message
+              if (_error != null)
+                Container(
+                  margin: const EdgeInsets.symmetric(vertical: 16),
+                  padding: const EdgeInsets.all(16),
+                  decoration: BoxDecoration(
+                    color: Theme.of(context).colorScheme.errorContainer,
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: Row(
+                    children: [
+                      Icon(
+                        Icons.error_outline,
+                        color: Theme.of(context).colorScheme.error,
+                      ),
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: Text(
+                          _error!,
+                          style: TextStyle(
+                            color: Theme.of(context).colorScheme.error,
+                          ),
+                        ),
+                      ),
+                    ],
                   ),
                 ),
-              const SizedBox(height: 24),
+
+              // Save Button
+              const SizedBox(height: 32),
               SizedBox(
                 width: double.infinity,
+                height: 50,
                 child: FilledButton.icon(
                   onPressed: _isLoading ? null : _updateHostel,
-                  icon: const Icon(Icons.save),
-                  label: const Text('Save Changes'),
+                  icon: _isLoading
+                      ? const SizedBox(
+                          width: 20,
+                          height: 20,
+                          child: CircularProgressIndicator(
+                            strokeWidth: 2,
+                            valueColor:
+                                AlwaysStoppedAnimation<Color>(Colors.white),
+                          ),
+                        )
+                      : const Icon(Icons.save),
+                  label: Text(_isLoading ? 'Saving...' : 'Save Changes'),
                 ),
               ),
             ],
