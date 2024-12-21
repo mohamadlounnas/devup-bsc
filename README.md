@@ -129,5 +129,21 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 
 For support, email mohamed@physia.dev
 
+## 🎮 Demo Links
+
+### 🎯 Live Demos
+- [Real-time Transport System](https://transprts.cscclub.net/)
+- [Super Admin Dashboard](https://app-bsc.mtdjari.com/) 
+  - Demo credentials: admingmail.com / 12345678
+
+### 📊 Presentation
+- [Project Slides](https://www.canva.com/design/DAGZ6PhY77w/TFTl0wP0TjS3jyHNHgx0EQ/edit?utm_content=DAGZ6PhY77w&utm_campaign=designshare&utm_medium=link2&utm_source=sharebutton)
+
+### 🎥 Video Demonstrations
+- [Event Check-in App Demo](https://youtube.com/shorts/mEnrD6sqm8s?si=K6ngJfD3lUUx9uE9)
+- [Admin Dashboard Walkthrough](https://youtu.be/M3ZfbVEqT6g)
+- [Smart City Client App Overview](https://www.youtube.com/watch?v=qXjQRwkMnqE)
+- [Reservation System Demo](https://www.youtube.com/watch?v=M3ZfbVEqT6g)
+
 ---
 Made with ❤️ by the BAZOKA Team
