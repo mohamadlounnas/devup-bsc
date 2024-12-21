@@ -4,7 +4,7 @@
 [![License](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
 
 DevUp is a modern, feature-rich Flutter application designed to enhance the campus experience by providing an interactive map interface for discovering hostels, facilities, and events around the campus area.
-
+ 
 ## 🌟 Features
 
 ### 🗺️ Interactive Map
