@@ -323,21 +323,24 @@ class _MapPageState extends State<MapPage> with TickerProviderStateMixin {
       name: 'Train Line 1',
       color: Colors.purple,
       trains: [
-        Train(id: 'Train 1A', delayMinutes: 0),
-        Train(id: 'Train 1B', delayMinutes: 30),
+        Train(id: 'Train 1→', delayMinutes: 0), // Starts from Boumerdes
+        Train(
+            id: 'Train 1←',
+            delayMinutes: 0), // Starts from Thénia (both start at same time)
       ],
       stations: [
         Station(
           name: 'Boumerdes Gare',
           location: LatLng(36.7665, 3.4719),
           order: 1,
-          minutesToNextStation: 15, // Increased time
+          minutesToNextStation:
+              25, // Increased time for more realistic train journey
         ),
         Station(
           name: 'Corso Gare',
           location: LatLng(36.7338, 3.4453),
           order: 2,
-          minutesToNextStation: 20, // Increased time
+          minutesToNextStation: 30,
         ),
         Station(
           name: 'Thénia Gare',
@@ -351,21 +354,24 @@ class _MapPageState extends State<MapPage> with TickerProviderStateMixin {
       name: 'Train Line 2',
       color: Colors.deepPurple,
       trains: [
-        Train(id: 'Train 2A', delayMinutes: 0),
-        Train(id: 'Train 2B', delayMinutes: 25),
+        Train(id: 'Train 2→', delayMinutes: 0), // Starts from Boumerdes
+        Train(
+            id: 'Train 2←',
+            delayMinutes:
+                0), // Starts from Rocher Noir (both start at same time)
       ],
       stations: [
         Station(
           name: 'Boumerdes Gare',
           location: LatLng(36.7665, 3.4719),
           order: 1,
-          minutesToNextStation: 18, // Increased time
+          minutesToNextStation: 28,
         ),
         Station(
           name: 'Tidjelabine Gare',
           location: LatLng(36.7372, 3.4986),
           order: 2,
-          minutesToNextStation: 16, // Increased time
+          minutesToNextStation: 26,
         ),
         Station(
           name: 'Rocher Noir Gare',
@@ -428,10 +434,11 @@ class _MapPageState extends State<MapPage> with TickerProviderStateMixin {
       for (var vehicle in vehicles) {
         final controllerId = '${lineName}_${vehicle.id}';
         final isTrainVehicle = vehicle is Train;
+        final isReturnDirection = isTrainVehicle && vehicle.id.contains('←');
 
-        // Make trains move slower by multiplying duration
+        // Make trains move slower
         final adjustedDuration = isTrainVehicle
-            ? Duration(seconds: totalDuration * 3) // Trains move 3x slower
+            ? Duration(seconds: totalDuration * 4) // Trains move 4x slower
             : Duration(seconds: totalDuration);
 
         _animationControllers[controllerId] = AnimationController(
@@ -439,17 +446,34 @@ class _MapPageState extends State<MapPage> with TickerProviderStateMixin {
           duration: adjustedDuration,
         );
 
-        _animations[controllerId] = Tween(begin: 0.0, end: 1.0).animate(
-          CurvedAnimation(
-            parent: _animationControllers[controllerId]!,
-            // Use a different curve for trains to make movement smoother
-            curve: isTrainVehicle ? Curves.linear : Curves.linear,
-          ),
-        );
+        if (isTrainVehicle) {
+          // For trains, start from opposite ends
+          _animations[controllerId] = Tween(
+            begin: isReturnDirection ? 1.0 : 0.0,
+            end: isReturnDirection ? 0.0 : 1.0,
+          ).animate(
+            CurvedAnimation(
+              parent: _animationControllers[controllerId]!,
+              curve: Curves.linear,
+            ),
+          );
 
-        Future.delayed(Duration(seconds: vehicle.delayMinutes), () {
+          // Start trains immediately (no delay)
           _animationControllers[controllerId]!.repeat();
-        });
+        } else {
+          // Keep existing bus animation
+          _animations[controllerId] = Tween(begin: 0.0, end: 1.0).animate(
+            CurvedAnimation(
+              parent: _animationControllers[controllerId]!,
+              curve: Curves.linear,
+            ),
+          );
+
+          // Only buses have delays
+          Future.delayed(Duration(seconds: vehicle.delayMinutes), () {
+            _animationControllers[controllerId]!.repeat(reverse: true);
+          });
+        }
       }
     }
   }
@@ -1036,6 +1060,75 @@ class _MapPageState extends State<MapPage> with TickerProviderStateMixin {
     );
   }
 
+  // Simple train timing calculation
+  String _getTrainTime(TrainLine trainLine, Station station, bool isForward) {
+    bool isFirstStation = station.order == 1;
+    bool isLastStation = station.order == trainLine.stations.length;
+
+    if (isFirstStation || isLastStation) {
+      int forwardTime =
+          _calculateTrainTimeForDirection(trainLine, station, true);
+      int reverseTime =
+          _calculateTrainTimeForDirection(trainLine, station, false);
+
+      int maxTime = max(forwardTime, reverseTime);
+      return maxTime == 999999 ? '' : '$maxTime min';
+    }
+
+    return '${_calculateTrainTimeForDirection(trainLine, station, isForward)} min';
+  }
+
+  int _calculateTrainTimeForDirection(
+      TrainLine trainLine, Station station, bool isForward) {
+    int shortestTime = 999999;
+
+    // Check each train in the line
+    for (var train in trainLine.trains) {
+      final controllerId = '${trainLine.name}_${train.id}';
+      final controller = _animationControllers[controllerId];
+      final animation = _animations[controllerId];
+
+      if (controller == null || animation == null) continue;
+
+      final totalDuration = trainLine.totalDuration;
+      double timeToStation = 0;
+      int stationIndex = trainLine.stations.indexOf(station);
+
+      if (isForward) {
+        // Calculate time to reach this station from start
+        for (int i = 0; i < stationIndex; i++) {
+          timeToStation += trainLine.stations[i].minutesToNextStation;
+        }
+
+        // If we've passed this station, add full route time
+        if (animation.value * totalDuration > timeToStation) {
+          timeToStation += totalDuration;
+        }
+      } else {
+        // Calculate time from end to this station
+        for (int i = trainLine.stations.length - 2; i >= stationIndex; i--) {
+          timeToStation += trainLine.stations[i].minutesToNextStation;
+        }
+
+        // If we've passed this station in reverse, add full route time
+        if ((1 - animation.value) * totalDuration > timeToStation) {
+          timeToStation += totalDuration;
+        }
+      }
+
+      final minutes = (timeToStation -
+              (isForward ? animation.value : (1 - animation.value)) *
+                  totalDuration)
+          .round();
+      if (minutes < shortestTime) {
+        shortestTime = minutes;
+      }
+    }
+
+    return shortestTime;
+  }
+
+  // Update the _buildTrainTimingRow method
   Widget _buildTrainTimingRow(TrainLine trainLine, Station station) {
     bool isFirstStation = station.order == 1;
     bool isLastStation = station.order == trainLine.stations.length;
@@ -1043,6 +1136,7 @@ class _MapPageState extends State<MapPage> with TickerProviderStateMixin {
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
+        // Forward direction
         Expanded(
           child: Row(
             children: [
@@ -1051,14 +1145,15 @@ class _MapPageState extends State<MapPage> with TickerProviderStateMixin {
               AnimatedBuilder(
                 animation: Listenable.merge(
                   trainLine.trains
+                      .where((train) => !train.id.contains('←'))
                       .map((train) => _animationControllers[
                           '${trainLine.name}_${train.id}'])
                       .whereType<AnimationController>()
                       .toList(),
                 ),
-                builder: (context, child) {
+                builder: (context, _) {
                   return Text(
-                    '${station.minutesToNextStation} min',
+                    _getTrainTime(trainLine, station, true),
                     style: TextStyle(
                       color: trainLine.color,
                       fontWeight: FontWeight.w500,
@@ -1069,6 +1164,7 @@ class _MapPageState extends State<MapPage> with TickerProviderStateMixin {
             ],
           ),
         ),
+        // Return direction
         Expanded(
           child: Row(
             mainAxisAlignment: MainAxisAlignment.end,
@@ -1076,6 +1172,7 @@ class _MapPageState extends State<MapPage> with TickerProviderStateMixin {
               AnimatedBuilder(
                 animation: Listenable.merge(
                   trainLine.trains
+                      .where((train) => train.id.contains('←'))
                       .map((train) => _animationControllers[
                           '${trainLine.name}_${train.id}'])
                       .whereType<AnimationController>()
@@ -1083,7 +1180,7 @@ class _MapPageState extends State<MapPage> with TickerProviderStateMixin {
                 ),
                 builder: (context, _) {
                   return Text(
-                    '${station.minutesToNextStation} min',
+                    _getTrainTime(trainLine, station, false),
                     style: TextStyle(
                       color: trainLine.color,
                       fontWeight: FontWeight.w500,
