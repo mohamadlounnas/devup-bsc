@@ -6,6 +6,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:iconsax/iconsax.dart';
 import 'package:intl/intl.dart';
+import 'package:share_plus/share_plus.dart';
 import 'package:shared/shared.dart';
 import 'package:url_launcher/url_launcher.dart';
 import '../../providers/facilities_provider.dart';
@@ -24,7 +25,7 @@ class _FacilitiesScreenState extends State<FacilitiesScreen> {
   final _searchController = TextEditingController();
   final _scrollController = ScrollController();
   final _debouncer = Debouncer(milliseconds: 300);
-  
+
   bool _isGridView = false;
   bool _isSearchExpanded = false;
   SortOption _sortOption = SortOption.distance;
@@ -55,7 +56,7 @@ class _FacilitiesScreenState extends State<FacilitiesScreen> {
 
   void _showFacilityDetails(Facility facility) {
     final isWideScreen = MediaQuery.of(context).size.width > 1200;
-    
+
     if (isWideScreen) {
       setState(() => _selectedFacility = facility);
     } else {
@@ -86,7 +87,7 @@ class _FacilitiesScreenState extends State<FacilitiesScreen> {
     final theme = Theme.of(context);
     final colorScheme = theme.colorScheme;
     final isWideScreen = MediaQuery.of(context).size.width > 1200;
-    
+
     return Scaffold(
       backgroundColor: Colors.transparent,
       body: Row(
@@ -143,7 +144,9 @@ class _FacilitiesScreenState extends State<FacilitiesScreen> {
                   IconButton(
                     onPressed: () => setState(() => _isGridView = !_isGridView),
                     icon: Icon(
-                      _isGridView ? Icons.view_list_rounded : Icons.grid_view_rounded,
+                      _isGridView
+                          ? Icons.view_list_rounded
+                          : Icons.grid_view_rounded,
                       semanticLabel: '${_isGridView ? 'List' : 'Grid'} view',
                     ),
                     tooltip: 'Change view mode',
@@ -257,8 +260,8 @@ class _FacilitiesScreenState extends State<FacilitiesScreen> {
             Text(
               _getSortLabel(),
               style: Theme.of(context).textTheme.labelLarge?.copyWith(
-                color: colorScheme.onSurfaceVariant,
-              ),
+                    color: colorScheme.onSurfaceVariant,
+                  ),
             ),
           ],
         ),
@@ -283,11 +286,11 @@ class _FacilitiesScreenState extends State<FacilitiesScreen> {
             ),
             label: Text(_getFacilityTypeLabel(type)),
             labelStyle: Theme.of(context).textTheme.labelLarge?.copyWith(
-              color: _selectedType == type
-                  ? colorScheme.onSecondaryContainer
-                  : colorScheme.onSurfaceVariant,
-              letterSpacing: 0.5,
-            ),
+                  color: _selectedType == type
+                      ? colorScheme.onSecondaryContainer
+                      : colorScheme.onSurfaceVariant,
+                  letterSpacing: 0.5,
+                ),
             onSelected: (selected) {
               setState(() {
                 _selectedType = selected ? type : null;
@@ -389,7 +392,7 @@ class _FacilitiesScreenState extends State<FacilitiesScreen> {
     final width = MediaQuery.of(context).size.width;
     final isCompact = width < 600;
     final cardWidth = isCompact ? 280.0 : 320.0;
-    
+
     return SingleChildScrollView(
       controller: _scrollController,
       padding: EdgeInsets.all(isCompact ? 12 : 16),
@@ -425,13 +428,16 @@ class _FacilitiesScreenState extends State<FacilitiesScreen> {
     if (searchQuery.isNotEmpty) {
       facilities = facilities.where((facility) {
         return facility.name.toLowerCase().contains(searchQuery) ||
-            (facility.description?.toLowerCase().contains(searchQuery) ?? false);
+            (facility.description?.toLowerCase().contains(searchQuery) ??
+                false);
       }).toList();
     }
 
     // Apply type filter
     if (_selectedType != null) {
-      facilities = facilities.where((facility) => facility.type == _selectedType).toList();
+      facilities = facilities
+          .where((facility) => facility.type == _selectedType)
+          .toList();
     }
 
     // Apply sorting
@@ -439,10 +445,10 @@ class _FacilitiesScreenState extends State<FacilitiesScreen> {
       switch (_sortOption) {
         case SortOption.distance:
           // Extract numeric value from location string (e.g., "0.5km from campus")
-          final aDistance = double.tryParse(
-                a.location?.split('km').first ?? '999') ?? 999;
-          final bDistance = double.tryParse(
-                b.location?.split('km').first ?? '999') ?? 999;
+          final aDistance =
+              double.tryParse(a.location?.split('km').first ?? '999') ?? 999;
+          final bDistance =
+              double.tryParse(b.location?.split('km').first ?? '999') ?? 999;
           return aDistance.compareTo(bDistance);
         case SortOption.name:
           return a.name.compareTo(b.name);
@@ -456,8 +462,9 @@ class _FacilitiesScreenState extends State<FacilitiesScreen> {
 
   Widget _buildEmptyState() {
     final theme = Theme.of(context);
-    final hasFilters = _searchController.text.isNotEmpty || _selectedType != null;
-    
+    final hasFilters =
+        _searchController.text.isNotEmpty || _selectedType != null;
+
     return Center(
       child: Padding(
         padding: const EdgeInsets.all(32),
@@ -506,7 +513,7 @@ class _FacilitiesScreenState extends State<FacilitiesScreen> {
   Widget _buildListView(List<Facility> facilities) {
     final width = MediaQuery.of(context).size.width;
     final isCompact = width < 600;
-    
+
     return ListView.builder(
       controller: _scrollController,
       padding: EdgeInsets.symmetric(
@@ -517,7 +524,7 @@ class _FacilitiesScreenState extends State<FacilitiesScreen> {
       itemBuilder: (context, index) {
         return Padding(
           padding: EdgeInsets.only(
-            // the last one add 200px 
+            // the last one add 200px
             bottom: index == facilities.length - 1 ? 200 : 6,
             left: isCompact ? 4 : 0,
             right: isCompact ? 4 : 0,
@@ -527,10 +534,16 @@ class _FacilitiesScreenState extends State<FacilitiesScreen> {
             isCompact: isCompact,
             onTap: () => _showFacilityDetails(facilities[index]),
             onShare: () {
-              // TODO: Implement share
+              var link =
+                  'https://www.google.com/maps/search/?api=1&query=${facilities[index].locationLatLng?.latitude},${facilities[index].locationLatLng?.longitude}';
+              Share.share(link);
             },
-            onGetDirections: () {
-              // TODO: Implement directions
+            onGetDirections: () async {
+              var link =
+                  'https://www.google.com/maps/search/?api=1&query=${facilities[index].locationLatLng?.latitude},${facilities[index].locationLatLng?.longitude}';
+              if (await canLaunchUrl(Uri.parse(link))) {
+                await launchUrl(Uri.parse(link));
+              }
             },
           ),
         );
@@ -572,9 +585,10 @@ class FacilityDetailsPanel extends StatelessWidget {
 
   Future<void> _launchMaps(BuildContext context) async {
     if (facility.location == null) return;
-    
-    final url = 'https://www.google.com/maps/search/?api=1&query=${Uri.encodeComponent(facility.location!)}';
-    
+
+    final url =
+        'https://www.google.com/maps/search/?api=1&query=${Uri.encodeComponent(facility.location!)}';
+
     try {
       if (await canLaunchUrl(Uri.parse(url))) {
         await launchUrl(Uri.parse(url));
@@ -622,9 +636,7 @@ class FacilityDetailsPanel extends StatelessWidget {
           BoxShadow(
             color: colorScheme.shadow.withOpacity(0.1),
             blurRadius: 8,
-            offset: isSideSheet
-                ? const Offset(-2, 0)
-                : const Offset(0, -2),
+            offset: isSideSheet ? const Offset(-2, 0) : const Offset(0, -2),
           ),
         ],
       ),
@@ -648,7 +660,8 @@ class FacilityDetailsPanel extends StatelessWidget {
             child: Row(
               children: [
                 Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
                   decoration: BoxDecoration(
                     color: colorScheme.primaryContainer,
                     borderRadius: BorderRadius.circular(20),
@@ -710,7 +723,8 @@ class FacilityDetailsPanel extends StatelessWidget {
                                     const SizedBox(height: 8),
                                     Text(
                                       'Image not available',
-                                      style: theme.textTheme.bodyMedium?.copyWith(
+                                      style:
+                                          theme.textTheme.bodyMedium?.copyWith(
                                         color: colorScheme.onSurfaceVariant,
                                       ),
                                     ),
@@ -799,43 +813,44 @@ class FacilityDetailsPanel extends StatelessWidget {
                     ),
                     const SizedBox(height: 16),
                     ...facility.events!.map((event) => Card(
-                      margin: const EdgeInsets.only(bottom: 8),
-                      child: ListTile(
-                        leading: Container(
-                          width: 40,
-                          height: 40,
-                          decoration: BoxDecoration(
-                            color: colorScheme.primaryContainer,
-                            borderRadius: BorderRadius.circular(8),
+                          margin: const EdgeInsets.only(bottom: 8),
+                          child: ListTile(
+                            leading: Container(
+                              width: 40,
+                              height: 40,
+                              decoration: BoxDecoration(
+                                color: colorScheme.primaryContainer,
+                                borderRadius: BorderRadius.circular(8),
+                              ),
+                              child: Icon(
+                                Icons.event,
+                                color: colorScheme.onPrimaryContainer,
+                              ),
+                            ),
+                            title: Text(
+                              event.name,
+                              style: theme.textTheme.titleSmall?.copyWith(
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                            subtitle: Text(
+                              event.started != null
+                                  ? DateFormat('MMM d, y • h:mm a')
+                                      .format(event.started!)
+                                  : 'Date TBD',
+                              style: theme.textTheme.bodySmall?.copyWith(
+                                color: colorScheme.onSurfaceVariant,
+                              ),
+                            ),
+                            trailing: Icon(
+                              Icons.arrow_forward_ios,
+                              color: colorScheme.onSurfaceVariant,
+                            ),
+                            onTap: () {
+                              // TODO: Navigate to event details
+                            },
                           ),
-                          child: Icon(
-                            Icons.event,
-                            color: colorScheme.onPrimaryContainer,
-                          ),
-                        ),
-                        title: Text(
-                          event.name,
-                          style: theme.textTheme.titleSmall?.copyWith(
-                            fontWeight: FontWeight.bold,
-                          ),
-                        ),
-                        subtitle: Text(
-                          event.started != null
-                              ? DateFormat('MMM d, y • h:mm a').format(event.started!)
-                              : 'Date TBD',
-                          style: theme.textTheme.bodySmall?.copyWith(
-                            color: colorScheme.onSurfaceVariant,
-                          ),
-                        ),
-                        trailing: Icon(
-                          Icons.arrow_forward_ios,
-                          color: colorScheme.onSurfaceVariant,
-                        ),
-                        onTap: () {
-                          // TODO: Navigate to event details
-                        },
-                      ),
-                    )),
+                        )),
                   ],
                 ],
               ),
@@ -918,4 +933,4 @@ class _ActionButton extends StatelessWidget {
       ),
     );
   }
-} 
+}

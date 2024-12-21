@@ -1,16 +1,18 @@
 import 'package:flutter/material.dart';
+import 'package:share_plus/share_plus.dart';
 import 'package:shared/shared.dart';
 import 'package:flutter_map/flutter_map.dart';
 import 'package:latlong2/latlong.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 /// A panel that displays detailed information about a hostel
 class HostelDetailsPanel extends StatelessWidget {
   /// The hostel to display details for
   final Hostel hostel;
-  
+
   /// Whether this panel is displayed as a side sheet
   final bool isSideSheet;
-  
+
   /// Callback when the panel is closed
   final VoidCallback onClose;
 
@@ -216,7 +218,8 @@ class HostelDetailsPanel extends StatelessWidget {
               avatar: service.icon != null
                   ? Icon(Icons.check_circle_outline, size: 18)
                   : null,
-              backgroundColor: theme.colorScheme.secondaryContainer.withOpacity(0.4),
+              backgroundColor:
+                  theme.colorScheme.secondaryContainer.withOpacity(0.4),
               side: BorderSide.none,
               padding: const EdgeInsets.symmetric(horizontal: 8),
             );
@@ -247,7 +250,8 @@ class HostelDetailsPanel extends StatelessWidget {
                 children: [
                   FlutterMap(
                     options: MapOptions(
-                      center: LatLng(hostel.latLong!.latitude, hostel.latLong!.longitude),
+                      center: LatLng(
+                          hostel.latLong!.latitude, hostel.latLong!.longitude),
                       zoom: 15.0,
                       minZoom: 3,
                       maxZoom: 18,
@@ -255,7 +259,8 @@ class HostelDetailsPanel extends StatelessWidget {
                     ),
                     children: [
                       TileLayer(
-                        urlTemplate: 'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
+                        urlTemplate:
+                            'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
                         userAgentPackageName: 'com.devup.app',
                         tileBuilder: (context, widget, tile) {
                           return AnimatedSwitcher(
@@ -267,7 +272,8 @@ class HostelDetailsPanel extends StatelessWidget {
                       MarkerLayer(
                         markers: [
                           Marker(
-                            point: LatLng(hostel.latLong!.latitude, hostel.latLong!.longitude),
+                            point: LatLng(hostel.latLong!.latitude,
+                                hostel.latLong!.longitude),
                             width: 40,
                             height: 40,
                             child: _buildMarker(theme),
@@ -325,7 +331,8 @@ class HostelDetailsPanel extends StatelessWidget {
                       Icon(
                         Icons.map_outlined,
                         size: 48,
-                        color: theme.colorScheme.onSurfaceVariant.withOpacity(0.8),
+                        color:
+                            theme.colorScheme.onSurfaceVariant.withOpacity(0.8),
                       ),
                       const SizedBox(height: 8),
                       Text(
@@ -361,6 +368,33 @@ class HostelDetailsPanel extends StatelessWidget {
             ],
           ),
         ],
+        // get directions (google maps) and share
+        Row(
+          children: [
+            IconButton(
+              icon: const Icon(Icons.directions_rounded),
+              onPressed: () async {
+                if (hostel.latLong != null) {
+                  final url = Uri.parse(
+                      'https://www.google.com/maps/search/?api=1&query=${hostel.latLong!.latitude},${hostel.latLong!.longitude}');
+                  if (await canLaunchUrl(url)) {
+                    await launchUrl(url);
+                  }
+                }
+              },
+              tooltip: 'Get Directions',
+            ),
+            IconButton(
+              icon: const Icon(Icons.share_rounded),
+              onPressed: () {
+                final link =
+                    'https://www.google.com/maps/search/?api=1&query=${hostel.latLong!.latitude},${hostel.latLong!.longitude}';
+                Share.share(link);
+              },
+              tooltip: 'Share',
+            ),
+          ],
+        ),
       ],
     );
   }
@@ -477,4 +511,4 @@ class HostelDetailsPanel extends StatelessWidget {
         return 'Limited availability';
     }
   }
-} 
+}
