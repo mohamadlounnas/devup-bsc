@@ -107,9 +107,12 @@ class _LoginScreenState extends State<LoginScreen> {
                         const SizedBox(height: 24),
                         Text(
                           'Welcome Back',
-                          style: Theme.of(context).textTheme.headlineMedium?.copyWith(
-                            fontSize: isDesktop ? 32 : 24,
-                          ),
+                          style: Theme.of(context)
+                              .textTheme
+                              .headlineMedium
+                              ?.copyWith(
+                                fontSize: isDesktop ? 32 : 24,
+                              ),
                         ),
                         SizedBox(height: isDesktop ? 48 : 24),
                         TextFormField(
@@ -133,7 +136,9 @@ class _LoginScreenState extends State<LoginScreen> {
                             border: const OutlineInputBorder(),
                             suffixIcon: IconButton(
                               icon: Icon(
-                                _obscurePassword ? Icons.visibility_off : Icons.visibility,
+                                _obscurePassword
+                                    ? Icons.visibility_off
+                                    : Icons.visibility,
                               ),
                               onPressed: () {
                                 setState(() {
@@ -155,7 +160,8 @@ class _LoginScreenState extends State<LoginScreen> {
                         const SizedBox(height: 16),
                         SwitchListTile(
                           title: const Text('Remember Me'),
-                          subtitle: const Text('Save credentials for next time'),
+                          subtitle:
+                              const Text('Save credentials for next time'),
                           value: _saveCredentials,
                           onChanged: (bool value) {
                             setState(() {
@@ -167,9 +173,11 @@ class _LoginScreenState extends State<LoginScreen> {
                         Consumer<AuthService>(
                           builder: (context, authService, child) {
                             return ElevatedButton(
-                              onPressed: authService.loading ? null : _handleLogin,
+                              onPressed:
+                                  authService.loading ? null : _handleLogin,
                               style: ElevatedButton.styleFrom(
-                                minimumSize: Size(isDesktop ? 300 : double.infinity, 50),
+                                minimumSize:
+                                    Size(isDesktop ? 300 : double.infinity, 50),
                                 shape: RoundedRectangleBorder(
                                   borderRadius: BorderRadius.circular(8),
                                 ),
@@ -178,7 +186,8 @@ class _LoginScreenState extends State<LoginScreen> {
                                   ? const CircularProgressIndicator()
                                   : Text(
                                       'Login',
-                                      style: TextStyle(fontSize: isDesktop ? 18 : 16),
+                                      style: TextStyle(
+                                          fontSize: isDesktop ? 18 : 16),
                                     ),
                             );
                           },
@@ -208,4 +217,4 @@ class _LoginScreenState extends State<LoginScreen> {
     _passwordController.dispose();
     super.dispose();
   }
-} 
+}
