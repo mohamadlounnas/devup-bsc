@@ -13,11 +13,14 @@ import 'package:shared/shared.dart';
 
 /// Responsive breakpoints for different screen sizes
 class ResponsiveLayout {
-  static bool isMobile(BuildContext context) => MediaQuery.of(context).size.width < 600;
-  static bool isTablet(BuildContext context) => 
-      MediaQuery.of(context).size.width >= 600 && MediaQuery.of(context).size.width < 1200;
-  static bool isDesktop(BuildContext context) => MediaQuery.of(context).size.width >= 1200;
-  
+  static bool isMobile(BuildContext context) =>
+      MediaQuery.of(context).size.width < 600;
+  static bool isTablet(BuildContext context) =>
+      MediaQuery.of(context).size.width >= 600 &&
+      MediaQuery.of(context).size.width < 1200;
+  static bool isDesktop(BuildContext context) =>
+      MediaQuery.of(context).size.width >= 1200;
+
   static double getQuickAccessCrossAxisCount(BuildContext context) {
     final width = MediaQuery.of(context).size.width;
     if (width >= 1500) return 5;
@@ -26,7 +29,7 @@ class ResponsiveLayout {
     if (width >= 600) return 2;
     return 2;
   }
-  
+
   static double getContentMaxWidth(BuildContext context) {
     final width = MediaQuery.of(context).size.width;
     if (width >= 1500) return 1400;
@@ -45,11 +48,13 @@ class HomeScreen extends StatefulWidget {
 }
 
 class _HomeScreenState extends State<HomeScreen> {
-  final CarouselController _featuredController = CarouselController(initialItem: 1);
-  final CarouselController _quickAccessController = CarouselController(initialItem: 0);
+  final CarouselController _featuredController =
+      CarouselController(initialItem: 1);
+  final CarouselController _quickAccessController =
+      CarouselController(initialItem: 0);
   late final EventsProvider _eventsProvider;
   late final FacilitiesProvider _facilitiesProvider;
-  
+
   bool _isRefreshing = false;
   FacilityEvent? _selectedEvent;
   Facility? _selectedFacility;
@@ -96,9 +101,9 @@ class _HomeScreenState extends State<HomeScreen> {
   // Pull to refresh handler with error handling and haptic feedback
   Future<void> _handleRefresh() async {
     if (_isRefreshing) return;
-    
+
     setState(() => _isRefreshing = true);
-    
+
     try {
       await _loadData();
       if (mounted) {
@@ -126,7 +131,7 @@ class _HomeScreenState extends State<HomeScreen> {
   void _showEventDetails(FacilityEvent event) {
     final isWideScreen = MediaQuery.of(context).size.width > 1200;
     HapticFeedback.selectionClick();
-    
+
     if (isWideScreen) {
       setState(() => _selectedEvent = event);
     } else {
@@ -156,7 +161,7 @@ class _HomeScreenState extends State<HomeScreen> {
   void _showFacilityDetails(Facility facility) {
     final isWideScreen = MediaQuery.of(context).size.width > 1200;
     HapticFeedback.selectionClick();
-    
+
     if (isWideScreen) {
       setState(() => _selectedFacility = facility);
     } else {
@@ -190,7 +195,7 @@ class _HomeScreenState extends State<HomeScreen> {
     final size = MediaQuery.sizeOf(context);
     final isDesktop = ResponsiveLayout.isDesktop(context);
     final isMobile = ResponsiveLayout.isMobile(context);
-    
+
     return Scaffold(
       backgroundColor: Colors.transparent,
       body: Row(
@@ -200,9 +205,11 @@ class _HomeScreenState extends State<HomeScreen> {
               onRefresh: _handleRefresh,
               displacement: 80,
               child: ListenableBuilder(
-                listenable: Listenable.merge([_eventsProvider, _facilitiesProvider]),
+                listenable:
+                    Listenable.merge([_eventsProvider, _facilitiesProvider]),
                 builder: (context, _) {
-                  if (_eventsProvider.error != null || _facilitiesProvider.error != null) {
+                  if (_eventsProvider.error != null ||
+                      _facilitiesProvider.error != null) {
                     return _buildErrorState(theme, colorScheme);
                   }
 
@@ -219,19 +226,21 @@ class _HomeScreenState extends State<HomeScreen> {
                         children: [
                           // App Bar with semantic labels
                           _buildAppBar(colorScheme),
-                          
+
                           // Hero section with featured events
                           Padding(
-                            padding: EdgeInsets.symmetric(vertical: isDesktop ? 32 : 24),
+                            padding: EdgeInsets.symmetric(
+                                vertical: isDesktop ? 32 : 24),
                             child: _buildFeaturedEventsSection(size),
                           ),
-                          
+
                           // Quick access section with responsive grid
                           Padding(
-                            padding: EdgeInsets.symmetric(vertical: isDesktop ? 32 : 24),
+                            padding: EdgeInsets.symmetric(
+                                vertical: isDesktop ? 32 : 24),
                             child: _buildQuickAccessSection(isMobile),
                           ),
-                          
+
                           // Facilities and Events sections side by side on desktop
                           if (isDesktop)
                             IntrinsicHeight(
@@ -253,7 +262,7 @@ class _HomeScreenState extends State<HomeScreen> {
                             const SizedBox(height: 24),
                             _buildEventsSection(),
                           ],
-                          
+
                           SizedBox(height: isDesktop ? 48 : 32),
                         ],
                       ),
@@ -301,7 +310,9 @@ class _HomeScreenState extends State<HomeScreen> {
             ),
             const SizedBox(height: 8),
             Text(
-              _eventsProvider.error ?? _facilitiesProvider.error ?? 'Unknown error',
+              _eventsProvider.error ??
+                  _facilitiesProvider.error ??
+                  'Unknown error',
               style: theme.textTheme.bodyMedium,
               textAlign: TextAlign.center,
             ),
@@ -318,7 +329,7 @@ class _HomeScreenState extends State<HomeScreen> {
 
   Widget _buildAppBar(ColorScheme colorScheme) {
     final isDesktop = ResponsiveLayout.isDesktop(context);
-    
+
     return Container(
       padding: EdgeInsets.symmetric(
         horizontal: isDesktop ? 24 : 16,
@@ -327,35 +338,34 @@ class _HomeScreenState extends State<HomeScreen> {
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-          if (isDesktop)
-            Semantics(
-              image: true,
-              label: 'App logo',
-              child: Image.asset(
-                'assets/logo/full.png',
-                height: 40,
-                semanticLabel: 'App logo',
-              ),
-            )
-          else
-            Semantics(
-              button: true,
-              label: 'Center on my location',
-              child: IconButton(
-                icon: const Icon(Icons.my_location),
-                onPressed: () {
-                  // TODO: Implement location centering
-                  HapticFeedback.selectionClick();
-                },
-                tooltip: 'Center on my location',
-              ),
+          Semantics(
+            button: true,
+            label: 'Center on my location',
+            child: IconButton(
+              icon: const Icon(Icons.my_location),
+              onPressed: () {
+                // TODO: Implement location centering
+                HapticFeedback.selectionClick();
+              },
+              tooltip: 'Center on my location',
             ),
+          ),
+          Semantics(
+            image: true,
+            label: 'App logo',
+            child: Image.asset(
+              'assets/logo/full.png',
+              height: 40,
+              semanticLabel: 'App logo',
+            ),
+          ),
           Row(
             children: [
               if (isDesktop) ...[
                 _buildDesktopNavItem('Events', Icons.event_outlined, '/events'),
                 _buildDesktopNavItem('Map', Icons.map_outlined, '/map'),
-                _buildDesktopNavItem('Facilities', Icons.business_outlined, '/facilities'),
+                _buildDesktopNavItem(
+                    'Facilities', Icons.business_outlined, '/facilities'),
                 const SizedBox(width: 16),
               ],
               const ThemeToggle(),
@@ -370,13 +380,14 @@ class _HomeScreenState extends State<HomeScreen> {
     final theme = Theme.of(context);
     final colorScheme = theme.colorScheme;
     final isSelected = GoRouterState.of(context).uri.path == route;
-    
+
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 8),
       child: TextButton.icon(
         onPressed: () => context.go(route),
         style: TextButton.styleFrom(
-          foregroundColor: isSelected ? colorScheme.primary : colorScheme.onSurfaceVariant,
+          foregroundColor:
+              isSelected ? colorScheme.primary : colorScheme.onSurfaceVariant,
           padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
         ),
         icon: Icon(icon, size: 20),
@@ -394,7 +405,7 @@ class _HomeScreenState extends State<HomeScreen> {
     final theme = Theme.of(context);
     final colorScheme = theme.colorScheme;
     final isDesktop = ResponsiveLayout.isDesktop(context);
-    
+
     return Semantics(
       container: true,
       label: 'Featured events carousel',
@@ -406,16 +417,16 @@ class _HomeScreenState extends State<HomeScreen> {
             ? CarouselView.weighted(
                 controller: _featuredController,
                 itemSnapping: true,
-                flexWeights: isDesktop 
-                    ? const <int>[2, 8, 2]  // Wider center panel for desktop
+                flexWeights: isDesktop
+                    ? const <int>[2, 8, 2] // Wider center panel for desktop
                     : const <int>[1, 7, 1],
                 children: List.generate(3, (index) => const SkeletonCard()),
               )
             : CarouselView.weighted(
                 controller: _featuredController,
                 itemSnapping: true,
-                flexWeights: isDesktop 
-                    ? const <int>[2, 8, 2]  // Wider center panel for desktop
+                flexWeights: isDesktop
+                    ? const <int>[2, 8, 2] // Wider center panel for desktop
                     : const <int>[1, 7, 1],
                 children: _eventsProvider.events.map((event) {
                   return _buildFeaturedCard(
@@ -436,7 +447,7 @@ class _HomeScreenState extends State<HomeScreen> {
     final now = DateTime.now();
     final theme = Theme.of(context);
     final colorScheme = theme.colorScheme;
-    
+
     // Determine icon based on event status
     IconData icon;
     if (event.ended != null && event.ended!.isBefore(now)) {
@@ -501,9 +512,10 @@ class _HomeScreenState extends State<HomeScreen> {
                     SizedBox(height: isDesktop ? 12 : 8),
                     Text(
                       event.name,
-                      style: (isDesktop 
-                          ? theme.textTheme.displaySmall 
-                          : theme.textTheme.headlineMedium)?.copyWith(
+                      style: (isDesktop
+                              ? theme.textTheme.displaySmall
+                              : theme.textTheme.headlineMedium)
+                          ?.copyWith(
                         color: Colors.white,
                         fontWeight: FontWeight.bold,
                       ),
@@ -511,9 +523,10 @@ class _HomeScreenState extends State<HomeScreen> {
                     SizedBox(height: isDesktop ? 12 : 8),
                     Text(
                       event.description ?? 'No description available',
-                      style: (isDesktop 
-                          ? theme.textTheme.headlineSmall 
-                          : theme.textTheme.bodyLarge)?.copyWith(
+                      style: (isDesktop
+                              ? theme.textTheme.headlineSmall
+                              : theme.textTheme.bodyLarge)
+                          ?.copyWith(
                         color: Colors.white.withOpacity(0.9),
                       ),
                     ),
@@ -585,7 +598,7 @@ class _HomeScreenState extends State<HomeScreen> {
   Widget _buildEventPlaceholder(FacilityEvent event, IconData icon) {
     final theme = Theme.of(context);
     final colorScheme = theme.colorScheme;
-    
+
     return Container(
       color: colorScheme.primaryContainer,
       child: Center(
@@ -629,7 +642,7 @@ class _HomeScreenState extends State<HomeScreen> {
     final theme = Theme.of(context);
     final colorScheme = theme.colorScheme;
     final isDesktop = ResponsiveLayout.isDesktop(context);
-    
+
     return Padding(
       padding: EdgeInsets.symmetric(horizontal: isDesktop ? 0 : 16),
       child: Column(
@@ -655,7 +668,9 @@ class _HomeScreenState extends State<HomeScreen> {
                     setState(() => _isGridView = !_isGridView);
                     HapticFeedback.selectionClick();
                   },
-                  tooltip: _isGridView ? 'Switch to carousel view' : 'Switch to grid view',
+                  tooltip: _isGridView
+                      ? 'Switch to carousel view'
+                      : 'Switch to grid view',
                 ),
             ],
           ),
@@ -666,7 +681,9 @@ class _HomeScreenState extends State<HomeScreen> {
             child: isDesktop
                 ? GridView.count(
                     shrinkWrap: true,
-                    crossAxisCount: ResponsiveLayout.getQuickAccessCrossAxisCount(context).toInt(),
+                    crossAxisCount:
+                        ResponsiveLayout.getQuickAccessCrossAxisCount(context)
+                            .toInt(),
                     mainAxisSpacing: 16,
                     crossAxisSpacing: 16,
                     childAspectRatio: 1.1,
@@ -707,7 +724,7 @@ class _HomeScreenState extends State<HomeScreen> {
   Widget _buildFacilitiesSection() {
     final theme = Theme.of(context);
     final colorScheme = theme.colorScheme;
-    
+
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 16),
       child: Row(
@@ -733,7 +750,7 @@ class _HomeScreenState extends State<HomeScreen> {
   Widget _buildEventsSection() {
     final theme = Theme.of(context);
     final colorScheme = theme.colorScheme;
-    
+
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 16),
       child: Row(
@@ -759,12 +776,14 @@ class _HomeScreenState extends State<HomeScreen> {
   Widget _buildQuickAccessCard({required QuickAccessInfo info}) {
     final theme = Theme.of(context);
     final colorScheme = theme.colorScheme;
-    
+
     // Use RepaintBoundary for better performance since these cards are static
     return RepaintBoundary(
       child: Card(
         elevation: 0,
-        color: colorScheme.brightness == Brightness.light ? info.backgroundColor : info.color.withOpacity(0.8),
+        color: colorScheme.brightness == Brightness.light
+            ? info.backgroundColor
+            : info.color.withOpacity(0.8),
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(16),
           side: BorderSide(
@@ -785,7 +804,8 @@ class _HomeScreenState extends State<HomeScreen> {
             onTapHint: 'Navigate to ${info.label}',
             child: MergeSemantics(
               child: Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 20),
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 16, vertical: 20),
                 child: Column(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
@@ -841,4 +861,4 @@ class _HomeScreenState extends State<HomeScreen> {
       ),
     );
   }
-} 
+}

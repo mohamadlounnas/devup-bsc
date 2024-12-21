@@ -7,6 +7,9 @@ import 'package:flutter_map/flutter_map.dart';
 import 'package:flutter_map_cached_tile_provider/flutter_map_cached_tile_provider.dart';
 import 'package:latlong2/latlong.dart';
 import 'package:shared/shared.dart';
+import 'package:app/providers/events_provider.dart';
+import 'package:app/providers/hostels_provider.dart';
+import 'package:flutter_map_marker_popup/flutter_map_marker_popup.dart';
 
 /// Screen that shows facilities and hostels on a map
 class MapScreen extends StatefulWidget {
@@ -19,6 +22,14 @@ class MapScreen extends StatefulWidget {
 class _MapScreenState extends State<MapScreen> {
   bool _showChat = false;
   late final GeminiService _geminiService;
+  late final EventsProvider _eventsProvider;
+  late final HostelsProvider _hostelsProvider;
+  final _popupLayerController = PopupController();
+
+  // Filter states
+  bool _showEvents = true;
+  bool _showHostels = true;
+  bool _showFacilities = true;
 
   @override
   void initState() {
@@ -26,12 +37,83 @@ class _MapScreenState extends State<MapScreen> {
     // TODO: Replace with your Gemini API key
     _geminiService =
         GeminiService(apiKey: 'AIzaSyBFaNgOZlD--RtxezGxoLDPSaXEo8PcEX8');
+    _eventsProvider = EventsProvider();
+    _hostelsProvider = HostelsProvider();
+
+    // Load data
+    _eventsProvider.subscribeToEvents();
+    _hostelsProvider.loadHostels();
+  }
+
+  @override
+  void dispose() {
+    _eventsProvider.dispose();
+    _hostelsProvider.dispose();
+    super.dispose();
   }
 
   void _toggleChat() {
     setState(() {
       _showChat = !_showChat;
     });
+  }
+
+  List<Marker> _buildEventMarkers() {
+    return _eventsProvider.events.where((event) {
+      return event.latitude != null && event.longitude != null;
+    }).map((event) {
+      return Marker(
+        width: 40,
+        height: 40,
+        point: LatLng(event.latitude!, event.longitude!),
+        builder: (context) => _buildMarkerIcon(
+          Icons.event,
+          Theme.of(context).colorScheme.primary,
+          event.name,
+        ),
+      );
+    }).toList();
+  }
+
+  List<Marker> _buildHostelMarkers() {
+    return _hostelsProvider.hostels.where((hostel) {
+      return hostel.latitude != null && hostel.longitude != null;
+    }).map((hostel) {
+      return Marker(
+        width: 40,
+        height: 40,
+        point: LatLng(hostel.latitude!, hostel.longitude!),
+        builder: (context) => _buildMarkerIcon(
+          Icons.hotel,
+          Theme.of(context).colorScheme.secondary,
+          hostel.name,
+        ),
+      );
+    }).toList();
+  }
+
+  Widget _buildMarkerIcon(IconData icon, Color color, String tooltip) {
+    return Tooltip(
+      message: tooltip,
+      child: Container(
+        decoration: BoxDecoration(
+          color: color.withOpacity(0.9),
+          shape: BoxShape.circle,
+          boxShadow: [
+            BoxShadow(
+              color: color.withOpacity(0.3),
+              blurRadius: 8,
+              spreadRadius: 2,
+            ),
+          ],
+        ),
+        child: Icon(
+          icon,
+          color: Colors.white,
+          size: 24,
+        ),
+      ),
+    );
   }
 
   @override
@@ -44,6 +126,8 @@ class _MapScreenState extends State<MapScreen> {
             // center on Boumerdes (wilaya of algeria)
             center: const LatLng(36.7525, 3.0420),
             zoom: 13.0,
+            maxZoom: 18.0,
+            minZoom: 3.0,
           ),
           children: [
             TileLayer(
@@ -118,6 +202,13 @@ class _MapScreenState extends State<MapScreen> {
                 ),
               ],
             ),
+            // Add markers for events and hostels
+            MarkerLayer(
+              markers: [
+                if (_showEvents) ..._buildEventMarkers(),
+                if (_showHostels) ..._buildHostelMarkers(),
+              ],
+            ),
           ],
         ),
 
@@ -131,6 +222,46 @@ class _MapScreenState extends State<MapScreen> {
             child: BackdropFilter(
               filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
               child: const CustomNavbar(),
+            ),
+          ),
+        ),
+
+        // Layer toggles
+        Positioned(
+          top: MediaQuery.of(context).padding.top + 80,
+          right: 16,
+          child: Card(
+            elevation: 4,
+            child: Padding(
+              padding: const EdgeInsets.all(8.0),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  _buildLayerToggle(
+                    'Events',
+                    Icons.event,
+                    _showEvents,
+                    (value) => setState(() => _showEvents = value),
+                    Theme.of(context).colorScheme.primary,
+                  ),
+                  const SizedBox(height: 8),
+                  _buildLayerToggle(
+                    'Hostels',
+                    Icons.hotel,
+                    _showHostels,
+                    (value) => setState(() => _showHostels = value),
+                    Theme.of(context).colorScheme.secondary,
+                  ),
+                  const SizedBox(height: 8),
+                  _buildLayerToggle(
+                    'Facilities',
+                    Icons.business,
+                    _showFacilities,
+                    (value) => setState(() => _showFacilities = value),
+                    Theme.of(context).colorScheme.tertiary,
+                  ),
+                ],
+              ),
             ),
           ),
         ),
@@ -160,6 +291,29 @@ class _MapScreenState extends State<MapScreen> {
       ],
     );
   }
+
+  Widget _buildLayerToggle(
+    String label,
+    IconData icon,
+    bool value,
+    ValueChanged<bool> onChanged,
+    Color color,
+  ) {
+    return Row(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Icon(icon, size: 20, color: color),
+        const SizedBox(width: 8),
+        Text(label),
+        const SizedBox(width: 8),
+        Switch(
+          value: value,
+          onChanged: onChanged,
+          activeColor: color,
+        ),
+      ],
+    );
+  }
 }
 
 class CustomNavbar extends StatelessWidget {
@@ -171,13 +325,13 @@ class CustomNavbar extends StatelessWidget {
   Widget build(BuildContext context) {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
-      // decoration: BoxDecoration(
-      //   color: Theme.of(context).colorScheme.surface.withOpacity(0.8),
-      //   borderRadius: BorderRadius.circular(30),
-      //   border: Border.all(
-      //     color: Theme.of(context).colorScheme.outline.withOpacity(0.1),
-      //   ),
-      // ),
+      decoration: BoxDecoration(
+        color: Theme.of(context).colorScheme.surface.withOpacity(0.5),
+        borderRadius: BorderRadius.circular(30),
+        border: Border.all(
+          color: Theme.of(context).colorScheme.outline.withOpacity(0.1),
+        ),
+      ),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [

@@ -30,21 +30,23 @@ enum EventsTab {
   myEvents,
 }
 
-class _EventsScreenState extends State<EventsScreen> with TickerProviderStateMixin {
+class _EventsScreenState extends State<EventsScreen>
+    with TickerProviderStateMixin {
   late final EventsProvider _eventsProvider;
   late final AnimationController _viewModeController;
   late final Animation<double> _viewModeAnimation;
-  
+
   final _searchController = TextEditingController();
   final _scrollController = ScrollController();
   final _debouncer = Debouncer(milliseconds: 300);
-  
+
   EventFilter _currentFilter = EventFilter.all;
   ViewMode _viewMode = ViewMode.list;
   DateTimeRange? _selectedDateRange;
   bool _isSearchExpanded = false;
   FacilityEvent? _selectedEvent;
-  late final TabController _tabController = TabController(length: 2, vsync: this);
+  late final TabController _tabController =
+      TabController(length: 2, vsync: this);
   EventsTab _currentTab = EventsTab.all;
 
   @override
@@ -58,7 +60,7 @@ class _EventsScreenState extends State<EventsScreen> with TickerProviderStateMix
     _eventsProvider.addListener(() {
       final authProvider = context.read<AuthService>();
       final registrationProvider = context.read<EventRegistrationProvider>();
-      
+
       if (authProvider.currentUser != null) {
         registrationProvider.loadRegistrations(
           authProvider.currentUser!.id,
@@ -71,7 +73,7 @@ class _EventsScreenState extends State<EventsScreen> with TickerProviderStateMix
     WidgetsBinding.instance.addPostFrameCallback((_) {
       final authProvider = context.read<AuthService>();
       final registrationProvider = context.read<EventRegistrationProvider>();
-      
+
       if (authProvider.currentUser != null) {
         registrationProvider.loadRegistrations(
           authProvider.currentUser!.id,
@@ -134,7 +136,7 @@ class _EventsScreenState extends State<EventsScreen> with TickerProviderStateMix
 
   void _showEventDetails(FacilityEvent event) {
     final isWideScreen = MediaQuery.of(context).size.width > 1200;
-    
+
     if (isWideScreen) {
       setState(() => _selectedEvent = event);
     } else {
@@ -161,10 +163,11 @@ class _EventsScreenState extends State<EventsScreen> with TickerProviderStateMix
   }
 
   Future<void> _showDateRangePicker() async {
-    final initialDateRange = _selectedDateRange ?? DateTimeRange(
-      start: DateTime.now(),
-      end: DateTime.now().add(const Duration(days: 7)),
-    );
+    final initialDateRange = _selectedDateRange ??
+        DateTimeRange(
+          start: DateTime.now(),
+          end: DateTime.now().add(const Duration(days: 7)),
+        );
 
     final pickedRange = await showDateRangePicker(
       context: context,
@@ -201,7 +204,7 @@ class _EventsScreenState extends State<EventsScreen> with TickerProviderStateMix
     final theme = Theme.of(context);
     final colorScheme = theme.colorScheme;
     final isWideScreen = MediaQuery.of(context).size.width > 1200;
-    
+
     return Scaffold(
       backgroundColor: Colors.transparent,
       body: Row(
@@ -288,17 +291,21 @@ class _EventsScreenState extends State<EventsScreen> with TickerProviderStateMix
                       children: [
                         Text(
                           'Events',
-                          style: Theme.of(context).textTheme.headlineMedium?.copyWith(
-                            fontWeight: FontWeight.bold,
-                            color: colorScheme.onBackground,
-                          ),
+                          style: Theme.of(context)
+                              .textTheme
+                              .headlineMedium
+                              ?.copyWith(
+                                fontWeight: FontWeight.bold,
+                                color: colorScheme.onBackground,
+                              ),
                         ),
                         const SizedBox(height: 4),
                         Text(
                           'Discover and join amazing events',
-                          style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                            color: colorScheme.onSurfaceVariant,
-                          ),
+                          style:
+                              Theme.of(context).textTheme.bodyMedium?.copyWith(
+                                    color: colorScheme.onSurfaceVariant,
+                                  ),
                         ),
                       ],
                     ),
@@ -364,28 +371,32 @@ class _EventsScreenState extends State<EventsScreen> with TickerProviderStateMix
                     label: 'All',
                     icon: Icons.event_rounded,
                     isSelected: _currentFilter == EventFilter.all,
-                    onSelected: (_) => setState(() => _currentFilter = EventFilter.all),
+                    onSelected: (_) =>
+                        setState(() => _currentFilter = EventFilter.all),
                   ),
                   const SizedBox(width: 8),
                   _buildAnimatedFilterChip(
                     label: 'Upcoming',
                     icon: Icons.upcoming_rounded,
                     isSelected: _currentFilter == EventFilter.upcoming,
-                    onSelected: (_) => setState(() => _currentFilter = EventFilter.upcoming),
+                    onSelected: (_) =>
+                        setState(() => _currentFilter = EventFilter.upcoming),
                   ),
                   const SizedBox(width: 8),
                   _buildAnimatedFilterChip(
                     label: 'Ongoing',
                     icon: Icons.play_circle_outline_rounded,
                     isSelected: _currentFilter == EventFilter.ongoing,
-                    onSelected: (_) => setState(() => _currentFilter = EventFilter.ongoing),
+                    onSelected: (_) =>
+                        setState(() => _currentFilter = EventFilter.ongoing),
                   ),
                   const SizedBox(width: 8),
                   _buildAnimatedFilterChip(
                     label: 'Past',
                     icon: Icons.history_rounded,
                     isSelected: _currentFilter == EventFilter.past,
-                    onSelected: (_) => setState(() => _currentFilter = EventFilter.past),
+                    onSelected: (_) =>
+                        setState(() => _currentFilter = EventFilter.past),
                   ),
                   const SizedBox(width: 12),
                   // Vertical divider with gradient
@@ -410,6 +421,7 @@ class _EventsScreenState extends State<EventsScreen> with TickerProviderStateMix
                 ],
               ),
             ),
+            const SizedBox(height: 16),
           ],
         ),
       ),
@@ -490,15 +502,13 @@ class _EventsScreenState extends State<EventsScreen> with TickerProviderStateMix
       avatar: Icon(
         icon,
         size: 18,
-        color: isSelected
-            ? colorScheme.onPrimary
-            : colorScheme.onSurfaceVariant,
+        color:
+            isSelected ? colorScheme.onPrimary : colorScheme.onSurfaceVariant,
       ),
       label: Text(label),
       labelStyle: theme.textTheme.labelLarge?.copyWith(
-        color: isSelected
-            ? colorScheme.onPrimary
-            : colorScheme.onSurfaceVariant,
+        color:
+            isSelected ? colorScheme.onPrimary : colorScheme.onSurfaceVariant,
         letterSpacing: 0.5,
       ),
       onSelected: onSelected,
@@ -617,9 +627,11 @@ class _EventsScreenState extends State<EventsScreen> with TickerProviderStateMix
           _selectedDateRange!.end.year,
           _selectedDateRange!.end.month,
           _selectedDateRange!.end.day,
-          23, 59, 59,
+          23,
+          59,
+          59,
         );
-        
+
         if (event.started!.isBefore(start) || event.started!.isAfter(end)) {
           return false;
         }
@@ -642,17 +654,29 @@ class _EventsScreenState extends State<EventsScreen> with TickerProviderStateMix
   }
 
   String _formatDate(DateTime date) {
-    const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 
-                   'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+    const months = [
+      'Jan',
+      'Feb',
+      'Mar',
+      'Apr',
+      'May',
+      'Jun',
+      'Jul',
+      'Aug',
+      'Sep',
+      'Oct',
+      'Nov',
+      'Dec'
+    ];
     return '${date.day} ${months[date.month - 1]} ${date.year}';
   }
 
   Widget _buildEmptyState() {
     final theme = Theme.of(context);
-    final hasFilters = _searchController.text.isNotEmpty || 
-                      _selectedDateRange != null || 
-                      _currentFilter != EventFilter.all;
-    
+    final hasFilters = _searchController.text.isNotEmpty ||
+        _selectedDateRange != null ||
+        _currentFilter != EventFilter.all;
+
     return Center(
       child: Padding(
         padding: const EdgeInsets.all(32),
@@ -730,7 +754,8 @@ class _EventsScreenState extends State<EventsScreen> with TickerProviderStateMix
   }
 
   String _getEmptyStateSubmessage() {
-    if (_selectedDateRange != null) return 'Try selecting a different date range';
+    if (_selectedDateRange != null)
+      return 'Try selecting a different date range';
     switch (_currentFilter) {
       case EventFilter.upcoming:
         return 'Stay tuned for new events';
@@ -748,7 +773,7 @@ class _EventsScreenState extends State<EventsScreen> with TickerProviderStateMix
   Widget _buildListView(List<FacilityEvent> events) {
     final width = MediaQuery.of(context).size.width;
     final isCompact = width < 600;
-    
+
     return AnimatedSwitcher(
       duration: const Duration(milliseconds: 300),
       child: ListView.builder(
@@ -800,7 +825,7 @@ Join us at this amazing event!
         shareText.trim(),
         subject: event.name,
       );
-      
+
       HapticFeedback.mediumImpact();
     } catch (e) {
       if (mounted) {
@@ -813,7 +838,7 @@ Join us at this amazing event!
 
   void _handleAddToCalendar(FacilityEvent event) async {
     if (event.started == null) return;
-    
+
     try {
       final calendarEvent = Event(
         title: event.name,
@@ -822,9 +847,9 @@ Join us at this amazing event!
         startDate: event.started!,
         endDate: event.ended ?? event.started!.add(const Duration(hours: 2)),
       );
-      
+
       await Add2Calendar.addEvent2Cal(calendarEvent);
-      
+
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(content: Text('Added to calendar')),
@@ -921,8 +946,8 @@ Join us at this amazing event!
                 Text(
                   'Register for events to see them here',
                   style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                    color: Theme.of(context).colorScheme.onSurfaceVariant,
-                  ),
+                        color: Theme.of(context).colorScheme.onSurfaceVariant,
+                      ),
                 ),
               ],
             ),
@@ -939,7 +964,7 @@ Join us at this amazing event!
             final event = myEvents[index];
             // Generate a unique ticket number based on user ID and event ID
             final ticketNumber = event.id.substring(0, 8).toUpperCase();
-            
+
             return Padding(
               padding: EdgeInsets.only(bottom: 16),
               child: EventTicketCard(
@@ -978,7 +1003,10 @@ Join us at this amazing event!
               boxShadow: [
                 if (isSelected)
                   BoxShadow(
-                    color: Theme.of(context).colorScheme.primary.withOpacity(0.1 * value),
+                    color: Theme.of(context)
+                        .colorScheme
+                        .primary
+                        .withOpacity(0.1 * value),
                     blurRadius: 8 * value,
                     spreadRadius: 2 * value,
                   ),
@@ -1048,4 +1076,4 @@ class Debouncer {
     _timer?.cancel();
     _timer = Timer(Duration(milliseconds: milliseconds), action);
   }
-} 
+}

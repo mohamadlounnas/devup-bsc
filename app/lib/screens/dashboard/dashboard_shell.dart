@@ -20,7 +20,8 @@ class DashboardShell extends StatefulWidget {
   State<DashboardShell> createState() => _DashboardShellState();
 }
 
-class _DashboardShellState extends State<DashboardShell> with SingleTickerProviderStateMixin {
+class _DashboardShellState extends State<DashboardShell>
+    with SingleTickerProviderStateMixin {
   bool _isRailHovered = false;
   late final AnimationController _railController;
   late final Animation<double> _railWidth;
@@ -244,7 +245,8 @@ class _DashboardShellState extends State<DashboardShell> with SingleTickerProvid
                   child: NavigationRail(
                     extended: true,
                     selectedIndex: selectedIndex,
-                    onDestinationSelected: (index) => _onDestinationSelected(context, index),
+                    onDestinationSelected: (index) =>
+                        _onDestinationSelected(context, index),
                     leading: Padding(
                       padding: const EdgeInsets.symmetric(vertical: 24),
                       child: Column(
@@ -290,7 +292,8 @@ class _DashboardShellState extends State<DashboardShell> with SingleTickerProvid
                 ),
                 child: NavigationRail(
                   selectedIndex: selectedIndex,
-                  onDestinationSelected: (index) => _onDestinationSelected(context, index),
+                  onDestinationSelected: (index) =>
+                      _onDestinationSelected(context, index),
                   leading: Padding(
                     padding: const EdgeInsets.symmetric(vertical: 16),
                     child: Column(
@@ -298,7 +301,7 @@ class _DashboardShellState extends State<DashboardShell> with SingleTickerProvid
                         Hero(
                           tag: 'app_logo',
                           child: Image.asset(
-                            'assets/images/logo_icon.png',
+                            'assets/logo/full.png',
                             height: 32,
                             semanticLabel: 'App logo',
                           ),
@@ -352,8 +355,14 @@ class _DashboardShellState extends State<DashboardShell> with SingleTickerProvid
                               begin: Alignment.topCenter,
                               end: Alignment.bottomCenter,
                               colors: [
-                                Theme.of(context).colorScheme.surface.withOpacity(0.0),
-                                Theme.of(context).colorScheme.surface.withOpacity(1),
+                                Theme.of(context)
+                                    .colorScheme
+                                    .surface
+                                    .withOpacity(0.0),
+                                Theme.of(context)
+                                    .colorScheme
+                                    .surface
+                                    .withOpacity(1),
                               ],
                             ),
                           ),
@@ -367,7 +376,8 @@ class _DashboardShellState extends State<DashboardShell> with SingleTickerProvid
                       child: NavigationBar(
                         backgroundColor: Colors.transparent,
                         selectedIndex: selectedIndex,
-                        onDestinationSelected: (index) => _onDestinationSelected(context, index),
+                        onDestinationSelected: (index) =>
+                            _onDestinationSelected(context, index),
                         destinations: destinations,
                       ),
                     ),
