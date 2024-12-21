@@ -106,38 +106,49 @@ class MapScreen extends StatelessWidget {
             borderRadius: BorderRadius.circular(16),
             child: BackdropFilter(
               filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
-              child: Container(
-                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
-                decoration: BoxDecoration(
-                  color: Theme.of(context).colorScheme.surface.withOpacity(0.8),
-                  borderRadius: BorderRadius.circular(30),
-                  border: Border.all(
-                    color: Theme.of(context).colorScheme.outline.withOpacity(0.1),
-                  ),
-                ),
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    IconButton(
-                      icon: const Icon(Icons.my_location),
-                      onPressed: () {
-                        // TODO: Implement location centering
-                      },
-                      tooltip: 'Center on my location',
-                    ),
-                    Image.asset(
-                      'assets/logo/icon.png',
-                      height: 28,
-                      semanticLabel: 'App logo',
-                    ),
-                    ThemeToggle(),
-                  ],
-                ),
-              ),
+              child: CustomNavbar(),
             ),
           ),
         ),
       ],
+    );
+  }
+}
+
+class CustomNavbar extends StatelessWidget {
+  const CustomNavbar({
+    super.key,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+      // decoration: BoxDecoration(
+      //   color: Theme.of(context).colorScheme.surface.withOpacity(0.8),
+      //   borderRadius: BorderRadius.circular(30),
+      //   border: Border.all(
+      //     color: Theme.of(context).colorScheme.outline.withOpacity(0.1),
+      //   ),
+      // ),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: [
+          IconButton(
+            icon: const Icon(Icons.my_location),
+            onPressed: () {
+              // TODO: Implement location centering
+            },
+            tooltip: 'Center on my location',
+          ),
+          Image.asset(
+            'assets/logo/icon.png',
+            height: 28,
+            semanticLabel: 'App logo',
+          ),
+          ThemeToggle(),
+        ],
+      ),
     );
   }
 }

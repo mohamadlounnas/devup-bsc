@@ -1,8 +1,7 @@
+import 'package:app/main.dart';
 import 'package:flutter/foundation.dart';
 import 'package:shared/models/facility_event.dart';
-import 'package:shared/models/facility_event_registration.dart';
 import 'package:shared/shared.dart';
-import '../services/pb_service.dart';
 
 /// Provider that manages event registrations state and operations
 class EventRegistrationProvider extends ChangeNotifier {
@@ -26,13 +25,13 @@ class EventRegistrationProvider extends ChangeNotifier {
     notifyListeners();
 
     try {
-      final response = await pb.collection('facility_event_registrations').getList(
-        filter: 'user = "$userId" && event ?= [${eventIds.map((id) => '"$id"').join(', ')}]',
+      final response = await pb.collection('facilities_events_registrations').getList(
+        filter: 'user = "$userId"',
       );
 
       for (final record in response.items) {
-        final registration = FacilityEventRegistration.fromJson(record.toJson());
-        _registeredEvents[registration.eventId] = true;
+        final eventId = record.data['event'] as String;
+        _registeredEvents[eventId] = true;
       }
     } catch (e) {
       _error = e.toString();
@@ -49,7 +48,7 @@ class EventRegistrationProvider extends ChangeNotifier {
     notifyListeners();
 
     try {
-      await pb.collection('facility_event_registrations').create(body: {
+      await pb.collection('facilities_events_registrations').create(body: {
         'user': userId,
         'event': event.id,
       });
@@ -74,12 +73,12 @@ class EventRegistrationProvider extends ChangeNotifier {
     notifyListeners();
 
     try {
-      final response = await pb.collection('facility_event_registrations').getList(
+      final response = await pb.collection('facilities_events_registrations').getList(
         filter: 'user = "$userId" && event = "$eventId"',
       );
 
       if (response.items.isNotEmpty) {
-        await pb.collection('facility_event_registrations').delete(response.items.first.id);
+        await pb.collection('facilities_events_registrations').delete(response.items.first.id);
       }
 
       _registeredEvents.remove(eventId);
@@ -101,5 +100,10 @@ class EventRegistrationProvider extends ChangeNotifier {
     _error = null;
     _isLoading = false;
     notifyListeners();
+  }
+
+  /// Add debug method
+  void debugPrintRegistrations() {
+    print('Registered Events: $_registeredEvents');
   }
 } 

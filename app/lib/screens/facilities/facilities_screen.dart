@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'package:app/helper.dart';
+import 'package:app/screens/map_screen.dart';
 import 'package:fluentui_system_icons/fluentui_system_icons.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -128,6 +129,10 @@ class _FacilitiesScreenState extends State<FacilitiesScreen> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
+            Padding(
+              padding: const EdgeInsets.only(left: 16, top: 8),
+              child: CustomNavbar(),
+            ),
             Padding(
               padding: const EdgeInsets.only(right: 16, top: 8),
               child: Row(

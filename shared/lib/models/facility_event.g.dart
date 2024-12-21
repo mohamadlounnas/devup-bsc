@@ -23,6 +23,9 @@ _$FacilityEventImpl _$$FacilityEventImplFromJson(Map<String, dynamic> json) =>
       location: json['location'] as String?,
       address: json['address'] as String?,
       remainingSeats: (json['remaining_seats'] as num?)?.toDouble(),
+      attended: json['attended'] == null
+          ? null
+          : DateTime.parse(json['attended'] as String),
       created: DateTime.parse(json['created'] as String),
       updated: DateTime.parse(json['updated'] as String),
     );
@@ -40,6 +43,7 @@ Map<String, dynamic> _$$FacilityEventImplToJson(_$FacilityEventImpl instance) =>
       'location': instance.location,
       'address': instance.address,
       'remaining_seats': instance.remainingSeats,
+      'attended': instance.attended?.toIso8601String(),
       'created': instance.created.toIso8601String(),
       'updated': instance.updated.toIso8601String(),
     };

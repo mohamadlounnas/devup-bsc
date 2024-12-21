@@ -152,6 +152,8 @@ class _EventRegistrationDialogState extends State<EventRegistrationDialog>
                             _buildErrorMessage(theme),
 
                           const SizedBox(height: 24),
+                          // info about the current user
+                          Text('You are registering for this event as ${widget.authService.currentUser?.email}'),
                           
                           // Enhanced action buttons
                           _buildEnhancedActionButtons(theme),

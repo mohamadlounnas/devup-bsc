@@ -27,6 +27,7 @@ class FacilityEvent with _$FacilityEvent {
   /// - [remainingSeats]: Optional number of remaining available seats
   /// - [location]: Optional location coordinates (format: "lat,lng")
   /// - [address]: Optional physical address of the event
+  /// - [attended]: Optional date when the event was attended
   /// - [created]: Timestamp when the event was created
   /// - [updated]: Timestamp when the event was last updated
   factory FacilityEvent({
@@ -41,6 +42,7 @@ class FacilityEvent with _$FacilityEvent {
     @JsonKey(name: 'location') String? location,
     @JsonKey(name: 'address') String? address,
     @JsonKey(name: 'remaining_seats') double? remainingSeats,
+    @JsonKey(name: 'attended') DateTime? attended,
     @JsonKey(name: 'created') required DateTime created,
     @JsonKey(name: 'updated') required DateTime updated,
   }) = _FacilityEvent;

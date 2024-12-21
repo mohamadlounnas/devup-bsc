@@ -19,6 +19,9 @@ _$FacilityEventRegistrationImpl _$$FacilityEventRegistrationImplFromJson(
           ? null
           : FacilityEvent.fromJson(
               json['event_expand'] as Map<String, dynamic>),
+      attended: json['attended'] == null
+          ? null
+          : DateTime.parse(json['attended'] as String),
       created: DateTime.parse(json['created'] as String),
       updated: DateTime.parse(json['updated'] as String),
     );
@@ -31,6 +34,7 @@ Map<String, dynamic> _$$FacilityEventRegistrationImplToJson(
       'user_expand': instance.user?.toJson(),
       'event': instance.eventId,
       'event_expand': instance.event?.toJson(),
+      'attended': instance.attended?.toIso8601String(),
       'created': instance.created.toIso8601String(),
       'updated': instance.updated.toIso8601String(),
     };
