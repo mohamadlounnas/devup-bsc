@@ -1,6 +1,8 @@
+import 'package:app/models/carousel_info.dart';
 import 'package:app/widgets/theme_toggle.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
+import 'package:flutter/material.dart' show CarouselView, CarouselController;
 
 /// A screen that displays a summary of all main features using a carousel layout.
 /// This screen serves as the main dashboard for users to quickly access different sections.
@@ -12,13 +14,13 @@ class HomeScreen extends StatefulWidget {
 }
 
 class _HomeScreenState extends State<HomeScreen> {
-  final PageController _pageController = PageController(initialPage: 1);
-  final ScrollController _quickAccessController = ScrollController();
-  final ScrollController _timelineController = ScrollController();
+  final CarouselController _featuredController = CarouselController(initialItem: 1);
+  final CarouselController _quickAccessController = CarouselController(initialItem: 0);
+  final CarouselController _timelineController = CarouselController(initialItem: 0);
 
   @override
   void dispose() {
-    _pageController.dispose();
+    _featuredController.dispose();
     _quickAccessController.dispose();
     _timelineController.dispose();
     super.dispose();
@@ -34,59 +36,37 @@ class _HomeScreenState extends State<HomeScreen> {
       body: ListView(
         children: [
           Container(
-            // margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
-                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
-                decoration: BoxDecoration(
-                  // color: Theme.of(context).colorScheme.surface.withOpacity(0.8),
-                  // borderRadius: BorderRadius.circular(30),
-                  // border: Border.all(
-                  //   color: Theme.of(context).colorScheme.outline.withOpacity(0.1),
-                  // ),
-                ),
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    IconButton(
-                      icon: const Icon(Icons.my_location),
-                      onPressed: () {
-                        // TODO: Implement location centering
-                      },
-                      tooltip: 'Center on my location',
-                    ),
-                    Image.asset(
-                      'assets/logo/icon.png',
-                      height: 28,
-                      semanticLabel: 'App logo',
-                    ),
-                    ThemeToggle(),
-                  ],
-                ),
-              ),
-          // Hero section with featured events
-          SizedBox(
-            height: height / 2,
-            child: PageView(
-              controller: _pageController,
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                _buildFeaturedCard(
-                  title: 'Upcoming Events',
-                  subtitle: 'Check out the latest campus events',
-                  imageUrl: 'https://picsum.photos/800/400?random=1',
-                  onTap: () => context.go('/events'),
+                IconButton(
+                  icon: const Icon(Icons.my_location),
+                  onPressed: () {
+                    // TODO: Implement location centering
+                  },
+                  tooltip: 'Center on my location',
                 ),
-                _buildFeaturedCard(
-                  title: 'Campus Map',
-                  subtitle: 'Navigate your way around campus',
-                  imageUrl: 'https://picsum.photos/800/400?random=2',
-                  onTap: () => context.go('/map'),
+                Image.asset(
+                  'assets/logo/icon.png',
+                  height: 28,
+                  semanticLabel: 'App logo',
                 ),
-                _buildFeaturedCard(
-                  title: 'Hostels',
-                  subtitle: 'Find your perfect accommodation',
-                  imageUrl: 'https://picsum.photos/800/400?random=3',
-                  onTap: () => context.go('/hostels'),
-                ),
+                const ThemeToggle(),
               ],
+            ),
+          ),
+          
+          // Hero section with featured events
+          ConstrainedBox(
+            constraints: BoxConstraints(maxHeight: height / 2),
+            child: CarouselView.weighted(
+              controller: _featuredController,
+              itemSnapping: true,
+              flexWeights: const <int>[1, 7, 1],
+              children: FeaturedInfo.values.map((info) {
+                return _buildFeaturedCard(info: info);
+              }).toList(),
             ),
           ),
           const SizedBox(height: 24),
@@ -104,44 +84,15 @@ class _HomeScreenState extends State<HomeScreen> {
           const SizedBox(height: 16),
           
           // Quick access cards
-          SizedBox(
-            height: 120,
-            child: ListView(
+          ConstrainedBox(
+            constraints: const BoxConstraints(maxHeight: 120),
+            child: CarouselView.weighted(
               controller: _quickAccessController,
-              scrollDirection: Axis.horizontal,
-              padding: const EdgeInsets.symmetric(horizontal: 16),
-              children: [
-                _buildQuickAccessCard(
-                  icon: Icons.event,
-                  label: 'Events',
-                  color: colorScheme.primary,
-                  onTap: () => context.go('/events'),
-                ),
-                _buildQuickAccessCard(
-                  icon: Icons.map,
-                  label: 'Map',
-                  color: colorScheme.secondary,
-                  onTap: () => context.go('/map'),
-                ),
-                _buildQuickAccessCard(
-                  icon: Icons.apartment,
-                  label: 'Hostels',
-                  color: colorScheme.tertiary,
-                  onTap: () => context.go('/hostels'),
-                ),
-                _buildQuickAccessCard(
-                  icon: Icons.business,
-                  label: 'Facilities',
-                  color: colorScheme.error,
-                  onTap: () => context.go('/facilities'),
-                ),
-                _buildQuickAccessCard(
-                  icon: Icons.person,
-                  label: 'Profile',
-                  color: colorScheme.primaryContainer,
-                  onTap: () => context.go('/profile'),
-                ),
-              ],
+              flexWeights: const <int>[3, 3, 3, 2, 1],
+              consumeMaxWeight: false,
+              children: QuickAccessInfo.values.map((info) {
+                return _buildQuickAccessCard(info: info);
+              }).toList(),
             ),
           ),
           
@@ -159,23 +110,16 @@ class _HomeScreenState extends State<HomeScreen> {
           ),
           const SizedBox(height: 16),
           
-          SizedBox(
-            height: 200,
-            child: ListView.builder(
+          // Timeline cards
+          ConstrainedBox(
+            constraints: const BoxConstraints(maxHeight: 200),
+            child: CarouselView.weighted(
               controller: _timelineController,
-              scrollDirection: Axis.horizontal,
-              padding: const EdgeInsets.symmetric(horizontal: 16),
-              itemCount: 5,
-              itemBuilder: (context, index) {
-                return SizedBox(
-                  width: 330,
-                  child: _buildTimelineCard(
-                    index: index,
-                    theme: theme,
-                    colorScheme: colorScheme,
-                  ),
-                );
-              },
+              flexWeights: const <int>[3, 3, 3, 2, 1],
+              consumeMaxWeight: false,
+              children: TimelineInfo.values.map((info) {
+                return _buildTimelineCard(info: info);
+              }).toList(),
             ),
           ),
           
@@ -185,26 +129,20 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
-  Widget _buildFeaturedCard({
-    required String title,
-    required String subtitle,
-    required String imageUrl,
-    required VoidCallback onTap,
-  }) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 16),
-      child: GestureDetector(
-        onTap: onTap,
-        child: Stack(
-          alignment: AlignmentDirectional.bottomStart,
-          children: [
-            ClipRRect(
-              borderRadius: BorderRadius.circular(16),
+  Widget _buildFeaturedCard({required FeaturedInfo info}) {
+    final width = MediaQuery.sizeOf(context).width;
+    return GestureDetector(
+      onTap: () => context.go(info.route),
+      child: Stack(
+        alignment: AlignmentDirectional.bottomStart,
+        children: [
+          ClipRect(
+            child: OverflowBox(
+              maxWidth: width * 7 / 8,
+              minWidth: width * 7 / 8,
               child: Image.network(
-                imageUrl,
+                info.imageUrl,
                 fit: BoxFit.cover,
-                width: double.infinity,
-                height: double.infinity,
                 errorBuilder: (context, error, stackTrace) {
                   return Container(
                     color: Theme.of(context).colorScheme.primaryContainer,
@@ -215,162 +153,115 @@ class _HomeScreenState extends State<HomeScreen> {
                 },
               ),
             ),
-            Container(
-              decoration: BoxDecoration(
-                borderRadius: BorderRadius.circular(16),
-                gradient: LinearGradient(
-                  begin: Alignment.topCenter,
-                  end: Alignment.bottomCenter,
-                  colors: [
-                    Colors.transparent,
-                    Colors.black.withOpacity(0.7),
-                  ],
-                ),
-              ),
-            ),
-            Padding(
-              padding: const EdgeInsets.all(24),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Text(
-                    title,
-                    style: const TextStyle(
-                      color: Colors.white,
-                      fontSize: 24,
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                  const SizedBox(height: 8),
-                  Text(
-                    subtitle,
-                    style: const TextStyle(
-                      color: Colors.white70,
-                      fontSize: 16,
-                    ),
-                  ),
+          ),
+          Container(
+            decoration: BoxDecoration(
+              gradient: LinearGradient(
+                begin: Alignment.topCenter,
+                end: Alignment.bottomCenter,
+                colors: [
+                  Colors.transparent,
+                  Colors.black.withOpacity(0.7),
                 ],
               ),
             ),
-          ],
+          ),
+          Padding(
+            padding: const EdgeInsets.all(18),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Text(
+                  info.title,
+                  overflow: TextOverflow.clip,
+                  softWrap: false,
+                  style: Theme.of(context).textTheme.headlineLarge?.copyWith(
+                    color: Colors.white,
+                  ),
+                ),
+                const SizedBox(height: 10),
+                Text(
+                  info.subtitle,
+                  overflow: TextOverflow.clip,
+                  softWrap: false,
+                  style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                    color: Colors.white,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildQuickAccessCard({required QuickAccessInfo info}) {
+    return GestureDetector(
+      onTap: () => context.go(info.route),
+      child: ColoredBox(
+        color: info.backgroundColor,
+        child: Center(
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Icon(info.icon, color: info.color, size: 32),
+              Text(
+                info.label,
+                style: TextStyle(
+                  color: info.color,
+                  fontWeight: FontWeight.bold,
+                ),
+                overflow: TextOverflow.clip,
+                softWrap: false,
+              ),
+            ],
+          ),
         ),
       ),
     );
   }
 
-  Widget _buildQuickAccessCard({
-    required IconData icon,
-    required String label,
-    required Color color,
-    required VoidCallback onTap,
-  }) {
-    return Padding(
-      padding: const EdgeInsets.only(right: 16),
-      child: SizedBox(
-        width: 120,
-        child: Card(
-          elevation: 0,
-          color: color.withOpacity(0.1),
-          child: InkWell(
-            onTap: onTap,
-            borderRadius: BorderRadius.circular(12),
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
+  Widget _buildTimelineCard({required TimelineInfo info}) {
+    final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
+
+    return ColoredBox(
+      color: colorScheme.surfaceVariant.withOpacity(0.5),
+      child: Padding(
+        padding: const EdgeInsets.all(16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
               children: [
-                Icon(icon, color: color, size: 32),
-                const SizedBox(height: 8),
+                Icon(
+                  info.icon,
+                  color: colorScheme.primary,
+                ),
+                const SizedBox(width: 8),
                 Text(
-                  label,
-                  style: TextStyle(
-                    color: color,
+                  info.title,
+                  style: theme.textTheme.titleMedium?.copyWith(
                     fontWeight: FontWeight.bold,
                   ),
                 ),
               ],
             ),
-          ),
-        ),
-      ),
-    );
-  }
-
-  Widget _buildTimelineCard({
-    required int index,
-    required ThemeData theme,
-    required ColorScheme colorScheme,
-  }) {
-    final List<Map<String, dynamic>> activities = [
-      {
-        'title': 'New Event Added',
-        'description': 'Tech Talk: Future of AI',
-        'icon': Icons.event_note,
-      },
-      {
-        'title': 'Facility Update',
-        'description': 'Library Hours Extended',
-        'icon': Icons.update,
-      },
-      {
-        'title': 'Hostel Notice',
-        'description': 'Maintenance Schedule',
-        'icon': Icons.apartment,
-      },
-      {
-        'title': 'Campus Alert',
-        'description': 'Weather Advisory',
-        'icon': Icons.warning_amber,
-      },
-      {
-        'title': 'Event Reminder',
-        'description': 'Career Fair Tomorrow',
-        'icon': Icons.notification_important,
-      },
-    ];
-
-    final activity = activities[index % activities.length];
-
-    return Padding(
-      padding: const EdgeInsets.only(right: 16),
-      child: Card(
-        elevation: 2,
-        child: InkWell(
-          onTap: () {},
-          child: Padding(
-            padding: const EdgeInsets.all(16),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Row(
-                  children: [
-                    Icon(
-                      activity['icon'] as IconData,
-                      color: colorScheme.primary,
-                    ),
-                    const SizedBox(width: 8),
-                    Text(
-                      activity['title'] as String,
-                      style: theme.textTheme.titleMedium?.copyWith(
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 8),
-                Text(
-                  activity['description'] as String,
-                  style: theme.textTheme.bodyLarge,
-                ),
-                const Spacer(),
-                Text(
-                  '2 hours ago',
-                  style: theme.textTheme.bodySmall?.copyWith(
-                    color: theme.colorScheme.onSurfaceVariant,
-                  ),
-                ),
-              ],
+            const SizedBox(height: 8),
+            Text(
+              info.description,
+              style: theme.textTheme.bodyLarge,
             ),
-          ),
+            const Spacer(),
+            Text(
+              '2 hours ago',
+              style: theme.textTheme.bodySmall?.copyWith(
+                color: colorScheme.onSurfaceVariant,
+              ),
+            ),
+          ],
         ),
       ),
     );
